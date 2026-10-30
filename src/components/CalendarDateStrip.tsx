@@ -1,0 +1,90 @@
+import React, { useEffect, useRef } from "react";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import type { ScrollViewInstance } from "react-native";
+import { formatDateKey } from "../sampleData";
+import { palette } from "../theme";
+
+type Props = {
+  dates: Date[];
+  selectedDate: Date;
+  today: Date;
+  onSelectDate: (date: Date) => void;
+  onTouchChange: (touching: boolean) => void;
+};
+
+export function CalendarDateStrip({ dates, selectedDate, today, onSelectDate, onTouchChange }: Props): React.JSX.Element {
+  const scrollViewRef = useRef<ScrollViewInstance | null>(null);
+  const selectedKey = formatDateKey(selectedDate);
+
+  useEffect(() => {
+    const selectedIndex = dates.findIndex((date) => formatDateKey(date) === selectedKey);
+    if (selectedIndex >= 0) {
+      scrollViewRef.current?.scrollTo({ x: Math.max(0, selectedIndex * 59), animated: true });
+    }
+  }, [dates, selectedKey]);
+
+  return (
+    <ScrollView
+      ref={scrollViewRef}
+      accessibilityLabel="Planning dates"
+      contentContainerStyle={styles.content}
+      horizontal
+      nestedScrollEnabled
+      directionalLockEnabled
+      onTouchStart={() => onTouchChange(true)}
+      onTouchEnd={() => onTouchChange(false)}
+      onTouchCancel={() => onTouchChange(false)}
+      showsHorizontalScrollIndicator={false}
+      style={styles.scroll}
+    >
+      {dates.map((date) => {
+        const active = formatDateKey(date) === formatDateKey(selectedDate);
+        const isToday = formatDateKey(date) === formatDateKey(today);
+        const label = date.toLocaleDateString(undefined, {
+          weekday: "long",
+          month: "long",
+          day: "numeric"
+        });
+        return (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={label}
+            accessibilityHint="Selects this date to view its meal plan"
+            accessibilityState={{ selected: active }}
+            key={formatDateKey(date)}
+            onPress={() => onSelectDate(date)}
+            style={[styles.dayButton, active && styles.dayButtonActive]}
+          >
+            <Text style={[styles.dayName, active && styles.dayNameActive]}>
+              {date.toLocaleDateString(undefined, { weekday: "short" })}
+            </Text>
+            <Text style={[styles.dayNumber, active && styles.dayNumberActive]}>{date.getDate()}</Text>
+            <View style={[styles.dayDot, (isToday || active) && styles.dayDotVisible]} />
+          </Pressable>
+        );
+      })}
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  scroll: { marginHorizontal: -22, marginBottom: 21 },
+  content: { paddingHorizontal: 22, gap: 7 },
+  dayButton: {
+    width: 52,
+    height: 73,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: palette.white,
+    borderWidth: 1,
+    borderColor: "#F0F0EA"
+  },
+  dayButtonActive: { backgroundColor: palette.green, borderColor: palette.green },
+  dayName: { color: palette.muted, fontSize: 10, fontWeight: "600" },
+  dayNameActive: { color: "#DCE7DB" },
+  dayNumber: { color: palette.ink, fontSize: 17, fontWeight: "700", marginTop: 5 },
+  dayNumberActive: { color: palette.white },
+  dayDot: { height: 4, width: 4, borderRadius: 2, marginTop: 4 },
+  dayDotVisible: { backgroundColor: "#9EBD9D" }
+});

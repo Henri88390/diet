@@ -1,0 +1,23 @@
+{
+  "expo": {
+    "name": "Nourish",
+    "slug": "nourish-planner",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#F7F7F2"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#F7F7F2"
+      }
+    },
+    "plugins": [
+      "expo-asset"
+    ]
+  }
+}

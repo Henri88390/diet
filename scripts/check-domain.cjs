@@ -560,8 +560,8 @@ assert.match(grocerySource, /not researched Lidl or other retailer prices/);
 assert.match(preferencesSource, /Country and currency/);
 assert.doesNotMatch(preferencesSource, /MADE FOR YOUR EVERYDAY|Good food,|your way\.|I’ll do this later/,
   "onboarding removes the requested hero copy and skip action");
-assert.match(preferencesSource, /estimatePresetBreakfast/,
-  "standard breakfast choices display a modeled cost, calorie, and protein preview");
+assert.doesNotMatch(preferencesSource, /breakfastEstimate|estimatePresetBreakfast/,
+  "standard breakfast choices do not display a cost, calorie, or protein preview");
 assert.match(mealDetailsSource, /formatMoney/);
 assert.match(appSource, /PanResponder/);
 assert.match(appSource, /Animated\.timing/);

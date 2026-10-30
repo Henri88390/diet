@@ -139,8 +139,7 @@ export function OnboardingScreen({
         <View style={styles.choiceGroup}>
           <Text style={styles.choiceTitle}>Typical breakfast</Text>
           <Text style={styles.assignmentText}>
-            Presets show a standard portion of about 650 kcal. Choose a repeating breakfast for every planned date,
-            or keep the existing varied breakfast menu.
+            Choose a repeating breakfast for every planned date, or keep the existing varied breakfast menu.
           </Text>
           <Text style={styles.assignmentText}>
             A selected breakfast takes priority over automatic fruit and dairy frequency preferences. Ingredient bans still apply.
@@ -154,7 +153,6 @@ export function OnboardingScreen({
               })}
             />
             {typicalBreakfastPresets.map((preset) => {
-              const estimate = estimatePresetBreakfast(preset.ingredients, countryCode);
               const selected = mealPreferences.typicalBreakfast.mode === "preset" &&
                 mealPreferences.typicalBreakfast.presetId === preset.id;
               return (
@@ -168,12 +166,6 @@ export function OnboardingScreen({
                       typicalBreakfast: { mode: "preset", presetId: preset.id }
                     })}
                   />
-                  <Text style={styles.breakfastEstimate}>
-                    {estimate.calories} kcal · {estimate.proteinGrams} g protein · ~{formatMoney({
-                      amountMinorUnits: estimate.costMinorUnits,
-                      currencyCode: getCountry(countryCode).currencyCode
-                    }, getCountry(countryCode).locale)}
-                  </Text>
                 </View>
               );
             })}
@@ -310,25 +302,6 @@ export function OnboardingScreen({
       </Pressable>
     </ScrollView>
   );
-}
-
-function estimatePresetBreakfast(
-  ingredients: TypicalBreakfastIngredient[],
-  countryCode: CountryCode
-): { calories: number; proteinGrams: number; costMinorUnits: number } {
-  return ingredients.reduce((total, ingredient) => {
-    const estimate = estimateIngredient(
-      ingredient.name,
-      ingredient.quantity,
-      ingredient.unit,
-      countryCode
-    );
-    return {
-      calories: total.calories + estimate.calories,
-      proteinGrams: Math.round((total.proteinGrams + estimate.proteinGrams) * 10) / 10,
-      costMinorUnits: total.costMinorUnits + estimate.estimatedCostCents
-    };
-  }, { calories: 0, proteinGrams: 0, costMinorUnits: 0 });
 }
 
 function CustomBreakfastBuilder({
@@ -497,7 +470,6 @@ const styles = StyleSheet.create({
   profileSection: { backgroundColor: palette.white, borderRadius: 17, padding: 15, marginBottom: 27, borderWidth: 1, borderColor: "#F0F0EA" },
   choiceGroup: { marginTop: 15 },
   breakfastPreset: { flexBasis: "48%", flexGrow: 1 },
-  breakfastEstimate: { color: palette.muted, fontSize: 9, lineHeight: 13, marginHorizontal: 2, marginTop: 4 },
   customBreakfast: { marginTop: 10, padding: 10, borderRadius: 11, backgroundColor: "#F7F7F3" },
   customBreakfastTitle: { color: palette.ink, fontSize: 12, fontWeight: "700", marginBottom: 8 },
   customIngredientChoices: { flexDirection: "row", flexWrap: "wrap", gap: 6 },

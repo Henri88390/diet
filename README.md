@@ -75,11 +75,10 @@ The optional typical breakfast can keep the existing varied breakfast plan,
 repeat a sample preset, or use a custom in-memory ingredient list. Meal and daily
 protein figures are modeled from illustrative per-ingredient protein rates and
 scale with portions; they are not verified nutrition data or dietary guidance.
-Standard typical-breakfast presets use portions around 650 kcal and show modeled
-calorie, protein, and local-currency cost previews. Selecting a repeating
-breakfast disables the automatic fruit addition to that meal and takes
-precedence over fruit and dairy frequency preferences. Ingredient bans still
-apply.
+Standard typical-breakfast presets use larger sample portions. Selecting a
+repeating breakfast disables the automatic fruit addition to that meal and
+takes precedence over fruit and dairy frequency preferences. Ingredient bans
+still apply.
 The protein catalog includes poultry, canned fish, beef and pork mince, and a
 modeled frozen minced beef option for lower-cost substitutions. Its costs and
 availability are illustrative assumptions, not verified supermarket data.

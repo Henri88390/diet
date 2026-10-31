@@ -40,7 +40,7 @@ export function CalendarDateStrip({ dates, selectedDate, today, onSelectDate, on
       {dates.map((date) => {
         const active = formatDateKey(date) === formatDateKey(selectedDate);
         const isToday = formatDateKey(date) === formatDateKey(today);
-        const label = date.toLocaleDateString(undefined, {
+        const label = date.toLocaleDateString("en-US", {
           weekday: "long",
           month: "long",
           day: "numeric"
@@ -56,7 +56,7 @@ export function CalendarDateStrip({ dates, selectedDate, today, onSelectDate, on
             style={[styles.dayButton, active && styles.dayButtonActive]}
           >
             <Text style={[styles.dayName, active && styles.dayNameActive]}>
-              {date.toLocaleDateString(undefined, { weekday: "short" })}
+              {date.toLocaleDateString("en-US", { weekday: "short" })}
             </Text>
             <Text style={[styles.dayNumber, active && styles.dayNumberActive]}>{date.getDate()}</Text>
             <View style={[styles.dayDot, (isToday || active) && styles.dayDotVisible]} />

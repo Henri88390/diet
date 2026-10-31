@@ -1,6 +1,6 @@
-# Nourish
+# Meal Planner
 
-Nourish is an Expo + React Native sample meal-planning app. It has local food
+This is an Expo + React Native sample meal-planning app. It has local food
 preferences, a calendar with selectable meal counts, editable portion targets,
 and a combined shopping list. The default is three meals and 2,000 kcal per
 day; two meals keeps breakfast and dinner, while four or five meals adds one or

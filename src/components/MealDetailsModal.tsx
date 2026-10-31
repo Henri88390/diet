@@ -43,8 +43,7 @@ export function MealDetailsModal({ meal, onClose }: Props): React.JSX.Element {
                 {meal.calories} kcal · {meal.proteinGrams} g protein · illustrative estimates
               </Text>
               <Text style={styles.summaryText}>
-                ~{formatCost(meal.estimatedCost?.amountMinorUnits ?? meal.estimatedCostCents)} estimated · {meal.durationMinutes} min
-              </Text>
+                ~{formatCost(meal.estimatedCost?.amountMinorUnits ?? meal.estimatedCostCents)}                 estimated              </Text>
             </View>
             {meal.banConflicts && meal.banConflicts.length > 0 && (
               <Text style={styles.banWarning}>

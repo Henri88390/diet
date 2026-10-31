@@ -74,5 +74,6 @@ export const customBreakfastIngredientOptions: Array<TypicalBreakfastIngredient 
   { key: "honey", name: "Honey", quantity: "1", unit: "tsp" },
   { key: "chia", name: "Chia seeds", quantity: "1", unit: "tbsp" },
   { key: "apple", name: "Apple", quantity: "1", unit: "medium" },
-  { key: "skyr", name: "Skyr", quantity: "150", unit: "g" }
+  { key: "skyr", name: "Skyr", quantity: "150", unit: "g" },
+  { key: "cottage-cheese", name: "Cottage cheese", quantity: "150", unit: "g" }
 ];

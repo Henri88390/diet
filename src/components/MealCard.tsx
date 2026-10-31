@@ -40,9 +40,7 @@ export function MealCard({ meal, onPress }: Props): React.JSX.Element {
         <View style={styles.metaRow}>
           <Text style={styles.cost}>~{cost}</Text>
           <Text style={styles.protein}>{meal.proteinGrams} g protein</Text>
-          <Text style={styles.duration}>◷ {meal.durationMinutes} min</Text>
         </View>
-        <Text style={styles.hint}>Tap for ingredient estimates →</Text>
       </View>
     </Pressable>
   );
@@ -62,7 +60,5 @@ const styles = StyleSheet.create({
   metaRow: { flexDirection: "row", alignItems: "center", marginTop: 9 },
   cost: { color: palette.green, fontSize: 11, fontWeight: "700" },
   protein: { color: palette.ink, fontSize: 10, fontWeight: "600", marginLeft: 10 },
-  duration: { color: palette.muted, fontSize: 9, marginLeft: "auto" },
-  hint: { color: palette.green, fontSize: 10, fontWeight: "600", marginTop: 8 },
   banWarning: { color: "#8B3027", fontSize: 10, lineHeight: 14, marginTop: 5 }
 });

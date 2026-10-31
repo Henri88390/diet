@@ -95,7 +95,7 @@ export function WeeklyGroceryList({
     <View style={styles.card}>
       <Text style={styles.title}>Shopping list</Text>
       <Text style={styles.description}>
-        Combined quantities from your personalized meal calendar, including any updated portions.
+        Combined quantities from your personalized meal calendar.
       </Text>
       <View style={styles.dateFields}>
         <DateFieldButton
@@ -145,13 +145,6 @@ export function WeeklyGroceryList({
           ))}
         </View>
       )}
-      <Text style={styles.disclaimer}>
-        Illustrative modeled rates only—not researched Lidl or other retailer prices, live prices, or a
-        full-package checkout total. {country.code === "PL"
-          ? "Polish chicken and egg amounts are calibrated to your examples; other prices remain unverified."
-          : "Country adjustments are synthetic assumptions, not verified local price indices."}
-        {" "}Small seasonings are included; package sizes and waste are not.
-      </Text>
       <DatePickerModal
         visible={activeDateField !== null}
         selectedDate={activeDateField === "end" ? endDate : startDate}

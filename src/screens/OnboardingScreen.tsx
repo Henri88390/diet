@@ -9,16 +9,15 @@ import type {
   TypicalBreakfastIngredient,
   WeeklyFrequency
 } from "../models";
-import { getWeeklyAssignmentDays } from "../sampleData";
 import { ingredientCatalog, ingredientCategoryOrder } from "../ingredientCatalog";
 import { palette } from "../theme";
 import { countries, formatMoney, getCountry, type CountryCode } from "../countryPricing";
 import {
   estimateIngredient,
-  isValidPositiveIngredientQuantity,
-  PRICE_ESTIMATE_REFERENCE
+  isValidPositiveIngredientQuantity
 } from "../ingredientEstimates";
 import { customBreakfastIngredientOptions, typicalBreakfastPresets } from "../typicalBreakfast";
+import { ArrowButton } from "../components/ArrowButton";
 
 type Props = {
   bannedIngredients: IngredientBans;
@@ -77,20 +76,13 @@ export function OnboardingScreen({
       ));
   return (
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-      <View style={styles.brandRow}>
-        <View style={styles.brandMark}><Text style={styles.brandMarkText}>n</Text></View>
-        <Text style={styles.brandName}>nourish</Text>
-      </View>
+      <ArrowButton
+        label="See my plan"
+        disabled={!typicalBreakfastIsValid}
+        onPress={onContinue}
+        style={{ marginBottom: 17 }}
+      />
       <View style={styles.profileSection}>
-        <Text style={styles.sectionTitle}>Shape your sample meals</Text>
-        <Text style={styles.helperText}>
-          Choose how often you’d like meat or fish and dairy in a typical week, and how you prefer fruit.
-        </Text>
-        <FrequencyChoice
-          title="Meat / fish"
-          value={mealPreferences.meatPerWeek}
-          onChange={(value) => onMealPreferencesChange({ ...mealPreferences, meatPerWeek: value })}
-        />
         <View style={styles.choiceGroup}>
           <Text style={styles.choiceTitle}>Meal plan style</Text>
           <View style={styles.planStyles}>
@@ -104,10 +96,6 @@ export function OnboardingScreen({
               />
             ))}
           </View>
-          <Text style={styles.assignmentText}>
-            {planStyleOptions.find((option) => option.value === mealPreferences.planStyle)?.description}.
-            Costs and nutrition are modeled estimates, not guarantees.
-          </Text>
         </View>
         <View style={styles.choiceGroup}>
           <Text style={styles.choiceTitle}>Weekly food budget</Text>
@@ -124,13 +112,15 @@ export function OnboardingScreen({
             />
             <Text style={styles.budgetCurrency}>{getCountry(countryCode).currencyCode} / week</Text>
           </View>
-          <Text style={styles.assignmentText}>
-            The planner will prefer cheaper foods when its modeled estimate exceeds this budget. Actual totals can still be higher.
-          </Text>
           {!budgetIsValid && (
             <Text style={styles.budgetError}>Enter a non-negative amount or leave the budget blank.</Text>
           )}
         </View>
+        <FrequencyChoice
+          title="Meat / fish"
+          value={mealPreferences.meatPerWeek}
+          onChange={(value) => onMealPreferencesChange({ ...mealPreferences, meatPerWeek: value })}
+        />
         <FrequencyChoice
           title="Dairy"
           value={mealPreferences.dairyPerWeek}
@@ -138,12 +128,6 @@ export function OnboardingScreen({
         />
         <View style={styles.choiceGroup}>
           <Text style={styles.choiceTitle}>Typical breakfast</Text>
-          <Text style={styles.assignmentText}>
-            Choose a repeating breakfast for every planned date, or keep the existing varied breakfast menu.
-          </Text>
-          <Text style={styles.assignmentText}>
-            A selected breakfast takes priority over automatic fruit and dairy frequency preferences. Ingredient bans still apply.
-          </Text>
           <View style={styles.frequencyChoices}>
             <ChoiceButton
               label="No fixed breakfast"
@@ -196,7 +180,6 @@ export function OnboardingScreen({
               })}
             />
           )}
-          <Text style={styles.assignmentText}>{PRICE_ESTIMATE_REFERENCE}</Text>
         </View>
         <View style={styles.choiceGroup}>
           <Text style={styles.choiceTitle}>Meals per day</Text>
@@ -214,9 +197,6 @@ export function OnboardingScreen({
               />
             ))}
           </View>
-          <Text style={styles.assignmentText}>
-            Two meals keeps breakfast and dinner; four or five adds snack meals.
-          </Text>
         </View>
         <View style={styles.choiceGroup}>
           <Text style={styles.choiceTitle}>Fruit</Text>
@@ -234,9 +214,6 @@ export function OnboardingScreen({
             ))}
           </View>
         </View>
-        <Text style={styles.preferenceNote}>
-          These are food preferences for sample recipes, not medical or dietary advice.
-        </Text>
         <View style={styles.countrySection}>
           <Text style={styles.choiceTitle}>Country and currency</Text>
           <View style={styles.countryChoices}>
@@ -250,15 +227,10 @@ export function OnboardingScreen({
               />
             ))}
           </View>
-          <Text style={styles.assignmentText}>
-            Changes meal and shopping-list estimates to {getCountry(countryCode).currencyCode}.
-            Country adjustments are illustrative assumptions, not researched local prices.
-          </Text>
         </View>
       </View>
       <View style={styles.banSection}>
-        <Text style={styles.sectionTitle}>Ingredients to avoid</Text>
-        <Text style={styles.helperText}>Tap an ingredient to ban it from your meal plans.</Text>
+        <Text style={styles.sectionTitle}>Ban ingredients</Text>
         {ingredientCategoryOrder.map((category) => (
           <View key={category} style={styles.banCategory}>
             <Text style={styles.banCategoryTitle}>{category}</Text>
@@ -284,22 +256,12 @@ export function OnboardingScreen({
           </View>
         ))}
       </View>
-      <Text style={styles.disclaimer}>
-        Banned foods are removed where a suitable alternative exists. If all practical substitutes are also banned,
-        the affected recipe will be clearly flagged. Meal examples use your plan style, budget, food bans, meat/fish,
-        dairy, and fruit choices. Ingredient prices and calorie values
-        are illustrative estimates, not verified portions, nutrient guidance, or medical advice.
-      </Text>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityState={{ disabled: !typicalBreakfastIsValid }}
+      <ArrowButton
+        label="See my plan"
         disabled={!typicalBreakfastIsValid}
         onPress={onContinue}
-        style={({ pressed }) => [styles.primaryButton, !typicalBreakfastIsValid && styles.buttonDisabled, pressed && styles.pressed]}
-      >
-        <Text style={styles.primaryButtonText}>See my plan</Text>
-        <Text style={styles.buttonArrow}>→</Text>
-      </Pressable>
+        style={{ marginTop: 17 }}
+      />
     </ScrollView>
   );
 }
@@ -374,7 +336,7 @@ function CustomBreakfastBuilder({
         </View>
       ))}
       <Text style={styles.customPreview}>
-        Preview: {quantityError || ingredients.length === 0 ? "Check quantities" : `${totalCalories} kcal · ${Math.round(totalProtein * 10) / 10} g protein · ~${formatMoney({
+        {quantityError || ingredients.length === 0 ? "Check quantities" : `${totalCalories} kcal · ${Math.round(totalProtein * 10) / 10} g protein · ~${formatMoney({
           amountMinorUnits: totalCost, currencyCode: getCountry(countryCode).currencyCode
         }, getCountry(countryCode).locale)}`}
       </Text>
@@ -383,7 +345,6 @@ function CustomBreakfastBuilder({
           Add an ingredient and enter a positive quantity for each item.
         </Text>
       )}
-      <Text style={styles.assignmentText}>Ingredient amounts and nutrition are illustrative estimates.</Text>
     </View>
   );
 }
@@ -411,13 +372,6 @@ function FrequencyChoice({
   value: WeeklyFrequency;
   onChange: (value: WeeklyFrequency) => void;
 }): React.JSX.Element {
-  const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-  const assignedDays = getWeeklyAssignmentDays(value);
-  const assignmentText = assignedDays.length === 0
-    ? "No days scheduled"
-    : assignedDays.length === 7
-      ? "Every day"
-      : `Planned on ${assignedDays.map((day) => weekdays[day]).join(" & ")}`;
   return (
     <View style={styles.choiceGroup}>
       <Text style={styles.choiceTitle}>{title} per week</Text>
@@ -432,7 +386,6 @@ function FrequencyChoice({
           />
         ))}
       </View>
-      <Text style={styles.assignmentText}>{assignmentText} each Monday-based calendar week</Text>
     </View>
   );
 }
@@ -463,10 +416,6 @@ function ChoiceButton({
 
 const styles = StyleSheet.create({
   content: { paddingHorizontal: 24, paddingTop: 22, paddingBottom: 36 },
-  brandRow: { flexDirection: "row", alignItems: "center" },
-  brandMark: { height: 34, width: 34, borderRadius: 12, backgroundColor: palette.green, alignItems: "center", justifyContent: "center" },
-  brandMarkText: { color: palette.white, fontSize: 24, fontWeight: "700", fontStyle: "italic", marginTop: -4 },
-  brandName: { marginLeft: 9, color: palette.ink, fontSize: 17, fontWeight: "700", letterSpacing: -0.5 },
   profileSection: { backgroundColor: palette.white, borderRadius: 17, padding: 15, marginBottom: 27, borderWidth: 1, borderColor: "#F0F0EA" },
   choiceGroup: { marginTop: 15 },
   breakfastPreset: { flexBasis: "48%", flexGrow: 1 },
@@ -510,9 +459,5 @@ const styles = StyleSheet.create({
   banText: { color: palette.ink, fontSize: 11, fontWeight: "500" },
   banTextSelected: { color: "#8B3027", fontWeight: "700" },
   disclaimer: { color: palette.muted, fontSize: 11, lineHeight: 16, marginTop: 16, textAlign: "center", paddingHorizontal: 8 },
-  primaryButton: { backgroundColor: palette.green, borderRadius: 15, minHeight: 55, marginTop: 17, alignItems: "center", justifyContent: "center", flexDirection: "row" },
-  buttonDisabled: { opacity: 0.45 },
-  primaryButtonText: { color: palette.white, fontSize: 15, fontWeight: "700" },
-  buttonArrow: { color: palette.white, fontSize: 20, marginLeft: 9, marginTop: -2 },
   pressed: { opacity: 0.84 },
 });

@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Nourish",
-    "slug": "nourish-planner",
+    "name": "Meal Planner",
+    "slug": "meal-planner",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",

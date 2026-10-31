@@ -65,6 +65,14 @@ export const ingredientCategoryOrder: IngredientCategoryGroup[] = [
   "Legumes", "Pantry & seasonings"
 ];
 
+/** Eggs and fruit are counted as whole pieces in the kitchen, so they are never split. */
+export function isWholePieceIngredient(name: string): boolean {
+  const normalized = name.toLowerCase();
+  return /\beggs?\b/.test(normalized) || ingredientCatalog.some((option) =>
+    option.category === "Fruit" && option.matches.some((match) => normalized.includes(match.toLowerCase()))
+  );
+}
+
 export function isIngredientBanned(name: string, bannedIds: string[]): boolean {
   const normalized = name.toLowerCase();
   return ingredientCatalog.some((option) =>

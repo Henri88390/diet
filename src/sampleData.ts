@@ -12,7 +12,7 @@ import {
   getIngredientCategory,
   isValidPositiveIngredientQuantity
 } from "./ingredientEstimates";
-import { isIngredientBanned } from "./ingredientCatalog";
+import { isIngredientBanned, isWholePieceIngredient } from "./ingredientCatalog";
 import { applyBatchCooking } from "./batchCooking";
 import type { CountryCode } from "./countryPricing";
 import { typicalBreakfastPresets } from "./typicalBreakfast";
@@ -191,7 +191,7 @@ export function scaleMealPlan(meals: Meal[], goal: number): Meal[] {
       : goal / sourceTotal;
     const ingredients = sourceMeal.ingredients.map((ingredient) => ({
       ...ingredient,
-      quantity: formatScaledQuantity(parseQuantity(ingredient.quantity) * portionScale, ingredient.unit)
+      quantity: formatScaledQuantity(parseQuantity(ingredient.quantity) * portionScale, ingredient.unit, ingredient.name)
     }));
 
     const quantityEstimates = ingredients.map((ingredient) =>
@@ -270,12 +270,16 @@ function parseQuantity(quantity: string): number {
 }
 
 /** Round scaled portions to kitchen-friendly amounts and format decimals by locale. */
-export function formatScaledQuantity(quantity: number, unit: string): string {
+export function formatScaledQuantity(quantity: number, unit: string, name = ""): string {
   if (!Number.isFinite(quantity) || quantity <= 0) return "0";
   if (unit === "g" || unit === "ml") {
     return new Intl.NumberFormat(undefined, { useGrouping: false, maximumFractionDigits: 0 }).format(
       Math.max(1, Math.round(quantity))
     );
+  }
+  // Eggs and whole fruit are never split: always a whole number, at least one.
+  if (isWholePieceIngredient(name)) {
+    return String(Math.max(1, Math.round(quantity)));
   }
   const roundedToHalf = Math.max(1, Math.round(quantity * 2)) / 2;
   if (roundedToHalf === 0.5) return "1/2";
@@ -470,7 +474,8 @@ function mergeDuplicateIngredients(meal: Meal): void {
     if (getIngredientCategory(ingredient.name) !== "seasoning" && existing.unit === ingredient.unit) {
       existing.quantity = formatScaledQuantity(
         parseQuantity(existing.quantity) + parseQuantity(ingredient.quantity),
-        existing.unit
+        existing.unit,
+        existing.name
       );
     }
   });

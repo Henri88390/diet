@@ -39,7 +39,8 @@ const { typicalBreakfastPresets } = require("../src/typicalBreakfast.ts");
 const {
   ingredientCatalog,
   ingredientCategoryOrder,
-  isIngredientBanned
+  isIngredientBanned,
+  isWholePieceIngredient
 } = require("../src/ingredientCatalog.ts");
 const {
   estimateIngredient,
@@ -594,6 +595,11 @@ for (const mealsPerDay of [2, 3, 4, 5]) {
   assert.equal(getDailyCalories(scaleMealPlan(day.meals, DEFAULT_DAILY_CALORIE_GOAL)),
     DEFAULT_DAILY_CALORIE_GOAL, `${mealsPerDay}-meal plan scales to the default calorie target`);
   const scaled = scaleMealPlan(day.meals, DEFAULT_DAILY_CALORIE_GOAL);
+  [1200, 1850, 2400, 3200].forEach((goal) => {
+    scaleMealPlan(day.meals, goal).forEach((meal) => meal.ingredients
+      .filter((item) => isWholePieceIngredient(item.name) && item.unit !== "g" && item.unit !== "ml")
+      .forEach((item) => assert.match(item.quantity, /^[1-9]\d*$/, `eggs and fruit stay whole (${item.name} ${item.quantity})`)));
+  });
   const mains = scaled.filter((meal) => meal.type !== "Snack");
   assert.ok(Math.max(...mains.map((meal) => meal.calories)) -
     Math.min(...mains.map((meal) => meal.calories)) <= 1,

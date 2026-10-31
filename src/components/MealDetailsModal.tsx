@@ -4,15 +4,19 @@ import type { Meal } from "../models";
 import { PRICE_ESTIMATE_REFERENCE } from "../ingredientEstimates";
 import { palette } from "../theme";
 import { formatMoney } from "../countryPricing";
+import { useTranslation } from "react-i18next";
+import { useFoodNames } from "../i18n";
 
 type Props = { meal: Meal | null; onClose: () => void };
 
 export function MealDetailsModal({ meal, onClose }: Props): React.JSX.Element {
+  const { t } = useTranslation();
+  const { food } = useFoodNames();
   const currencyCode = meal?.currencyCode ?? "EUR";
   const currencyLocale = meal?.currencyLocale;
   const mealLabel = meal?.type === "Snack" && meal.slot
-    ? `${meal.slot} snack`
-    : meal?.type;
+    ? t("snackLabel", { slot: t(`snackSlot.${meal.slot}`, { defaultValue: meal.slot }) })
+    : meal ? t(`mealType.${meal.type}`) : "";
   const formatCost = (minorUnits: number): string =>
     formatMoney({ amountMinorUnits: minorUnits, currencyCode }, currencyLocale);
   const ingredientCalories = meal?.ingredients.reduce((sum, item) => sum + item.calories, 0) ?? 0;
@@ -25,68 +29,63 @@ export function MealDetailsModal({ meal, onClose }: Props): React.JSX.Element {
   return (
     <Modal animationType="slide" onRequestClose={onClose} transparent visible={meal !== null}>
       <View style={styles.overlay}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Close meal details" onPress={onClose} style={StyleSheet.absoluteFill} />
+        <Pressable accessibilityRole="button" accessibilityLabel={t("details.close")} onPress={onClose} style={StyleSheet.absoluteFill} />
         {meal && (
           <View accessibilityViewIsModal style={styles.sheet}>
             <View style={styles.handle} />
             <View style={styles.header}>
               <View style={styles.heading}>
-                <Text style={styles.eyebrow}>{mealLabel} · SAMPLE MEAL</Text>
-                <Text accessibilityRole="header" style={styles.title}>{meal.title}</Text>
+                <Text style={styles.eyebrow}>{t("details.eyebrow", { label: mealLabel })}</Text>
+                <Text accessibilityRole="header" style={styles.title}>{food(meal.title)}</Text>
               </View>
-              <Pressable accessibilityRole="button" accessibilityLabel="Close meal details" onPress={onClose} style={styles.close}>
+              <Pressable accessibilityRole="button" accessibilityLabel={t("details.close")} onPress={onClose} style={styles.close}>
                 <Text style={styles.closeText}>×</Text>
               </Pressable>
             </View>
             <View style={styles.summary}>
               <View style={styles.statTile}>
                 <Text style={styles.statValue}>{meal.calories}</Text>
-                <Text style={styles.statLabel}>kcal</Text>
+                <Text style={styles.statLabel}>{t("details.kcal")}</Text>
               </View>
               <View style={[styles.statTile, styles.statTileProtein]}>
                 <Text style={[styles.statValue, styles.statValueProtein]}>{meal.proteinGrams} g</Text>
-                <Text style={styles.statLabel}>protein</Text>
+                <Text style={styles.statLabel}>{t("details.protein")}</Text>
               </View>
               <View style={[styles.statTile, styles.statTileCost]}>
                 <Text style={[styles.statValue, styles.statValueCost]}>
                   ~{formatCost(meal.estimatedCost?.amountMinorUnits ?? meal.estimatedCostCents)}
                 </Text>
-                <Text style={styles.statLabel}>est. cost</Text>
+                <Text style={styles.statLabel}>{t("details.estCost")}</Text>
               </View>
             </View>
             {meal.banConflicts && meal.banConflicts.length > 0 && (
               <Text style={styles.banWarning}>
-                No allowed substitute was found for: {meal.banConflicts.join(", ")}. Review the bans or choose another meal.
+                {t("details.banWarning", { list: meal.banConflicts.map(food).join(", ") })}
               </Text>
             )}
             <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-              <Text style={styles.sectionTitle}>Main ingredients</Text>
-              <Text style={styles.helper}>Core foods for this sample portion</Text>
+              <Text style={styles.sectionTitle}>{t("details.mainIngredients")}</Text>
+              <Text style={styles.helper}>{t("details.mainHelper")}</Text>
               {mainIngredients.map((ingredient, index) => (
                 <IngredientRow key={`${ingredient.name}-${index}`} ingredient={ingredient} formatCost={formatCost} />
               ))}
               {seasonings.length > 0 && (
                 <View style={styles.seasoningGroup}>
-                  <Text style={styles.seasoningTitle}>Seasonings & cooking additions</Text>
-                  <Text style={styles.helper}>Shown separately from the main ingredients</Text>
+                  <Text style={styles.seasoningTitle}>{t("details.seasonings")}</Text>
+                  <Text style={styles.helper}>{t("details.seasoningsHelper")}</Text>
                   {seasonings.map((ingredient, index) => (
                     <IngredientRow key={`${ingredient.name}-${index}`} ingredient={ingredient} formatCost={formatCost} />
                   ))}
                 </View>
               )}
               <View style={styles.total}>
-                <Text style={styles.totalLabel}>Ingredient estimate total</Text>
+                <Text style={styles.totalLabel}>{t("details.total")}</Text>
                 <Text style={styles.totalValue}>
-                  {ingredientCalories.toLocaleString()} kcal · {meal.proteinGrams} g protein · ~{formatCost(ingredientCost)}
+                  {t("details.totalValue", { kcal: ingredientCalories.toLocaleString(), protein: meal.proteinGrams, cost: formatCost(ingredientCost) })}
                 </Text>
               </View>
               <Text style={styles.priceReference}>{PRICE_ESTIMATE_REFERENCE}</Text>
-              <Text style={styles.disclaimer}>
-                Nutrition and costs use modeled ingredient quantities and unit estimates; scaled calorie values are
-                reconciled to the selected daily goal. Costs are rounded to the nearest minor currency unit, so a very small positive
-                portion may display as zero. Portions and values are illustrative, not verified recipe amounts,
-                regional prices, nutrition guidance, or medical advice.
-              </Text>
+              <Text style={styles.disclaimer}>{t("details.disclaimer")}</Text>
             </ScrollView>
           </View>
         )}
@@ -102,16 +101,18 @@ function IngredientRow({
   ingredient: Meal["ingredients"][number];
   formatCost: (value: number) => string;
 }): React.JSX.Element {
+  const { t } = useTranslation();
+  const { food, unit } = useFoodNames();
   return (
     <View style={styles.ingredient}>
       <View style={styles.ingredientTop}>
-        <Text style={styles.ingredientName}>{ingredient.name}</Text>
-        <Text style={styles.quantity}>{ingredient.quantity} {ingredient.unit}</Text>
+        <Text style={styles.ingredientName}>{food(ingredient.name)}</Text>
+        <Text style={styles.quantity}>{ingredient.quantity} {unit(ingredient.unit)}</Text>
       </View>
       <View style={styles.chips}>
-        <View style={styles.chip}><Text style={styles.chipText}>{ingredient.calories} kcal</Text></View>
+        <View style={styles.chip}><Text style={styles.chipText}>{t("meal.kcalChip", { value: ingredient.calories })}</Text></View>
         <View style={[styles.chip, styles.chipProtein]}>
-          <Text style={[styles.chipText, styles.chipTextProtein]}>{ingredient.proteinGrams} g protein</Text>
+          <Text style={[styles.chipText, styles.chipTextProtein]}>{t("meal.proteinChip", { value: ingredient.proteinGrams })}</Text>
         </View>
         <View style={[styles.chip, styles.chipCost]}>
           <Text style={[styles.chipText, styles.chipTextCost]}>

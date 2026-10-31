@@ -6,6 +6,8 @@ import { palette } from "../theme";
 import { CalendarDateStrip } from "../components/CalendarDateStrip";
 import { MealCard } from "../components/MealCard";
 import { ArrowButton } from "../components/ArrowButton";
+import { useTranslation } from "react-i18next";
+import { useDateLocale } from "../i18n";
 
 type Props = {
   dates: Date[];
@@ -29,25 +31,16 @@ type Props = {
   onDateStripTouchChange: (touching: boolean) => void;
 };
 
-const mealsPerDayOptions: { value: MealsPerDay; label: string }[] = [
-  { value: 2, label: "2 meals" },
-  { value: 3, label: "3 meals" },
-  { value: 4, label: "3 meals + 1 snack" },
-  { value: 5, label: "3 meals + 2 snacks" }
-];
-
-const planStyleOptions: { value: PlanStyle; label: string }[] = [
-  { value: "balanced", label: "Balanced" },
-  { value: "highProtein", label: "Higher protein" },
-  { value: "lowCost", label: "Lower cost" },
-  { value: "moreVariety", label: "More variety" },
-  { value: "simpleIngredients", label: "Simple ingredients" }
-];
+const mealsPerDayOptions: MealsPerDay[] = [2, 3, 4, 5];
+const planStyleOptions: PlanStyle[] = ["balanced", "highProtein", "lowCost", "moreVariety", "simpleIngredients"];
 
 export function CalendarScreen(props: Props): React.JSX.Element {
+  const { t } = useTranslation();
+  const dateLocale = useDateLocale();
   const [mealMenuOpen, setMealMenuOpen] = useState(false);
   const [styleMenuOpen, setStyleMenuOpen] = useState(false);
-  const planStyleLabel = planStyleOptions.find((option) => option.value === props.planStyle)?.label ?? "";
+  const styleLabel = (style: PlanStyle): string => t(style === "moreVariety" ? "planStyle.moreVarietyShort" : `planStyle.${style}`);
+  const planStyleLabel = styleLabel(props.planStyle);
   const goalInputRef = useRef<React.ComponentRef<typeof TextInput>>(null);
   const [goalSelection, setGoalSelection] = useState<{ start: number; end: number } | undefined>();
 
@@ -56,28 +49,28 @@ export function CalendarScreen(props: Props): React.JSX.Element {
     setGoalSelection({ start: end, end });
     goalInputRef.current?.focus();
   }
-  const mealsPerDayLabel = mealsPerDayOptions.find((option) => option.value === props.mealsPerDay)?.label ?? "";
+  const mealsPerDayLabel = t(`mealsPerDay.${props.mealsPerDay}`);
   const meals = getMealsInDisplayOrder(props.meals);
   const protein = getDailyProtein(meals);
-  const monthLabel = props.selectedDate.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  const monthLabel = props.selectedDate.toLocaleDateString(dateLocale, { month: "long", year: "numeric" });
 
   return (
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
-        <ArrowButton variant="compact" direction="left" label="Preferences" accessibilityLabel="Edit ingredient preferences" onPress={props.onEditPreferences} />
-        <ArrowButton variant="compact" label="Weekly grocery estimate" accessibilityLabel="Open weekly grocery estimate" onPress={props.onOpenGroceries} />
+        <ArrowButton variant="compact" direction="left" label={t("calendar.preferences")} accessibilityLabel={t("calendar.preferencesA11y")} onPress={props.onEditPreferences} />
+        <ArrowButton variant="compact" style={{ flexShrink: 1, marginLeft: 10 }} label={t("calendar.weeklyGrocery")} accessibilityLabel={t("calendar.weeklyGroceryA11y")} onPress={props.onOpenGroceries} />
       </View>
       <View style={styles.dateHeading}>
         <View style={styles.dateHeadingRow}>
           <Text style={styles.monthLabel}>{monthLabel}</Text>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Go to today"
-            accessibilityHint="Selects today's meal plan and brings today into view"
+            accessibilityLabel={t("calendar.goToToday")}
+            accessibilityHint={t("calendar.todayHint")}
             onPress={props.onTodayPress}
             style={({ pressed }) => [styles.todayButton, pressed && styles.pressed]}
           >
-            <Text style={styles.todayButtonText}>Today</Text>
+            <Text style={styles.todayButtonText}>{t("calendar.today")}</Text>
           </Pressable>
         </View>
       </View>
@@ -94,11 +87,11 @@ export function CalendarScreen(props: Props): React.JSX.Element {
           <View style={styles.calorieBottomRow}>
             <View style={styles.statChip}>
               <Text style={styles.statChipValue}>{protein}</Text>
-              <Text style={styles.statChipLabel}> g protein</Text>
+              <Text style={styles.statChipLabel}> {t("common.proteinUnit")}</Text>
             </View>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={`Meals per day: ${mealsPerDayLabel}. Change`}
+              accessibilityLabel={t("calendar.mealsPerDayChange", { label: mealsPerDayLabel })}
               accessibilityState={{ expanded: mealMenuOpen }}
               onPress={() => setMealMenuOpen((open) => !open)}
               style={[styles.statChip, styles.mealChip]}
@@ -110,20 +103,20 @@ export function CalendarScreen(props: Props): React.JSX.Element {
           {mealMenuOpen && (
             <View style={styles.mealMenu}>
               {mealsPerDayOptions.map((option) => {
-                const selected = option.value === props.mealsPerDay;
+                const selected = option === props.mealsPerDay;
                 return (
                   <Pressable
-                    key={option.value}
+                    key={option}
                     accessibilityRole="button"
-                    accessibilityLabel={`Meals per day: ${option.label}`}
+                    accessibilityLabel={t("prefs.mealsPerDayA11y", { label: t(`mealsPerDay.${option}`) })}
                     accessibilityState={{ selected }}
                     onPress={() => {
                       setMealMenuOpen(false);
-                      if (!selected) props.onMealsPerDayChange(option.value);
+                      if (!selected) props.onMealsPerDayChange(option);
                     }}
                     style={[styles.mealMenuItem, selected && styles.mealMenuItemSelected]}
                   >
-                    <Text style={[styles.mealMenuText, selected && styles.mealMenuTextSelected]}>{option.label}</Text>
+                    <Text style={[styles.mealMenuText, selected && styles.mealMenuTextSelected]}>{t(`mealsPerDay.${option}`)}</Text>
                   </Pressable>
                 );
               })}
@@ -132,7 +125,7 @@ export function CalendarScreen(props: Props): React.JSX.Element {
           <View style={styles.stepperRow}>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={`Meal plan style: ${planStyleLabel}. Change`}
+              accessibilityLabel={t("calendar.planStyleChange", { label: planStyleLabel })}
               accessibilityState={{ expanded: styleMenuOpen }}
               onPress={() => setStyleMenuOpen((open) => !open)}
               style={[styles.statChip, styles.styleChip]}
@@ -140,7 +133,7 @@ export function CalendarScreen(props: Props): React.JSX.Element {
               <Text numberOfLines={1} style={[styles.statChipLabel, styles.styleChipLabel]}>{planStyleLabel}</Text>
               <Text style={styles.mealChipCaret}>{styleMenuOpen ? "▴" : "▾"}</Text>
             </Pressable>
-            <Pressable accessibilityRole="button" accessibilityLabel="Decrease calorie goal by 100" onPress={() => props.onAdjustGoal(-100)} style={styles.stepperButton}>
+            <Pressable accessibilityRole="button" accessibilityLabel={t("calendar.decrease")} onPress={() => props.onAdjustGoal(-100)} style={styles.stepperButton}>
               <Text style={styles.stepperText}>−</Text>
             </Pressable>
             <Pressable onPress={focusGoalInput} style={[styles.goalInputContainer, !props.hasValidGoal && styles.goalInputInvalid]}>
@@ -148,42 +141,42 @@ export function CalendarScreen(props: Props): React.JSX.Element {
                 ref={goalInputRef}
                 selection={goalSelection}
                 onSelectionChange={() => setGoalSelection(undefined)}
-                accessibilityLabel="Daily calorie goal"
-                accessibilityHint={`Enter a whole number from ${MIN_DAILY_CALORIE_GOAL} to ${MAX_DAILY_CALORIE_GOAL} kilocalories`}
+                accessibilityLabel={t("calendar.goalLabel")}
+                accessibilityHint={t("calendar.goalHint", { min: MIN_DAILY_CALORIE_GOAL, max: MAX_DAILY_CALORIE_GOAL })}
                 keyboardType="number-pad"
                 onChangeText={props.setGoalInput}
                 style={styles.goalInput}
                 value={props.goalInput}
               />
-              <Text style={styles.goalUnit}>kcal</Text>
+              <Text style={styles.goalUnit}>{t("common.kcal")}</Text>
             </Pressable>
-            <Pressable accessibilityRole="button" accessibilityLabel="Increase calorie goal by 100" onPress={() => props.onAdjustGoal(100)} style={styles.stepperButton}>
+            <Pressable accessibilityRole="button" accessibilityLabel={t("calendar.increase")} onPress={() => props.onAdjustGoal(100)} style={styles.stepperButton}>
               <Text style={styles.stepperText}>+</Text>
             </Pressable>
           </View>
           {styleMenuOpen && (
             <View style={styles.mealMenu}>
               {planStyleOptions.map((option) => {
-                const selected = option.value === props.planStyle;
+                const selected = option === props.planStyle;
                 return (
                   <Pressable
-                    key={option.value}
+                    key={option}
                     accessibilityRole="button"
-                    accessibilityLabel={`Meal plan style: ${option.label}`}
+                    accessibilityLabel={t("prefs.planStyleA11y", { label: styleLabel(option) })}
                     accessibilityState={{ selected }}
                     onPress={() => {
                       setStyleMenuOpen(false);
-                      if (!selected) props.onPlanStyleChange(option.value);
+                      if (!selected) props.onPlanStyleChange(option);
                     }}
                     style={[styles.mealMenuItem, selected && styles.mealMenuItemSelected]}
                   >
-                    <Text style={[styles.mealMenuText, selected && styles.mealMenuTextSelected]}>{option.label}</Text>
+                    <Text style={[styles.mealMenuText, selected && styles.mealMenuTextSelected]}>{styleLabel(option)}</Text>
                   </Pressable>
                 );
               })}
             </View>
           )}
-          {!props.hasValidGoal && <Text style={styles.goalError}>Enter a whole-number goal from 500 to 10,000 kcal.</Text>}
+          {!props.hasValidGoal && <Text style={styles.goalError}>{t("calendar.goalError")}</Text>}
         </View>
       </View>
 
@@ -192,8 +185,8 @@ export function CalendarScreen(props: Props): React.JSX.Element {
       ) : (
         <View style={styles.emptyCard}>
           <Text style={styles.emptyEmoji}>🍽️</Text>
-          <Text style={styles.emptyTitle}>A little room to improvise</Text>
-          <Text style={styles.emptyCopy}>No meals planned for this day yet. Pick another day to see meal ideas.</Text>
+          <Text style={styles.emptyTitle}>{t("calendar.emptyTitle")}</Text>
+          <Text style={styles.emptyCopy}>{t("calendar.emptyCopy")}</Text>
         </View>
       )}
     </ScrollView>

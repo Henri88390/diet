@@ -11,6 +11,8 @@ import {
 import { PLANNING_HORIZON_DAYS } from "../sampleData";
 import type { MealPreferences } from "../models";
 import { palette } from "../theme";
+import { useTranslation } from "react-i18next";
+import { useDateLocale, useFoodNames } from "../i18n";
 
 type Props = {
   today: Date;
@@ -23,7 +25,6 @@ type DateField = "start" | "end";
 
 const DAY_MS = 86_400_000;
 const MAX_RANGE_DAYS = 90;
-const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const categoryOrder = [
   "Fruit",
   "Vegetables",
@@ -41,6 +42,8 @@ export function WeeklyGroceryList({
   appliedGoals,
   countryCode
 }: Props): React.JSX.Element {
+  const { t } = useTranslation();
+  const { food, unit } = useFoodNames();
   const country = getCountry(countryCode);
   const firstAvailableDate = startOfDay(today);
   const lastAvailableDate = addDays(firstAvailableDate, PLANNING_HORIZON_DAYS);
@@ -93,45 +96,45 @@ export function WeeklyGroceryList({
 
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>Shopping list</Text>
+      <Text style={styles.title}>{t("grocery.title")}</Text>
       <View style={styles.dateFields}>
         <DateFieldButton
-          label="Start date"
+          label={t("grocery.startDate")}
           date={startDate}
           onPress={() => setActiveDateField("start")}
         />
         <Text style={styles.dateSeparator}>—</Text>
         <DateFieldButton
-          label="End date"
+          label={t("grocery.endDate")}
           date={endDate}
           onPress={() => setActiveDateField("end")}
         />
       </View>
-      <Text style={styles.period}>{days} {days === 1 ? "day" : "days"} · {days === 7 ? "weekly list" : "selected date range"}</Text>
+      <Text style={styles.period}>{t("grocery.days", { count: days })} · {days === 7 ? t("grocery.weeklyList") : t("grocery.selectedRange")}</Text>
       <View style={styles.totalRow}>
         <View>
-          <Text style={styles.totalLabel}>Estimated total</Text>
+          <Text style={styles.totalLabel}>{t("grocery.estimatedTotal")}</Text>
           <Text style={styles.countryLabel}>{country.name} · {country.currencyCode}</Text>
         </View>
         <Text style={styles.totalValue}>{formatMoney(estimate.estimatedTotal, country.locale)}</Text>
       </View>
       {estimate.items.length === 0 ? (
-        <Text style={styles.empty}>No ingredients are planned for these dates yet.</Text>
+        <Text style={styles.empty}>{t("grocery.empty")}</Text>
       ) : (
         <View style={styles.items}>
           {groups.map((group) => (
             <View key={group.category} style={styles.category}>
               <View style={styles.categoryHeader}>
-                <Text style={styles.categoryTitle}>{group.category.toUpperCase()}</Text>
+                <Text style={styles.categoryTitle}>{t(`grocery.category.${group.category}`, { defaultValue: group.category }).toUpperCase()}</Text>
                 <Text style={styles.categoryCount}>{group.items.length}</Text>
               </View>
               <View style={styles.categoryItems}>
                 {group.items.map((item) => (
                   <View key={item.key} style={styles.itemRow}>
                     <View style={styles.itemMain}>
-                      <Text style={styles.itemName}>{item.name}</Text>
+                      <Text style={styles.itemName}>{food(item.name)}</Text>
                       <Text style={styles.quantity}>
-                        {formatShoppingQuantity(item.quantity, item.unit, country.locale)}
+                                              {formatShoppingQuantity(item.quantity, unit(item.unit), country.locale)}
                       </Text>
                     </View>
                     <Text style={styles.itemCost}>{formatMoney(item.estimatedCost, country.locale)}</Text>
@@ -166,15 +169,17 @@ function DateFieldButton({
   date: Date;
   onPress: () => void;
 }): React.JSX.Element {
+  const { t } = useTranslation();
+  const dateLocale = useDateLocale();
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${label}: ${formatDate(date)}. Change date`}
+      accessibilityLabel={t("grocery.dateA11y", { label, date: formatDate(date, dateLocale) })}
       onPress={onPress}
       style={({ pressed }) => [styles.dateField, pressed && styles.pressed]}
     >
       <Text style={styles.dateFieldLabel}>{label}</Text>
-      <Text style={styles.dateFieldValue}>{formatDate(date)}</Text>
+      <Text style={styles.dateFieldValue}>{formatDate(date, dateLocale)}</Text>
     </Pressable>
   );
 }
@@ -196,7 +201,12 @@ function DatePickerModal({
   onSelect: (date: Date) => void;
   onClose: () => void;
 }): React.JSX.Element {
+  const { t } = useTranslation();
+  const dateLocale = useDateLocale();
   const [month, setMonth] = useState(() => new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1));
+  const weekdays = Array.from({ length: 7 }, (_, index) =>
+    new Date(2024, 0, 1 + index).toLocaleDateString(dateLocale, { weekday: "short" })
+  );
 
   useEffect(() => {
     if (visible) setMonth(new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1));
@@ -206,7 +216,7 @@ function DatePickerModal({
   const gridStart = new Date(first);
   gridStart.setDate(1 - ((first.getDay() + 6) % 7));
   const dates = Array.from({ length: 42 }, (_, index) => addDays(gridStart, index));
-  const monthLabel = month.toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+  const monthLabel = month.toLocaleDateString(dateLocale, { month: "long", year: "numeric" });
   const monthNavigation = minDate && maxDate
     ? getCalendarMonthNavigationAvailability(month, minDate, maxDate)
     : { previous: true, next: true };
@@ -220,11 +230,11 @@ function DatePickerModal({
       <View style={styles.modalOverlay}>
         <View accessibilityViewIsModal style={styles.datePicker}>
           <View style={styles.pickerHeader}>
-            <Pressable accessibilityRole="button" accessibilityLabel="Previous month" accessibilityState={{ disabled: !monthNavigation.previous }} disabled={!monthNavigation.previous} onPress={() => changeMonth(-1)} style={[styles.monthButton, !monthNavigation.previous && styles.monthButtonDisabled]}>
+            <Pressable accessibilityRole="button" accessibilityLabel={t("grocery.previousMonth")} accessibilityState={{ disabled: !monthNavigation.previous }} disabled={!monthNavigation.previous} onPress={() => changeMonth(-1)} style={[styles.monthButton, !monthNavigation.previous && styles.monthButtonDisabled]}>
               <Text style={[styles.monthArrow, !monthNavigation.previous && styles.monthArrowDisabled]}>‹</Text>
             </Pressable>
             <Text accessibilityRole="header" style={styles.monthTitle}>{monthLabel}</Text>
-            <Pressable accessibilityRole="button" accessibilityLabel="Next month" accessibilityState={{ disabled: !monthNavigation.next }} disabled={!monthNavigation.next} onPress={() => changeMonth(1)} style={[styles.monthButton, !monthNavigation.next && styles.monthButtonDisabled]}>
+            <Pressable accessibilityRole="button" accessibilityLabel={t("grocery.nextMonth")} accessibilityState={{ disabled: !monthNavigation.next }} disabled={!monthNavigation.next} onPress={() => changeMonth(1)} style={[styles.monthButton, !monthNavigation.next && styles.monthButtonDisabled]}>
               <Text style={[styles.monthArrow, !monthNavigation.next && styles.monthArrowDisabled]}>›</Text>
             </Pressable>
           </View>
@@ -240,7 +250,7 @@ function DatePickerModal({
               return (
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel={date.toLocaleDateString("en-GB", {
+                  accessibilityLabel={date.toLocaleDateString(dateLocale, {
                     weekday: "long", day: "numeric", month: "long", year: "numeric"
                   })}
                   accessibilityState={{ selected, disabled }}
@@ -259,7 +269,7 @@ function DatePickerModal({
             })}
           </View>
           <Pressable accessibilityRole="button" onPress={onClose} style={styles.cancelButton}>
-            <Text style={styles.cancelText}>Cancel</Text>
+            <Text style={styles.cancelText}>{t("common.cancel")}</Text>
           </Pressable>
         </View>
       </View>
@@ -293,8 +303,8 @@ function isSameDay(first: Date, second: Date): boolean {
     first.getDate() === second.getDate();
 }
 
-function formatDate(date: Date): string {
-  return date.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+function formatDate(date: Date, locale: string): string {
+  return date.toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" });
 }
 
 const styles = StyleSheet.create({

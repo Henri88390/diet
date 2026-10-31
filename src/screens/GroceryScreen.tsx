@@ -4,6 +4,7 @@ import { ArrowButton } from "../components/ArrowButton";
 import { WeeklyGroceryList } from "../components/WeeklyGroceryList";
 import type { CountryCode } from "../countryPricing";
 import type { MealPreferences } from "../models";
+import { useTranslation } from "react-i18next";
 
 type Props = {
   today: Date;
@@ -20,13 +21,14 @@ export function GroceryScreen({
   countryCode,
   onBackToCalendar
 }: Props): React.JSX.Element {
+  const { t } = useTranslation();
   return (
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       <ArrowButton
         variant="compact"
         direction="left"
-        label="Meal calendar"
-        accessibilityLabel="Back to meal calendar"
+        label={t("grocery.back")}
+        accessibilityLabel={t("grocery.backA11y")}
         onPress={onBackToCalendar}
         style={{ alignSelf: "flex-start" }}
       />

@@ -56,7 +56,7 @@ export function ArrowButton({
       ]}
     >
       {direction === "left" && chevron}
-      <Text style={[styles.text, { color: v.fg, fontSize: v.fontSize }]}>{label}</Text>
+      <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={[styles.text, { color: v.fg, fontSize: v.fontSize }, style && { flexShrink: 1 }]}>{label}</Text>
       {direction === "right" && chevron}
     </Pressable>
   );

@@ -3,6 +3,8 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import type { ScrollViewInstance } from "react-native";
 import { formatDateKey } from "../sampleData";
 import { palette } from "../theme";
+import { useTranslation } from "react-i18next";
+import { useDateLocale } from "../i18n";
 
 type Props = {
   dates: Date[];
@@ -13,6 +15,8 @@ type Props = {
 };
 
 export function CalendarDateStrip({ dates, selectedDate, today, onSelectDate, onTouchChange }: Props): React.JSX.Element {
+  const { t } = useTranslation();
+  const dateLocale = useDateLocale();
   const scrollViewRef = useRef<ScrollViewInstance | null>(null);
   const selectedKey = formatDateKey(selectedDate);
 
@@ -26,7 +30,7 @@ export function CalendarDateStrip({ dates, selectedDate, today, onSelectDate, on
   return (
     <ScrollView
       ref={scrollViewRef}
-      accessibilityLabel="Planning dates"
+      accessibilityLabel={t("calendar.planningDates")}
       contentContainerStyle={styles.content}
       horizontal
       nestedScrollEnabled
@@ -40,7 +44,7 @@ export function CalendarDateStrip({ dates, selectedDate, today, onSelectDate, on
       {dates.map((date) => {
         const active = formatDateKey(date) === formatDateKey(selectedDate);
         const isToday = formatDateKey(date) === formatDateKey(today);
-        const label = date.toLocaleDateString("en-US", {
+        const label =         date.toLocaleDateString(dateLocale, {
           weekday: "long",
           month: "long",
           day: "numeric"
@@ -49,14 +53,14 @@ export function CalendarDateStrip({ dates, selectedDate, today, onSelectDate, on
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={label}
-            accessibilityHint="Selects this date to view its meal plan"
+            accessibilityHint={t("calendar.dateHint")}
             accessibilityState={{ selected: active }}
             key={formatDateKey(date)}
             onPress={() => onSelectDate(date)}
             style={[styles.dayButton, active && styles.dayButtonActive]}
           >
             <Text style={[styles.dayName, active && styles.dayNameActive]}>
-              {date.toLocaleDateString("en-US", { weekday: "short" })}
+              {date.toLocaleDateString(dateLocale, { weekday: "short" })}
             </Text>
             <Text style={[styles.dayNumber, active && styles.dayNumberActive]}>{date.getDate()}</Text>
             <View style={[styles.dayDot, (isToday || active) && styles.dayDotVisible]} />

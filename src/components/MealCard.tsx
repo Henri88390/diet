@@ -3,13 +3,18 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { Meal } from "../models";
 import { mealAccent, mealBadge, palette } from "../theme";
 import { formatMoney } from "../countryPricing";
+import { useTranslation } from "react-i18next";
+import { useFoodNames } from "../i18n";
 
 type Props = { meal: Meal; onPress: (meal: Meal) => void };
 
 export function MealCard({ meal, onPress }: Props): React.JSX.Element {
+  const { t } = useTranslation();
+  const { food } = useFoodNames();
+  const title = food(meal.title);
   const mealLabel = meal.type === "Snack" && meal.slot
-    ? `${meal.slot} snack`
-    : meal.type;
+    ? t("snackLabel", { slot: t(`snackSlot.${meal.slot}`, { defaultValue: meal.slot }) })
+    : t(`mealType.${meal.type}`);
   const cost = formatMoney(
     meal.estimatedCost ?? { amountMinorUnits: meal.estimatedCostCents, currencyCode: meal.currencyCode ?? "EUR" },
     meal.currencyLocale
@@ -17,16 +22,16 @@ export function MealCard({ meal, onPress }: Props): React.JSX.Element {
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${mealLabel}: ${meal.title}, ${meal.calories} kilocalories, ${meal.proteinGrams} grams protein`}
-      accessibilityHint="Opens meal details and illustrative ingredient quantities"
+      accessibilityLabel={t("meal.a11y", { label: mealLabel, title, calories: meal.calories, protein: meal.proteinGrams })}
+      accessibilityHint={t("meal.hint")}
       onPress={() => onPress(meal)}
       style={({ pressed }) => [styles.card, pressed && styles.pressed]}
     >
       <View style={styles.headerRow}>
         <View style={[styles.typeBadge, { backgroundColor: mealBadge[meal.type].background }]}>
-          <Text style={[styles.type, { color: mealBadge[meal.type].text }]}>{mealLabel}</Text>
+          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} style={[styles.type, { color: mealBadge[meal.type].text }]}>{mealLabel}</Text>
         </View>
-        <Text numberOfLines={2} style={styles.title}>{meal.title}</Text>
+        <Text numberOfLines={2} style={styles.title}>{title}</Text>
       </View>
       <View style={styles.body}>
         <View style={[styles.icon, { backgroundColor: mealAccent[meal.type] }]}>
@@ -36,19 +41,19 @@ export function MealCard({ meal, onPress }: Props): React.JSX.Element {
         <View style={styles.ingredientList}>
           {meal.description.split("·").map((part) => part.trim()).filter(Boolean).map((name, index) => (
             <View key={`${name}-${index}`} style={styles.ingredientPill}>
-              <Text style={styles.ingredientPillText}>{name}</Text>
+              <Text style={styles.ingredientPillText}>{food(name)}</Text>
             </View>
           ))}
         </View>
         {meal.banConflicts && meal.banConflicts.length > 0 && (
           <Text style={styles.banWarning}>
-            Needs a replacement for banned: {meal.banConflicts.join(", ")}
+            {t("meal.banned", { list: meal.banConflicts.map(food).join(", ") })}
           </Text>
         )}
         <View style={styles.metaRow}>
-          <View style={styles.chip}><Text style={styles.chipText}>{meal.calories} kcal</Text></View>
+          <View style={styles.chip}><Text style={styles.chipText}>{t("meal.kcalChip", { value: meal.calories })}</Text></View>
           <View style={[styles.chip, styles.chipProtein]}>
-            <Text style={[styles.chipText, styles.chipTextProtein]}>{meal.proteinGrams} g protein</Text>
+            <Text style={[styles.chipText, styles.chipTextProtein]}>{t("meal.proteinChip", { value: meal.proteinGrams })}</Text>
           </View>
           <View style={[styles.chip, styles.chipCost]}>
             <Text style={[styles.chipText, styles.chipTextCost]}>~{cost}</Text>
@@ -68,8 +73,8 @@ const styles = StyleSheet.create({
   icon: { width: 72, height: 49, borderRadius: 14, alignItems: "center", justifyContent: "center", marginRight: 12 },
   emoji: { fontSize: 24 },
   details: { flex: 1 },
-  typeBadge: { width: 72, borderRadius: 8, paddingVertical: 3, alignItems: "center" },
-  type: { fontSize: 10, fontWeight: "700", letterSpacing: 0.35, textAlign: "center" },
+  typeBadge: { width: 72, borderRadius: 8,   paddingVertical: 3, paddingHorizontal: 4, alignItems: "center" },
+    type: { fontSize: 10, fontWeight: "700", textAlign: "center" },
   title: { flex: 1, color: palette.ink, fontSize: 14, fontWeight: "700" },
   ingredientList: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
   ingredientPill: { borderRadius: 9, paddingHorizontal: 9, paddingVertical: 4, backgroundColor: "#F4F4ED", borderWidth: 1, borderColor: "#E8EAE2" },

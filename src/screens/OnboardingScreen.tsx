@@ -18,6 +18,9 @@ import {
 } from "../ingredientEstimates";
 import { customBreakfastIngredientOptions, typicalBreakfastPresets } from "../typicalBreakfast";
 import { ArrowButton } from "../components/ArrowButton";
+import { LanguageDropdown } from "../components/LanguageDropdown";
+import { useFoodNames } from "../i18n";
+import { useTranslation } from "react-i18next";
 
 type Props = {
   bannedIngredients: IngredientBans;
@@ -29,33 +32,22 @@ type Props = {
   onContinue: () => void;
 };
 
-const frequencyOptions: { value: WeeklyFrequency; label: string }[] = [
-  { value: 0, label: "Never" },
-  { value: 7, label: "Every day" },
-  { value: 1, label: "1 / wk" },
-  { value: 2, label: "2 / wk" },
-  { value: 3, label: "3 / wk" }
+const frequencyOptions: { value: WeeklyFrequency }[] = [
+  { value: 0 },
+  { value: 7 },
+  { value: 1 },
+  { value: 2 },
+  { value: 3 }
 ];
 
-const fruitOptions: { value: FruitPreference; label: string }[] = [
-  { value: "include", label: "Include with meals" },
-  { value: "optional", label: "Optional" },
-  { value: "avoid", label: "Avoid fruit" }
+const fruitOptions: { value: FruitPreference; labelKey: string }[] = [
+  { value: "include", labelKey: "prefs.fruitInclude" },
+  { value: "optional", labelKey: "prefs.fruitOptional" },
+  { value: "avoid", labelKey: "prefs.fruitAvoid" }
 ];
 
-const mealsPerDayOptions: { value: MealsPerDay; label: string }[] = [
-  { value: 2, label: "2 meals" },
-  { value: 3, label: "3 meals" },
-  { value: 4, label: "3 + 1 snack" },
-  { value: 5, label: "3 + 2 snacks" }
-];
-const planStyleOptions: { value: PlanStyle; label: string; description: string }[] = [
-  { value: "balanced", label: "Balanced", description: "A practical mix of foods and costs" },
-  { value: "highProtein", label: "Higher protein", description: "Favors protein-rich ingredients" },
-  { value: "lowCost", label: "Lower cost", description: "Prefers lower-cost ingredient choices" },
-  { value: "moreVariety", label: "More ingredient variety", description: "Rotates ingredients more often" },
-  { value: "simpleIngredients", label: "Simple ingredients", description: "Repeats familiar ingredients to keep meals and groceries simple" }
-];
+const mealsPerDayOptions: MealsPerDay[] = [2, 3, 4, 5];
+const planStyleOptions: PlanStyle[] = ["balanced", "highProtein", "lowCost", "moreVariety", "simpleIngredients"];
 
 export function OnboardingScreen({
   bannedIngredients,
@@ -66,6 +58,8 @@ export function OnboardingScreen({
   onCountryChange,
   onContinue
 }: Props): React.JSX.Element {
+  const { t } = useTranslation();
+  const { food } = useFoodNames();
   const parsedBudget = Number(mealPreferences.weeklyBudget.replace(",", "."));
   const budgetIsValid = mealPreferences.weeklyBudget.trim() === "" ||
     (Number.isFinite(parsedBudget) && parsedBudget >= 0);
@@ -76,32 +70,35 @@ export function OnboardingScreen({
       ));
   return (
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-      <ArrowButton
-        label="See my plan"
-        disabled={!typicalBreakfastIsValid}
-        onPress={onContinue}
-        style={{ marginBottom: 17 }}
-      />
+      <View style={styles.topRow}>
+        <ArrowButton
+          label={t("common.seeMyPlan")}
+          disabled={!typicalBreakfastIsValid}
+          onPress={onContinue}
+          style={{ flex: 1 }}
+        />
+        <LanguageDropdown />
+      </View>
       <View style={styles.profileSection}>
         <View style={styles.choiceGroup}>
-          <Text style={styles.choiceTitle}>Meal plan style</Text>
+          <Text style={styles.choiceTitle}>{t("prefs.planStyle")}</Text>
           <View style={styles.planStyles}>
             {planStyleOptions.map((option) => (
               <ChoiceButton
-                key={option.value}
-                label={option.label}
-                accessibilityLabel={`Meal plan style: ${option.label}`}
-                selected={mealPreferences.planStyle === option.value}
-                onPress={() => onMealPreferencesChange({ ...mealPreferences, planStyle: option.value })}
+                key={option}
+                label={t(`planStyle.${option}`)}
+                accessibilityLabel={t("prefs.planStyleA11y", { label: t(`planStyle.${option}`) })}
+                selected={mealPreferences.planStyle === option}
+                onPress={() => onMealPreferencesChange({ ...mealPreferences, planStyle: option })}
               />
             ))}
           </View>
         </View>
         <View style={styles.choiceGroup}>
-          <Text style={styles.choiceTitle}>Weekly food budget</Text>
+          <Text style={styles.choiceTitle}>{t("prefs.budget")}</Text>
           <View style={styles.budgetRow}>
             <TextInput
-              accessibilityLabel="Weekly food budget"
+              accessibilityLabel={t("prefs.budget")}
               keyboardType="decimal-pad"
               maxLength={9}
               onChangeText={(weeklyBudget) =>
@@ -110,27 +107,27 @@ export function OnboardingScreen({
               style={styles.budgetInput}
               value={mealPreferences.weeklyBudget}
             />
-            <Text style={styles.budgetCurrency}>{getCountry(countryCode).currencyCode} / week</Text>
+            <Text style={styles.budgetCurrency}>{t("prefs.perWeekCurrency", { currency: getCountry(countryCode).currencyCode })}</Text>
           </View>
           {!budgetIsValid && (
-            <Text style={styles.budgetError}>Enter a non-negative amount or leave the budget blank.</Text>
+            <Text style={styles.budgetError}>{t("prefs.budgetError")}</Text>
           )}
         </View>
         <FrequencyChoice
-          title="Meat / fish"
+          title={t("prefs.meatFish")}
           value={mealPreferences.meatPerWeek}
           onChange={(value) => onMealPreferencesChange({ ...mealPreferences, meatPerWeek: value })}
         />
         <FrequencyChoice
-          title="Dairy"
+          title={t("prefs.dairy")}
           value={mealPreferences.dairyPerWeek}
           onChange={(value) => onMealPreferencesChange({ ...mealPreferences, dairyPerWeek: value })}
         />
         <View style={styles.choiceGroup}>
-          <Text style={styles.choiceTitle}>Typical breakfast</Text>
+          <Text style={styles.choiceTitle}>{t("prefs.typicalBreakfast")}</Text>
           <View style={styles.frequencyChoices}>
             <ChoiceButton
-              label="No fixed breakfast"
+              label={t("prefs.noFixedBreakfast")}
               selected={mealPreferences.typicalBreakfast.mode === "none"}
               onPress={() => onMealPreferencesChange({
                 ...mealPreferences, typicalBreakfast: { mode: "none" }
@@ -142,8 +139,8 @@ export function OnboardingScreen({
               return (
                 <View key={preset.id} style={styles.breakfastPreset}>
                   <ChoiceButton
-                    label={preset.label}
-                    accessibilityLabel={`Typical breakfast preset: ${preset.label}`}
+                    label={food(preset.label)}
+                    accessibilityLabel={t("prefs.presetA11y", { label: food(preset.label) })}
                     selected={selected}
                     onPress={() => onMealPreferencesChange({
                       ...mealPreferences,
@@ -154,7 +151,7 @@ export function OnboardingScreen({
               );
             })}
             <ChoiceButton
-              label="Custom breakfast"
+              label={t("prefs.customBreakfast")}
               selected={mealPreferences.typicalBreakfast.mode === "custom"}
               onPress={() => onMealPreferencesChange({
                 ...mealPreferences,
@@ -182,30 +179,30 @@ export function OnboardingScreen({
           )}
         </View>
         <View style={styles.choiceGroup}>
-          <Text style={styles.choiceTitle}>Meals per day</Text>
+          <Text style={styles.choiceTitle}>{t("prefs.mealsPerDay")}</Text>
           <View style={styles.frequencyChoices}>
             {mealsPerDayOptions.map((option) => (
               <ChoiceButton
-                key={option.value}
-                label={option.label}
-                accessibilityLabel={`Meals per day: ${option.label}`}
-                selected={mealPreferences.mealsPerDay === option.value}
+                key={option}
+                label={t(`mealsPerDay.${option}`)}
+                accessibilityLabel={t("prefs.mealsPerDayA11y", { label: t(`mealsPerDay.${option}`) })}
+                selected={mealPreferences.mealsPerDay === option}
                 onPress={() => onMealPreferencesChange({
                   ...mealPreferences,
-                  mealsPerDay: option.value
+                  mealsPerDay: option
                 })}
               />
             ))}
           </View>
         </View>
         <View style={styles.choiceGroup}>
-          <Text style={styles.choiceTitle}>Fruit</Text>
+          <Text style={styles.choiceTitle}>{t("prefs.fruit")}</Text>
           <View style={styles.fruitChoices}>
             {fruitOptions.map((option) => (
               <ChoiceButton
                 key={option.value}
-                label={option.label}
-                accessibilityLabel={`Fruit preference: ${option.label}`}
+                label={t(option.labelKey)}
+                accessibilityLabel={t("prefs.fruitA11y", { label: t(option.labelKey) })}
                 selected={mealPreferences.fruitPreference === option.value}
                 onPress={() =>
                   onMealPreferencesChange({ ...mealPreferences, fruitPreference: option.value })
@@ -215,13 +212,13 @@ export function OnboardingScreen({
           </View>
         </View>
         <View style={styles.countrySection}>
-          <Text style={styles.choiceTitle}>Country and currency</Text>
+          <Text style={styles.choiceTitle}>{t("prefs.country")}</Text>
           <View style={styles.countryChoices}>
             {countries.map((country) => (
               <ChoiceButton
                 key={country.code}
                 label={`${country.name} · ${country.currencyCode}`}
-                accessibilityLabel={`Country: ${country.name}, currency ${country.currencyCode}`}
+                accessibilityLabel={t("prefs.countryA11y", { country: country.name, currency: country.currencyCode })}
                 selected={country.code === countryCode}
                 onPress={() => onCountryChange(country.code)}
               />
@@ -230,24 +227,24 @@ export function OnboardingScreen({
         </View>
       </View>
       <View style={styles.banSection}>
-        <Text style={styles.sectionTitle}>Ban ingredients</Text>
+        <Text style={styles.sectionTitle}>{t("prefs.banIngredients")}</Text>
         {ingredientCategoryOrder.map((category) => (
           <View key={category} style={styles.banCategory}>
-            <Text style={styles.banCategoryTitle}>{category}</Text>
+            <Text style={styles.banCategoryTitle}>{t(`grocery.category.${category}`, { defaultValue: category })}</Text>
             <View style={styles.banChoices}>
               {ingredientCatalog.filter((ingredient) => ingredient.category === category).map((ingredient) => {
                 const isBanned = bannedIngredients.includes(ingredient.id);
                 return (
                   <Pressable
                     accessibilityRole="button"
-                    accessibilityLabel={`${isBanned ? "Unban" : "Ban"} ${ingredient.name}`}
+                    accessibilityLabel={t(isBanned ? "prefs.unban" : "prefs.ban",                     { name: food(ingredient.name) })}
                     accessibilityState={{ selected: isBanned }}
                     key={ingredient.id}
                     onPress={() => onToggleIngredientBan(ingredient.id)}
                     style={[styles.banButton, isBanned && styles.banButtonSelected]}
                   >
                     <Text style={[styles.banText, isBanned && styles.banTextSelected]}>
-                      {ingredient.name}
+                                          {food(ingredient.name)}
                     </Text>
                   </Pressable>
                 );
@@ -257,7 +254,7 @@ export function OnboardingScreen({
         ))}
       </View>
       <ArrowButton
-        label="See my plan"
+        label={t("common.seeMyPlan")}
         disabled={!typicalBreakfastIsValid}
         onPress={onContinue}
         style={{ marginTop: 17 }}
@@ -275,6 +272,8 @@ function CustomBreakfastBuilder({
   countryCode: CountryCode;
   onChange: (ingredients: TypicalBreakfastIngredient[]) => void;
 }): React.JSX.Element {
+  const { t } = useTranslation();
+  const { food, unit } = useFoodNames();
   const selectedNames = new Set(ingredients.map((ingredient) => ingredient.name));
   const available = customBreakfastIngredientOptions.filter((option) => !selectedNames.has(option.name));
   let totalCalories = 0;
@@ -297,13 +296,13 @@ function CustomBreakfastBuilder({
   });
   return (
     <View style={styles.customBreakfast}>
-      <Text style={styles.customBreakfastTitle}>Build your usual breakfast</Text>
+      <Text style={styles.customBreakfastTitle}>{t("prefs.buildBreakfast")}</Text>
       <View style={styles.customIngredientChoices}>
         {available.map((option) => (
           <ChoiceButton
             key={option.key}
-            label={`+ ${option.name}`}
-            accessibilityLabel={`Add ${option.name} to custom breakfast`}
+            label={t("prefs.addIngredient",             { name: food(option.name) })}
+                        accessibilityLabel={t("prefs.addIngredientA11y", { name: food(option.name) })}
             selected={false}
             onPress={() => onChange([...ingredients, {
               name: option.name, quantity: option.quantity, unit: option.unit
@@ -313,9 +312,9 @@ function CustomBreakfastBuilder({
       </View>
       {ingredients.map((ingredient, index) => (
         <View key={`${ingredient.name}-${index}`} style={styles.customIngredientRow}>
-          <Text style={styles.customIngredientName}>{ingredient.name}</Text>
+          <Text style={styles.customIngredientName}>          {food(ingredient.name)}</Text>
           <TextInput
-            accessibilityLabel={`${ingredient.name} quantity`}
+                      accessibilityLabel={t("prefs.quantityA11y", { name: food(ingredient.name) })}
             keyboardType="decimal-pad"
             value={ingredient.quantity}
             onChangeText={(quantity) => onChange(ingredients.map((item, itemIndex) =>
@@ -323,10 +322,10 @@ function CustomBreakfastBuilder({
             ))}
             style={styles.customQuantity}
           />
-          <Text style={styles.customUnit}>{ingredient.unit}</Text>
+          <Text style={styles.customUnit}>          {unit(ingredient.unit)}</Text>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={`Remove ${ingredient.name}`}
+                      accessibilityLabel={t("prefs.removeA11y", { name: food(ingredient.name) })}
             disabled={ingredients.length <= 1}
             onPress={() => onChange(ingredients.filter((_item, itemIndex) => itemIndex !== index))}
             style={styles.removeIngredient}
@@ -336,13 +335,13 @@ function CustomBreakfastBuilder({
         </View>
       ))}
       <Text style={styles.customPreview}>
-        {quantityError || ingredients.length === 0 ? "Check quantities" : `${totalCalories} kcal · ${Math.round(totalProtein * 10) / 10} g protein · ~${formatMoney({
+        {quantityError || ingredients.length === 0 ? t("prefs.checkQuantities") : `${totalCalories} kcal · ${Math.round(totalProtein * 10) / 10} g protein · ~${formatMoney({
           amountMinorUnits: totalCost, currencyCode: getCountry(countryCode).currencyCode
         }, getCountry(countryCode).locale)}`}
       </Text>
       {(quantityError || ingredients.length === 0) && (
         <Text accessibilityRole="alert" style={styles.quantityError}>
-          Add an ingredient and enter a positive quantity for each item.
+          {t("prefs.quantityError")}
         </Text>
       )}
     </View>
@@ -372,15 +371,20 @@ function FrequencyChoice({
   value: WeeklyFrequency;
   onChange: (value: WeeklyFrequency) => void;
 }): React.JSX.Element {
+  const { t } = useTranslation();
   return (
     <View style={styles.choiceGroup}>
-      <Text style={styles.choiceTitle}>{title} per week</Text>
+      <Text style={styles.choiceTitle}>{t("prefs.perWeek", { title })}</Text>
       <View style={styles.frequencyChoices}>
         {frequencyOptions.map((option) => (
           <ChoiceButton
             key={option.value}
-            label={option.label}
-            accessibilityLabel={`${title}: ${option.value === 7 ? "every day" : option.value === 0 ? "never" : `${option.value} times per week`}`}
+            label={option.value === 0 ? t("prefs.never") : option.value === 7 ? t("prefs.everyDay") : t("prefs.timesPerWeek", { count: option.value })}
+            accessibilityLabel={option.value === 7
+              ? t("prefs.freqEveryDay", { title })
+              : option.value === 0
+                ? t("prefs.freqNever", { title })
+                : t("prefs.freqTimes", { title, count: option.value })}
             selected={value === option.value}
             onPress={() => onChange(option.value)}
           />
@@ -416,6 +420,7 @@ function ChoiceButton({
 
 const styles = StyleSheet.create({
   content: { paddingHorizontal: 24, paddingTop: 22, paddingBottom: 36 },
+  topRow: { flexDirection: "row", alignItems: "center", marginBottom: 17, zIndex: 20 },
   profileSection: { backgroundColor: palette.white, borderRadius: 17, padding: 15, marginBottom: 27, borderWidth: 1, borderColor: "#F0F0EA" },
   choiceGroup: { marginTop: 15 },
   breakfastPreset: { flexBasis: "48%", flexGrow: 1 },

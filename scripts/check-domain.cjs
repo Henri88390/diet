@@ -46,6 +46,12 @@ const {
   isValidPositiveIngredientQuantity,
   PRICE_ESTIMATE_REFERENCE
 } = require("../src/ingredientEstimates.ts");
+const { en } = require("../src/i18n-en.ts");
+const { fr } = require("../src/i18n-fr.ts");
+const { de } = require("../src/i18n-de.ts");
+const { es } = require("../src/i18n-es.ts");
+const { ru } = require("../src/i18n-ru.ts");
+const { pl } = require("../src/i18n-pl.ts");
 const appSource = fs.readFileSync(require.resolve("../App.tsx"), "utf8");
 const grocerySource = fs.readFileSync(
   require.resolve("../src/components/WeeklyGroceryList.tsx"), "utf8"
@@ -556,7 +562,7 @@ assert.notEqual(
 );
 assert.equal(countries.length, 11, "explicit supported country list is present");
 assert.match(PRICE_ESTIMATE_REFERENCE, /not researched retailer prices/i);
-assert.match(preferencesSource, /Country and currency/);
+assert.match(preferencesSource, /prefs\.country/);
 assert.doesNotMatch(preferencesSource, /MADE FOR YOUR EVERYDAY|Good food,|your way\.|I’ll do this later/,
   "onboarding removes the requested hero copy and skip action");
 assert.doesNotMatch(preferencesSource, /breakfastEstimate|estimatePresetBreakfast/,
@@ -680,9 +686,9 @@ assert.ok(ingredientCatalog.length >= 50, "ban list includes all modeled planner
 assert.ok(ingredientCategoryOrder.every((category) =>
   ingredientCatalog.some((ingredient) => ingredient.category === category)
 ), "ban list groups options across all ingredient categories");
-assert.match(preferencesSource, /More ingredient variety/);
-assert.match(preferencesSource, /Weekly food budget/);
-assert.match(preferencesSource, /Ban ingredients/);
+assert.match(preferencesSource, /planStyle\.\$\{option\}/);
+assert.match(preferencesSource, /prefs\.budget/);
+assert.match(preferencesSource, /prefs\.banIngredients/);
 assert.match(preferencesSource, /CustomBreakfastBuilder/,
   "preferences include a custom typical-breakfast builder");
 assert.doesNotMatch(preferencesSource, /ingredient\.name\}\{isBanned \? " · Banned"/,
@@ -768,5 +774,32 @@ assert.ok(allFoodsBanned.meals.every((meal) => meal.ingredients.length === 0 || 
   "unresolved substitutions are surfaced when every food is banned");
 assert.equal(getDailyCalories(scaleMealPlan(allFoodsBanned.meals, DEFAULT_DAILY_CALORIE_GOAL)), 0,
   "an entirely banned plan remains safe to render without falsely allocating calories");
+
+assert.equal(en.prefs.banIngredients, "Ban ingredients");
+assert.equal(en.prefs.budget, "Weekly food budget");
+assert.equal(en.planStyle.moreVariety, "More ingredient variety");
+assert.equal(en.prefs.country, "Country and currency");
+
+const { hasFoodTranslation, translateTitle } = require("../src/foodNames.ts");
+const flattenKeys = (node, prefix = "") => Object.entries(node).flatMap(([key, value]) =>
+  typeof value === "string"
+    ? [`${prefix}${key.replace(/_(zero|one|two|few|many|other)$/, "")}`]
+    : flattenKeys(value, `${prefix}${key}.`));
+const untranslatedFoods = [
+  ...ingredientCatalog.map((ingredient) => ingredient.name),
+  ...typicalBreakfastPresets.map((preset) => preset.label),
+  ...typicalBreakfastPresets.flatMap((preset) => preset.ingredients.map((ingredient) => ingredient.name)),
+  ...plans.flat().map((meal) => meal.title).filter((title) => translateTitle(title, "fr") === title),
+  ...plans.flat().flatMap((meal) => meal.ingredients.map((ingredient) => ingredient.name))
+].filter((name) => !hasFoodTranslation(name));
+assert.deepEqual([...new Set(untranslatedFoods)], [], "every displayed food name has a translation");
+const englishKeys = new Set(flattenKeys(en));
+for (const [code, locale] of Object.entries({ fr, de, es, ru, pl })) {
+  const keys = new Set(flattenKeys(locale));
+  assert.deepEqual([...englishKeys].filter((key) => !keys.has(key)), [],
+    `${code} locale has every English translation key`);
+  assert.deepEqual([...keys].filter((key) => !englishKeys.has(key)), [],
+    `${code} locale has no unknown translation keys`);
+}
 
 console.log("Domain checks passed: seven-day calendar shopping aggregation, applied portions, modeled country pricing, currency formatting, and navigation contracts.");

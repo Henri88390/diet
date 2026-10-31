@@ -285,7 +285,6 @@ export function applyBatchCooking(meals: Meal[], date: Date, options: BatchCooki
       ? `${nameParts[0]} & ${nameParts[1].charAt(0).toLowerCase()}${nameParts[1].slice(1)} bowl`
       : `${nameParts[0]} bowl`;
     meal.description = foods.join(" · ");
-    meal.emoji = "🍱";
     meal.durationMinutes = 10;
     meal.batch = batch;
     meal.calories = meal.ingredients.reduce((sum, ingredient) => sum + ingredient.calories, 0);

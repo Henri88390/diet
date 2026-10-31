@@ -21,7 +21,7 @@ export function BatchNote(): React.JSX.Element {
   const { t } = useTranslation();
   return (
     <View style={styles.note}>
-      <Text style={styles.noteText}>🍱 {t("batch.note")}</Text>
+      <Text style={styles.noteText}>🍲 {t("batch.note")}</Text>
     </View>
   );
 }

@@ -15,3 +15,10 @@ export const mealAccent = {
   Dinner: "#F0E2D9",
   Snack: "#E9E5F3"
 } as const;
+
+export const mealBadge = {
+  Breakfast: { background: "#F8E8B8", text: "#7A5A0E" },
+  Lunch: { background: "#CFE5CB", text: "#2B5A33" },
+  Dinner: { background: "#F2D4C3", text: "#8A4222" },
+  Snack: { background: "#DDD5F0", text: "#54418A" }
+} as const;

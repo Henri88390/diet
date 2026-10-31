@@ -451,8 +451,40 @@ export function getPersonalizedDayPlan(
     applyLowCostChoices(mealsForBudgetAdjustment);
   }
   applyIngredientBans(meals, preferences.bannedIngredients);
+  meals.forEach(mergeDuplicateIngredients);
   meals.forEach(refreshMealEstimates);
   return { date: basePlan.date, meals };
+}
+
+/** Substitutions can reintroduce an ingredient the meal already has (e.g. olive oil). */
+function mergeDuplicateIngredients(meal: Meal): void {
+  const merged: MealIngredient[] = [];
+  meal.ingredients.forEach((ingredient) => {
+    const existing = merged.find((item) => item.name.toLowerCase() === ingredient.name.toLowerCase());
+    if (!existing) {
+      merged.push(ingredient);
+      return;
+    }
+    if (getIngredientCategory(ingredient.name) !== "seasoning" && existing.unit === ingredient.unit) {
+      existing.quantity = formatScaledQuantity(
+        parseQuantity(existing.quantity) + parseQuantity(ingredient.quantity),
+        existing.unit
+      );
+    }
+  });
+  if (merged.length === meal.ingredients.length) return;
+  meal.ingredients = merged;
+  const seen = new Set<string>();
+  meal.description = meal.description
+    .split("·")
+    .map((part) => part.trim())
+    .filter((part) => {
+      const key = part.toLowerCase();
+      if (!part || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .join(" · ");
 }
 
 function applyPlanStyle(

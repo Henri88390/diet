@@ -113,7 +113,7 @@ export const es: Translation = {
     mainHelper: "Alimentos base de esta porción de ejemplo",
     seasonings: "Condimentos y añadidos de cocina",
     seasoningsHelper: "Se muestran por separado de los ingredientes principales",
-    total: "Total estimado de ingredientes",
+    total: "Total",
     totalValue: "{{kcal}} kcal · {{protein}} g de proteína · ~{{cost}}",
     disclaimer: "La nutrición y los costes usan cantidades de ingredientes y precios unitarios modelados; las calorías se ajustan al objetivo diario elegido. Los costes se redondean a la unidad monetaria mínima, por lo que una porción muy pequeña puede mostrarse como cero. Las porciones y los valores son orientativos: no son cantidades de recetas verificadas, precios regionales, recomendaciones nutricionales ni consejo médico."
   },

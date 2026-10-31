@@ -117,7 +117,7 @@ export const pl: Translation = {
     mainHelper: "Podstawowe produkty w tej przykładowej porcji",
     seasonings: "Przyprawy i dodatki do gotowania",
     seasoningsHelper: "Pokazane osobno od głównych składników",
-    total: "Szacunkowa suma składników",
+    total: "Razem",
     totalValue: "{{kcal}} kcal · {{protein}} g białka · ~{{cost}}",
     disclaimer: "Wartości odżywcze i koszty opierają się na modelowych ilościach składników i cenach jednostkowych; kalorie są dopasowywane do wybranego dziennego celu. Koszty są zaokrąglane do najmniejszej jednostki waluty, więc bardzo mała porcja może wyświetlić się jako zero. Porcje i wartości są orientacyjne – to nie zweryfikowane przepisy, ceny regionalne, zalecenia żywieniowe ani porady medyczne."
   },

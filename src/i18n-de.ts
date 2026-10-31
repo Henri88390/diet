@@ -113,7 +113,7 @@ export const de: Translation = {
     mainHelper: "Grundnahrungsmittel für diese Beispielportion",
     seasonings: "Gewürze & Zutaten zum Kochen",
     seasoningsHelper: "Getrennt von den Hauptzutaten angezeigt",
-    total: "Geschätzte Summe der Zutaten",
+    total: "Summe",
     totalValue: "{{kcal}} kcal · {{protein}} g Eiweiß · ~{{cost}}",
     disclaimer: "Nährwerte und Kosten beruhen auf modellierten Zutatenmengen und Stückpreisen; die Kalorienwerte werden an das gewählte Tagesziel angepasst. Kosten werden auf die kleinste Währungseinheit gerundet, sodass eine sehr kleine Portion als null angezeigt werden kann. Portionen und Werte sind Richtwerte – keine geprüften Rezeptmengen, regionalen Preise, Ernährungsempfehlungen oder medizinischen Ratschläge."
   },

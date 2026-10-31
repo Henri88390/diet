@@ -121,7 +121,7 @@ export const en: Translation = {
     mainHelper: "Core foods for this sample portion",
     seasonings: "Seasonings & cooking additions",
     seasoningsHelper: "Shown separately from the main ingredients",
-    total: "Ingredient estimate total",
+    total: "Total",
     totalValue: "{{kcal}} kcal · {{protein}} g protein · ~{{cost}}",
     disclaimer: "Nutrition and costs use modeled ingredient quantities and unit estimates; scaled calorie values are reconciled to the selected daily goal. Costs are rounded to the nearest minor currency unit, so a very small positive portion may display as zero. Portions and values are illustrative, not verified recipe amounts, regional prices, nutrition guidance, or medical advice."
   },

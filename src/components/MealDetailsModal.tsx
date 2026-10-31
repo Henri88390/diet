@@ -1,7 +1,7 @@
 import React from "react";
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import type { Meal } from "../models";
-import { palette } from "../theme";
+import { mealBadge, mealTypeIcon, palette } from "../theme";
 import { formatMoney } from "../countryPricing";
 import { useTranslation } from "react-i18next";
 import { useFoodNames } from "../i18n";
@@ -30,6 +30,9 @@ export function MealDetailsModal({ meal, onClose }: Props): React.JSX.Element {
         {meal && (
           <View accessibilityViewIsModal style={styles.sheet}>
             <View style={styles.handle} />
+            <View accessible={false} style={[styles.typeIcon, { backgroundColor: mealBadge[meal.type].background }]}>
+              <Text style={styles.typeIconText}>{mealTypeIcon[meal.type]}</Text>
+            </View>
             <View style={styles.header}>
               <View style={styles.heading}>
                 <Text accessibilityRole="header" style={styles.title}>{food(meal.title)}</Text>
@@ -129,7 +132,9 @@ const styles = StyleSheet.create({
   sheet: { maxHeight: "88%", backgroundColor: palette.paper, borderTopLeftRadius: 25, borderTopRightRadius: 25, paddingHorizontal: 21, paddingTop: 10, paddingBottom: 24 },
   handle: { width: 38, height: 4, borderRadius: 2, backgroundColor: "#D6D9D0", alignSelf: "center", marginBottom: 16 },
   header: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" },
-  heading: { flex: 1, paddingRight: 12 },
+  heading: { flex: 1, paddingRight: 40 },
+  typeIcon: { position: "absolute", top: 14, right: 16, width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center", zIndex: 1 },
+  typeIconText: { fontSize: 17 },
   title: { color: palette.ink, fontSize: 21, fontWeight: "700" },
   summary: { flexDirection: "row", gap: 8, marginTop: 15 },
   statTile: { flex: 1, borderRadius: 12, paddingVertical: 10, paddingHorizontal: 8, alignItems: "center", backgroundColor: "#F1EEE4" },

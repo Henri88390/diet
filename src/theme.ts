@@ -16,6 +16,8 @@ export const mealAccent = {
   Snack: "#E9E5F3"
 } as const;
 
+export const mealTypeIcon = { Breakfast: "🌅", Lunch: "☀️", Dinner: "🌙", Snack: "🍎" } as const;
+
 export const mealBadge = {
   Breakfast: { background: "#F8E8B8", text: "#7A5A0E" },
   Lunch: { background: "#CFE5CB", text: "#2B5A33" },

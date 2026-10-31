@@ -1,15 +1,13 @@
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { Meal } from "../models";
-import { mealAccent, mealBadge, palette } from "../theme";
+import { mealAccent, mealBadge, mealTypeIcon, palette } from "../theme";
 import { formatMoney } from "../countryPricing";
 import { useTranslation } from "react-i18next";
 import { useFoodNames } from "../i18n";
 import { BatchNote } from "./BatchCooking";
 
 type Props = { meal: Meal; onPress: (meal: Meal) => void };
-
-const mealTypeIcon = { Breakfast: "🌅", Lunch: "☀️", Dinner: "🌙", Snack: "🍎" } as const;
 
 export function MealCard({ meal, onPress }: Props): React.JSX.Element {
   const { t } = useTranslation();

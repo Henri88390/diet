@@ -48,7 +48,7 @@ export function CalendarScreen(props: Props): React.JSX.Element {
   const [mealMenuOpen, setMealMenuOpen] = useState(false);
   const [styleMenuOpen, setStyleMenuOpen] = useState(false);
   const planStyleLabel = planStyleOptions.find((option) => option.value === props.planStyle)?.label ?? "";
-  const goalInputRef = useRef<TextInput>(null);
+  const goalInputRef = useRef<React.ComponentRef<typeof TextInput>>(null);
   const [goalSelection, setGoalSelection] = useState<{ start: number; end: number } | undefined>();
 
   function focusGoalInput(): void {

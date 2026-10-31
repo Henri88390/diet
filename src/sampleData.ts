@@ -442,7 +442,7 @@ export function getPersonalizedDayPlan(
     }
   }
 
-  applyPlanStyle(meals, preferences, weekday);
+  applyPlanStyle(meals, preferences, weekday, countryCode);
   applyTypicalBreakfast(meals, preferences.typicalBreakfast);
   if (isWeeklyBudgetTight(meals, preferences.weeklyBudget, countryCode)) {
     const mealsForBudgetAdjustment = preferences.typicalBreakfast.mode === "none"
@@ -455,35 +455,15 @@ export function getPersonalizedDayPlan(
   return { date: basePlan.date, meals };
 }
 
-function applyPlanStyle(meals: Meal[], preferences: MealPreferences, weekday: number): void {
+function applyPlanStyle(
+  meals: Meal[],
+  preferences: MealPreferences,
+  weekday: number,
+  countryCode: CountryCode
+): void {
   if (preferences.planStyle === "lowCost") applyLowCostChoices(meals);
   if (preferences.planStyle === "simpleIngredients") applySimpleIngredientChoices(meals);
-  if (preferences.planStyle === "highProtein") {
-    meals.forEach((meal) => {
-      if (meal.type === "Snack") return;
-      const proteinIndex = meal.ingredients.findIndex((ingredient) =>
-        isMeat(ingredient.name) || isEgg(ingredient.name) ||
-        /beans|chickpeas|lentils|hummus/i.test(ingredient.name)
-      );
-      if (proteinIndex >= 0) {
-        const ingredient = meal.ingredients[proteinIndex];
-        if (ingredient.unit === "g") {
-          ingredient.quantity = String(Math.round(Number(ingredient.quantity) * 1.2));
-        }
-      } else if (meal.type === "Breakfast") {
-        meal.ingredients.push({
-          name: "Eggs", quantity: "1", unit: "large", category: "main",
-          calories: 72, proteinGrams: 6.3, estimatedCostCents: 35
-        });
-      } else {
-        meal.ingredients.push({
-          name: "Black beans, drained", quantity: "60", unit: "g", category: "main",
-          calories: 76, proteinGrams: 5.2, estimatedCostCents: 17
-        });
-      }
-      refreshMealEstimates(meal);
-    });
-  }
+  if (preferences.planStyle === "highProtein") applyHighProteinChoices(meals, preferences, countryCode);
   if (preferences.planStyle === "moreVariety") {
     const proteinRotation = ["Black beans, drained", "Chickpeas, drained", "Lentils, dry"];
     meals.forEach((meal) => {
@@ -495,6 +475,63 @@ function applyPlanStyle(meals: Meal[], preferences: MealPreferences, weekday: nu
       });
     });
   }
+}
+
+/**
+ * Daily portions are rescaled to the calorie goal, so extra protein only
+ * sticks if calorie-dense starches and oils shrink while protein grows.
+ */
+function applyHighProteinChoices(
+  meals: Meal[],
+  preferences: MealPreferences,
+  countryCode: CountryCode
+): void {
+  const budgetTight = isWeeklyBudgetTight(meals, preferences.weeklyBudget, countryCode);
+  const starchOrFat = /rolled oats|basmati rice|pasta, dry|^bread|wrap|bread roll|potato|olive oil|vegetable oil|honey|jam|chia/i;
+  const proteinFood = /beans|chickpeas|lentils|hummus|cottage cheese|skyr|yogurt/i;
+
+  function addOrIncrease(meal: Meal, name: string, quantity: number, unit: string): void {
+    const existing = meal.ingredients.find((ingredient) => ingredient.name === name);
+    if (existing) {
+      existing.quantity = String(Number(existing.quantity) + quantity);
+      return;
+    }
+    const estimate = estimateIngredient(name, String(quantity), unit);
+    meal.ingredients.push({
+      name, quantity: String(quantity), unit, category: estimate.category,
+      calories: estimate.calories, proteinGrams: estimate.proteinGrams,
+      estimatedCostCents: estimate.estimatedCostCents
+    });
+  }
+
+  meals.forEach((meal) => {
+    if (meal.type === "Snack") return;
+    let hasMeatOrFish = false;
+    meal.ingredients.forEach((ingredient) => {
+      const quantity = Number(ingredient.quantity);
+      if (!Number.isFinite(quantity)) return;
+      if (isMeat(ingredient.name) && ingredient.unit === "g") {
+        hasMeatOrFish = true;
+        ingredient.quantity = String(Math.round(quantity * 1.5));
+      } else if (proteinFood.test(ingredient.name) && ingredient.unit === "g") {
+        ingredient.quantity = String(Math.round(quantity * 1.5));
+      } else if (starchOrFat.test(ingredient.name)) {
+        const shrunk = quantity * 0.65;
+        ingredient.quantity = ingredient.unit === "g" || ingredient.unit === "ml"
+          ? String(Math.round(shrunk))
+          : String(Math.max(0.5, Math.round(shrunk * 2) / 2));
+      }
+    });
+
+    if (meal.type === "Breakfast") {
+      addOrIncrease(meal, "Eggs", 2, "large");
+      if (!budgetTight) addOrIncrease(meal, "Skyr", 120, "g");
+    } else if (!hasMeatOrFish) {
+      if (budgetTight) addOrIncrease(meal, "Black beans, drained", 100, "g");
+      else addOrIncrease(meal, "Canned tuna, drained", 90, "g");
+    }
+    refreshMealEstimates(meal);
+  });
 }
 
 function applySimpleIngredientChoices(meals: Meal[]): void {

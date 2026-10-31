@@ -62,6 +62,7 @@ const styles = StyleSheet.create({
   icon: { width: 49, height: 49, borderRadius: 14, alignItems: "center", justifyContent: "center", marginRight: 12 },
   emoji: { fontSize: 24 },
   details: { flex: 1, paddingTop: 1 },
+  titleRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   type: { color: palette.green, fontSize: 10, fontWeight: "700", letterSpacing: 0.35 },
   title: { color: palette.ink, fontSize: 14, fontWeight: "700", marginTop: 5 },
   ingredientList: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 8 },

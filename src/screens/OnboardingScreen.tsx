@@ -439,6 +439,7 @@ const styles = StyleSheet.create({
   choiceButtonSelected: { backgroundColor: palette.softGreen, borderColor: "#C9D9C9" },
   choiceText: { color: palette.muted, fontSize: 11, fontWeight: "500" },
   choiceTextSelected: { color: palette.green, fontWeight: "700" },
+  sectionTitle: { color: palette.ink, fontSize: 19, fontWeight: "700", letterSpacing: -0.4 },
   planStyles: { flexDirection: "row", flexWrap: "wrap", gap: 7 },
   budgetRow: { flexDirection: "row", alignItems: "center", backgroundColor: "#F7F7F3", borderRadius: 10, paddingHorizontal: 11, minHeight: 44 },
   budgetInput: { minWidth: 70, color: palette.ink, fontSize: 15, fontWeight: "700", paddingVertical: 8 },

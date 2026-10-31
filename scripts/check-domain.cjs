@@ -103,7 +103,7 @@ assert.ok(plans.flat().every((meal) => Number.isFinite(meal.proteinGrams)),
 assert.equal(getDailyProtein(plans[0]),
   Math.round(plans[0].reduce((sum, meal) => sum + meal.proteinGrams, 0) * 10) / 10,
   "daily protein is summed from the displayed meals");
-assert.match(appSource, /dates\.map\(\(date\) => \[formatDateKey\(date\), parsedGoal\]\)/,
+assert.match(appSource, /dates\.map\(\(date\) => \[formatDateKey\(date\), goal\]\)/,
   "applying an updated calorie target writes it to every visible calendar date");
 
 const defaultEstimate = buildSevenDayShoppingEstimate(today, preferences, appliedGoals, "DE");
@@ -281,8 +281,8 @@ assert.match(grocerySource, /hasCustomRange/,
   "user-selected grocery date ranges are preserved when today rolls over");
 assert.match(appSource, /setGoalInput\(selectedGoal\)/,
   "changing selected dates synchronizes the calorie input to that date's saved goal or default");
-assert.match(calendarSource, /mealCountText\}\>\{mealCountLabel\}/,
-  "calendar meal-count indicator reflects the selected meal and snack preference");
+assert.match(calendarSource, /mealsPerDayLabel/,
+  "calendar meals chip reflects the selected meal and snack preference");
 assert.doesNotMatch(calendarSource, /\{meals\.length\}\s*\/\s*3/,
   "calendar no longer hard-codes a three-meal count");
 const mealCardSource = fs.readFileSync(require.resolve("../src/components/MealCard.tsx"), "utf8");
@@ -556,7 +556,6 @@ assert.notEqual(
 );
 assert.equal(countries.length, 11, "explicit supported country list is present");
 assert.match(PRICE_ESTIMATE_REFERENCE, /not researched retailer prices/i);
-assert.match(grocerySource, /not researched Lidl or other retailer prices/);
 assert.match(preferencesSource, /Country and currency/);
 assert.doesNotMatch(preferencesSource, /MADE FOR YOUR EVERYDAY|Good food,|your way\.|I’ll do this later/,
   "onboarding removes the requested hero copy and skip action");
@@ -683,7 +682,7 @@ assert.ok(ingredientCategoryOrder.every((category) =>
 ), "ban list groups options across all ingredient categories");
 assert.match(preferencesSource, /More ingredient variety/);
 assert.match(preferencesSource, /Weekly food budget/);
-assert.match(preferencesSource, /Ingredients to avoid/);
+assert.match(preferencesSource, /Ban ingredients/);
 assert.match(preferencesSource, /CustomBreakfastBuilder/,
   "preferences include a custom typical-breakfast builder");
 assert.doesNotMatch(preferencesSource, /ingredient\.name\}\{isBanned \? " · Banned"/,

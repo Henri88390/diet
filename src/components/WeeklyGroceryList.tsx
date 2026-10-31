@@ -94,9 +94,6 @@ export function WeeklyGroceryList({
   return (
     <View style={styles.card}>
       <Text style={styles.title}>Shopping list</Text>
-      <Text style={styles.description}>
-        Combined quantities from your personalized meal calendar.
-      </Text>
       <View style={styles.dateFields}>
         <DateFieldButton
           label="Start date"
@@ -303,7 +300,6 @@ function formatDate(date: Date): string {
 const styles = StyleSheet.create({
   card: { marginTop: 24, backgroundColor: palette.white, borderRadius: 18, padding: 15, borderWidth: 1, borderColor: "#F0F0EA" },
   title: { color: palette.ink, fontSize: 18, fontWeight: "700" },
-  description: { color: palette.muted, fontSize: 11, lineHeight: 16, marginTop: 5 },
   dateFields: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 15 },
   dateField: { flex: 1, minHeight: 54, justifyContent: "center", paddingHorizontal: 10, borderRadius: 11, backgroundColor: "#F7F7F2" },
   dateFieldLabel: { color: palette.muted, fontSize: 9, fontWeight: "600" },
@@ -319,14 +315,13 @@ const styles = StyleSheet.create({
   categoryHeader: { minHeight: 46, flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 13, backgroundColor: "#DCE9D9", borderBottomWidth: 2, borderBottomColor: "#C0D2BC" },
   categoryTitle: { color: "#244A31", fontSize: 13, fontWeight: "800", letterSpacing: 0.8 },
   categoryCount: { color: palette.green, fontSize: 10, fontWeight: "800", backgroundColor: palette.white, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 4, overflow: "hidden" },
-  categoryItems: { paddingHorizontal: 10 },
-  itemRow: { minHeight: 48, flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderBottomWidth: 1, borderBottomColor: "#E8EBE4" },
-  itemMain: { flex: 1, paddingVertical: 8 },
-  itemName: { color: palette.ink, fontSize: 11, fontWeight: "600" },
-  quantity: { color: palette.muted, fontSize: 10, marginTop: 3 },
-  itemCost: { color: palette.ink, fontSize: 11, fontWeight: "600", marginLeft: 12 },
+  categoryItems: { paddingHorizontal: 10, paddingTop: 10, paddingBottom: 2 },
+  itemRow: { minHeight: 48, flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 12, marginBottom: 8, borderRadius: 11, backgroundColor: palette.white, borderWidth: 1, borderColor: "#EDEFE8" },
+  itemMain: { flex: 1, paddingVertical: 9 },
+  itemName: { color: palette.ink, fontSize: 12, fontWeight: "600" },
+  quantity: { color: palette.muted, fontSize: 11, fontWeight: "600", marginTop: 3 },
+  itemCost: { color: "#8A5A1F", fontSize: 11, fontWeight: "700", marginLeft: 12, backgroundColor: "#F6E9D8", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, overflow: "hidden" },
   empty: { color: palette.muted, fontSize: 11, paddingVertical: 12 },
-  disclaimer: { color: palette.muted, fontSize: 9, lineHeight: 14, marginTop: 13 },
   modalOverlay: { flex: 1, justifyContent: "center", padding: 20, backgroundColor: "rgba(25, 32, 26, 0.42)" },
   datePicker: { borderRadius: 20, padding: 16, backgroundColor: palette.paper },
   pickerHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 },

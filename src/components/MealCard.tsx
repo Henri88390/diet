@@ -28,18 +28,28 @@ export function MealCard({ meal, onPress }: Props): React.JSX.Element {
       <View style={styles.details}>
         <View style={styles.titleRow}>
           <Text style={styles.type}>{mealLabel}</Text>
-          <Text style={styles.calories}>{meal.calories} kcal</Text>
         </View>
         <Text style={styles.title}>{meal.title}</Text>
-        <Text style={styles.description}>{meal.description}</Text>
+        <View style={styles.ingredientList}>
+          {meal.description.split("·").map((part) => part.trim()).filter(Boolean).map((name, index) => (
+            <View key={`${name}-${index}`} style={styles.ingredientPill}>
+              <Text style={styles.ingredientPillText}>{name}</Text>
+            </View>
+          ))}
+        </View>
         {meal.banConflicts && meal.banConflicts.length > 0 && (
           <Text style={styles.banWarning}>
             Needs a replacement for banned: {meal.banConflicts.join(", ")}
           </Text>
         )}
         <View style={styles.metaRow}>
-          <Text style={styles.cost}>~{cost}</Text>
-          <Text style={styles.protein}>{meal.proteinGrams} g protein</Text>
+          <View style={styles.chip}><Text style={styles.chipText}>{meal.calories} kcal</Text></View>
+          <View style={[styles.chip, styles.chipProtein]}>
+            <Text style={[styles.chipText, styles.chipTextProtein]}>{meal.proteinGrams} g protein</Text>
+          </View>
+          <View style={[styles.chip, styles.chipCost]}>
+            <Text style={[styles.chipText, styles.chipTextCost]}>~{cost}</Text>
+          </View>
         </View>
       </View>
     </Pressable>
@@ -52,13 +62,17 @@ const styles = StyleSheet.create({
   icon: { width: 49, height: 49, borderRadius: 14, alignItems: "center", justifyContent: "center", marginRight: 12 },
   emoji: { fontSize: 24 },
   details: { flex: 1, paddingTop: 1 },
-  titleRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   type: { color: palette.green, fontSize: 10, fontWeight: "700", letterSpacing: 0.35 },
-  calories: { color: palette.ink, fontSize: 10, fontWeight: "700" },
   title: { color: palette.ink, fontSize: 14, fontWeight: "700", marginTop: 5 },
-  description: { color: palette.muted, fontSize: 11, marginTop: 3 },
-  metaRow: { flexDirection: "row", alignItems: "center", marginTop: 9 },
-  cost: { color: palette.green, fontSize: 11, fontWeight: "700" },
-  protein: { color: palette.ink, fontSize: 10, fontWeight: "600", marginLeft: 10 },
+  ingredientList: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 8 },
+  ingredientPill: { borderRadius: 9, paddingHorizontal: 9, paddingVertical: 4, backgroundColor: "#F4F4ED", borderWidth: 1, borderColor: "#E8EAE2" },
+  ingredientPillText: { color: palette.ink, fontSize: 11, fontWeight: "500" },
+  metaRow: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 9 },
+  chip: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, backgroundColor: "#F1EEE4" },
+  chipProtein: { backgroundColor: palette.softGreen },
+  chipCost: { backgroundColor: "#F6E9D8" },
+  chipText: { color: palette.ink, fontSize: 10, fontWeight: "700" },
+  chipTextProtein: { color: palette.green },
+  chipTextCost: { color: "#8A5A1F" },
   banWarning: { color: "#8B3027", fontSize: 10, lineHeight: 14, marginTop: 5 }
 });

@@ -298,15 +298,11 @@ export function getWeekDates(referenceDate = new Date()): Date[] {
   });
 }
 
-/**
- * The selectable planning window starts at the beginning of the current
- * Monday-based week and ends 30 days after the reference date.
- */
+/** The selectable planning window starts today and ends 30 days later. */
 export function getPlanningDateWindow(referenceDate = new Date()): { start: Date; end: Date } {
   const today = new Date(referenceDate);
   today.setHours(0, 0, 0, 0);
   const start = new Date(today);
-  start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
   const end = new Date(today);
   end.setDate(end.getDate() + PLANNING_HORIZON_DAYS);
   return { start, end };
@@ -334,11 +330,9 @@ export function getSelectedDateAfterTodayRefresh(
 ): Date {
   const currentDay = new Date(currentDate);
   currentDay.setHours(0, 0, 0, 0);
-  const weekStart = new Date(currentDay);
-  weekStart.setDate(weekStart.getDate() - ((weekStart.getDay() + 6) % 7));
   if (
     formatDateKey(selectedDate) === formatDateKey(previousToday) ||
-    selectedDate < weekStart
+    selectedDate < currentDay
   ) {
     return currentDay;
   }

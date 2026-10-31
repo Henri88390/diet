@@ -7,7 +7,7 @@ import { GroceryScreen } from "./src/screens/GroceryScreen";
 import { OnboardingScreen } from "./src/screens/OnboardingScreen";
 import type {
   Meal,
-  MealPreferences,
+  MealPreferences
 } from "./src/models";
 import {
   formatDateKey,
@@ -17,8 +17,7 @@ import {
   MAX_DAILY_CALORIE_GOAL,
   MIN_DAILY_CALORIE_GOAL,
   scaleMealPlan,
-  getPersonalizedDayPlan,
-  shouldDisableMealPlanUpdate
+  getPersonalizedDayPlan
 } from "./src/sampleData";
 import { DEFAULT_COUNTRY, type CountryCode } from "./src/countryPricing";
 import { repriceMeals } from "./src/ingredientEstimates";
@@ -54,7 +53,6 @@ export default function App(): React.JSX.Element {
   const selectedDateKey = formatDateKey(selectedDate);
   const appliedGoal = appliedGoals[selectedDateKey];
   const personalizedPlan = getPersonalizedDayPlan(selectedDate, mealPreferences, countryCode);
-  const baselineCalories = DEFAULT_DAILY_CALORIE_GOAL;
   const unpricedMeals = scaleMealPlan(
     personalizedPlan.meals,
     appliedGoals[selectedDateKey] ?? DEFAULT_DAILY_CALORIE_GOAL
@@ -67,14 +65,6 @@ export default function App(): React.JSX.Element {
     Number.isInteger(parsedGoal) &&
     parsedGoal >= MIN_DAILY_CALORIE_GOAL &&
     parsedGoal <= MAX_DAILY_CALORIE_GOAL;
-  const goalChanged = hasValidGoal && parsedGoal !== (appliedGoal ?? baselineCalories);
-  const updateDisabled = shouldDisableMealPlanUpdate(
-    parsedGoal,
-    hasValidGoal,
-    baselineCalories,
-    appliedGoal,
-    personalizedPlan.meals.some((meal) => meal.ingredients.length > 0 && meal.calories > 0)
-  );
 
   useEffect(() => {
     const selectedGoal = String(appliedGoal ?? DEFAULT_DAILY_CALORIE_GOAL);
@@ -114,15 +104,7 @@ export default function App(): React.JSX.Element {
       Math.max(MIN_DAILY_CALORIE_GOAL, baseValue + amount)
     );
     const nextGoal = String(nextValue);
-    setGoalInput(nextGoal);
-  }
-
-  function updateMealPlan(): void {
-    if (updateDisabled) return;
-    setAppliedGoals(Object.fromEntries(
-      dates.map((date) => [formatDateKey(date), parsedGoal])
-    ));
-    setDailyCalorieGoal(goalInput);
+    changeDailyGoalInput(nextGoal);
   }
 
   function toggleIngredientBan(ingredientId: string): void {
@@ -136,6 +118,16 @@ export default function App(): React.JSX.Element {
 
   function changeDailyGoalInput(value: string): void {
     setGoalInput(value);
+    const goal = Number(value);
+    if (
+      /^\d+$/.test(value) &&
+      Number.isInteger(goal) &&
+      goal >= MIN_DAILY_CALORIE_GOAL &&
+      goal <= MAX_DAILY_CALORIE_GOAL
+    ) {
+      setAppliedGoals(Object.fromEntries(dates.map((date) => [formatDateKey(date), goal])));
+      setDailyCalorieGoal(value);
+    }
   }
 
   function goToToday(): void {
@@ -240,12 +232,10 @@ export default function App(): React.JSX.Element {
               goalInput={goalInput}
               setGoalInput={changeDailyGoalInput}
               hasValidGoal={hasValidGoal}
-              goalChanged={goalChanged}
-              appliedGoal={appliedGoal}
-              updateDisabled={updateDisabled}
               onAdjustGoal={adjustGoal}
-              onUpdateMealPlan={updateMealPlan}
               onMealPress={setSelectedMeal}
+              mealsPerDay={mealPreferences.mealsPerDay}
+              onMealsPerDayChange={(mealsPerDay) => setMealPreferences((current) => ({ ...current, mealsPerDay }))}
               onEditPreferences={() => navigateTo("preferences")}
               onOpenGroceries={() => navigateTo("groceries")}
               onDateStripTouchChange={handleDateStripTouch}

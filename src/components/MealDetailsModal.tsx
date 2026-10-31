@@ -39,11 +39,20 @@ export function MealDetailsModal({ meal, onClose }: Props): React.JSX.Element {
               </Pressable>
             </View>
             <View style={styles.summary}>
-              <Text style={styles.summaryText}>
-                {meal.calories} kcal · {meal.proteinGrams} g protein · illustrative estimates
-              </Text>
-              <Text style={styles.summaryText}>
-                ~{formatCost(meal.estimatedCost?.amountMinorUnits ?? meal.estimatedCostCents)}                 estimated              </Text>
+              <View style={styles.statTile}>
+                <Text style={styles.statValue}>{meal.calories}</Text>
+                <Text style={styles.statLabel}>kcal</Text>
+              </View>
+              <View style={[styles.statTile, styles.statTileProtein]}>
+                <Text style={[styles.statValue, styles.statValueProtein]}>{meal.proteinGrams} g</Text>
+                <Text style={styles.statLabel}>protein</Text>
+              </View>
+              <View style={[styles.statTile, styles.statTileCost]}>
+                <Text style={[styles.statValue, styles.statValueCost]}>
+                  ~{formatCost(meal.estimatedCost?.amountMinorUnits ?? meal.estimatedCostCents)}
+                </Text>
+                <Text style={styles.statLabel}>est. cost</Text>
+              </View>
             </View>
             {meal.banConflicts && meal.banConflicts.length > 0 && (
               <Text style={styles.banWarning}>
@@ -95,16 +104,20 @@ function IngredientRow({
 }): React.JSX.Element {
   return (
     <View style={styles.ingredient}>
-      <View style={styles.ingredientDescription}>
+      <View style={styles.ingredientTop}>
         <Text style={styles.ingredientName}>{ingredient.name}</Text>
         <Text style={styles.quantity}>{ingredient.quantity} {ingredient.unit}</Text>
       </View>
-      <View style={styles.estimates}>
-        <Text style={styles.ingredientCalories}>{ingredient.calories} kcal</Text>
-        <Text style={styles.ingredientProtein}>{ingredient.proteinGrams} g protein</Text>
-        <Text style={styles.ingredientCost}>
-          ~{formatCost(ingredient.estimatedCost?.amountMinorUnits ?? ingredient.estimatedCostCents)}
-        </Text>
+      <View style={styles.chips}>
+        <View style={styles.chip}><Text style={styles.chipText}>{ingredient.calories} kcal</Text></View>
+        <View style={[styles.chip, styles.chipProtein]}>
+          <Text style={[styles.chipText, styles.chipTextProtein]}>{ingredient.proteinGrams} g protein</Text>
+        </View>
+        <View style={[styles.chip, styles.chipCost]}>
+          <Text style={[styles.chipText, styles.chipTextCost]}>
+            ~{formatCost(ingredient.estimatedCost?.amountMinorUnits ?? ingredient.estimatedCostCents)}
+          </Text>
+        </View>
       </View>
     </View>
   );
@@ -120,22 +133,31 @@ const styles = StyleSheet.create({
   title: { color: palette.ink, fontSize: 21, fontWeight: "700", marginTop: 6 },
   close: { width: 32, height: 32, borderRadius: 11, alignItems: "center", justifyContent: "center", backgroundColor: palette.white },
   closeText: { color: palette.muted, fontSize: 24, lineHeight: 27 },
-  summary: { backgroundColor: palette.softGreen, borderRadius: 12, padding: 12, marginTop: 15, gap: 4 },
-  summaryText: { color: palette.green, fontSize: 11, fontWeight: "600" },
+  summary: { flexDirection: "row", gap: 8, marginTop: 15 },
+  statTile: { flex: 1, borderRadius: 12, paddingVertical: 10, paddingHorizontal: 8, alignItems: "center", backgroundColor: "#F1EEE4" },
+  statTileProtein: { backgroundColor: palette.softGreen },
+  statTileCost: { backgroundColor: "#F6E9D8" },
+  statValue: { color: palette.ink, fontSize: 16, fontWeight: "800" },
+  statValueProtein: { color: palette.green },
+  statValueCost: { color: "#8A5A1F" },
+  statLabel: { color: palette.muted, fontSize: 10, fontWeight: "600", marginTop: 2 },
   banWarning: { color: "#8B3027", fontSize: 11, lineHeight: 16, marginTop: 10 },
   scrollContent: { paddingBottom: 12 },
   sectionTitle: { color: palette.ink, fontSize: 16, fontWeight: "700", marginTop: 19 },
   helper: { color: palette.muted, fontSize: 10, marginTop: 4, marginBottom: 8 },
   seasoningGroup: { marginTop: 13, paddingHorizontal: 11, paddingBottom: 3, borderRadius: 12, backgroundColor: "#F4F4ED" },
   seasoningTitle: { color: palette.green, fontSize: 13, fontWeight: "700", marginTop: 11 },
-  ingredient: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: palette.line },
-  ingredientDescription: { flex: 1 },
-  ingredientName: { color: palette.ink, fontSize: 12, fontWeight: "600" },
-  quantity: { color: palette.muted, fontSize: 10, marginTop: 3 },
-  estimates: { alignItems: "flex-end", marginLeft: 12 },
-  ingredientCalories: { color: palette.ink, fontSize: 11, fontWeight: "600" },
-  ingredientProtein: { color: palette.muted, fontSize: 9, marginTop: 2 },
-  ingredientCost: { color: palette.muted, fontSize: 10, marginTop: 3 },
+  ingredient: { backgroundColor: palette.white, borderRadius: 12, paddingVertical: 11, paddingHorizontal: 12, marginBottom: 8 },
+  ingredientTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  ingredientName: { flex: 1, color: palette.ink, fontSize: 13, fontWeight: "600" },
+  quantity: { color: palette.muted, fontSize: 11, fontWeight: "600", marginLeft: 12 },
+  chips: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 8 },
+  chip: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, backgroundColor: "#F1EEE4" },
+  chipProtein: { backgroundColor: palette.softGreen },
+  chipCost: { backgroundColor: "#F6E9D8" },
+  chipText: { color: palette.ink, fontSize: 10, fontWeight: "700" },
+  chipTextProtein: { color: palette.green },
+  chipTextCost: { color: "#8A5A1F" },
   total: { flexDirection: "row", justifyContent: "space-between", paddingTop: 13 },
   totalLabel: { color: palette.ink, fontSize: 11, fontWeight: "700" },
   totalValue: { color: palette.green, fontSize: 10, fontWeight: "700" },

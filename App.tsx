@@ -20,7 +20,7 @@ import {
   scaleMealPlan,
   getPersonalizedDayPlan
 } from "./src/sampleData";
-import { DEFAULT_COUNTRY, type CountryCode } from "./src/countryPricing";
+import { DEFAULT_COUNTRY, getCountry, type CountryCode } from "./src/countryPricing";
 import { repriceMeals } from "./src/ingredientEstimates";
 import { getBatchPrep } from "./src/groceryEstimate";
 import { setBatchCalendar } from "./src/batchCooking";
@@ -56,7 +56,12 @@ export default function App(): React.JSX.Element {
   setBatchCalendar(dates[0], dates[dates.length - 1]);
   const selectedDateKey = formatDateKey(selectedDate);
   const appliedGoal = appliedGoals[selectedDateKey];
-  const personalizedPlan = getPersonalizedDayPlan(selectedDate, mealPreferences, countryCode);
+  const personalizedPlan = getPersonalizedDayPlan(
+    selectedDate,
+    mealPreferences,
+    countryCode,
+    appliedGoals[selectedDateKey] ?? DEFAULT_DAILY_CALORIE_GOAL
+  );
   const unpricedMeals = scaleMealPlan(
     personalizedPlan.meals,
     appliedGoals[selectedDateKey] ?? DEFAULT_DAILY_CALORIE_GOAL
@@ -244,6 +249,11 @@ export default function App(): React.JSX.Element {
               onMealsPerDayChange={(mealsPerDay) => setMealPreferences((current) => ({ ...current, mealsPerDay }))}
               planStyle={mealPreferences.planStyle}
               onPlanStyleChange={(planStyle) => setMealPreferences((current) => ({ ...current, planStyle }))}
+              fruitPreference={mealPreferences.fruitPreference}
+              onFruitPreferenceChange={(fruitPreference) => setMealPreferences((current) => ({ ...current, fruitPreference }))}
+              weeklyBudget={mealPreferences.weeklyBudget}
+              onWeeklyBudgetChange={(weeklyBudget) => setMealPreferences((current) => ({ ...current, weeklyBudget }))}
+              currencyCode={getCountry(countryCode).currencyCode}
               onEditPreferences={() => navigateTo("preferences")}
               onOpenGroceries={() => navigateTo("groceries")}
               onDateStripTouchChange={handleDateStripTouch}

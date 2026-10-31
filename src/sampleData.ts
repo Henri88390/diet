@@ -385,7 +385,8 @@ export function getWeeklyAssignmentDays(frequency: WeeklyFrequency): number[] {
 export function getPersonalizedDayPlan(
   date: Date,
   preferences: MealPreferences,
-  countryCode: CountryCode = "DE"
+  countryCode: CountryCode = "DE",
+  goal: number = DEFAULT_DAILY_CALORIE_GOAL
 ): DayPlan {
   const basePlan = getDayPlan(date);
   const weekday = (date.getDay() + 6) % 7;
@@ -432,6 +433,22 @@ export function getPersonalizedDayPlan(
     }
   }
 
+  if (preferences.fruitPreference === "include") {
+    const fruitSide = meals.find((meal) => meal.type === "Lunch") ?? meals.find((meal) => meal.type === "Dinner");
+    if (fruitSide && !fruitSide.ingredients.some((ingredient) => isFruit(ingredient.name))) {
+      fruitSide.ingredients.push({
+        name: "Apple",
+        quantity: "1",
+        unit: "medium",
+        category: "main",
+        calories: 95,
+        proteinGrams: 0.5,
+        estimatedCostCents: 35
+      });
+      fruitSide.description = appendDescription(fruitSide.description, "apple");
+    }
+  }
+
   meals.forEach((meal) => {
     if (meal.type === "Lunch" || meal.type === "Dinner") addSeasoningIfNeeded(meal);
     refreshMealEstimates(meal);
@@ -447,15 +464,9 @@ export function getPersonalizedDayPlan(
     }
   }
 
-  applyPlanStyle(meals, preferences, countryCode, date);
+  applyPlanStyle(meals, preferences, countryCode, date, goal);
   applyTypicalBreakfast(meals, preferences.typicalBreakfast);
-  if (isWeeklyBudgetTight(meals, preferences.weeklyBudget, countryCode)) {
-    const mealsForBudgetAdjustment = (preferences.typicalBreakfast.mode === "none"
-      ? meals
-      : meals.filter((meal) => meal.type !== "Breakfast")
-    ).filter((meal) => !meal.batch);
-    applyLowCostChoices(mealsForBudgetAdjustment);
-  }
+  fitMealsToBudget(meals, preferences, countryCode, goal);
   applyIngredientBans(meals, preferences.bannedIngredients);
   meals.forEach(mergeDuplicateIngredients);
   meals.forEach(refreshMealEstimates);
@@ -498,22 +509,27 @@ function applyPlanStyle(
   meals: Meal[],
   preferences: MealPreferences,
   countryCode: CountryCode,
-  date: Date
+  date: Date,
+  goal: number
 ): void {
   if (preferences.planStyle === "batchCooking") {
     const options = {
       bannedIngredients: preferences.bannedIngredients,
       meatWeekdays: getWeeklyAssignmentDays(preferences.meatPerWeek),
-      budgetTight: isWeeklyBudgetTight(meals, preferences.weeklyBudget, countryCode)
+      budgetTight: isWeeklyBudgetTight(meals, preferences.weeklyBudget, countryCode, goal),
+      plantOnly: false
     };
     applyBatchCooking(meals, date, options);
-    // Re-run with cheaper components if the batch itself pushes past the budget.
-    if (!options.budgetTight && isWeeklyBudgetTight(meals, preferences.weeklyBudget, countryCode)) {
+    // Re-run with cheaper components, then without animal protein, if the batch itself pushes past the budget.
+    if (!options.budgetTight && isWeeklyBudgetTight(meals, preferences.weeklyBudget, countryCode, goal)) {
       applyBatchCooking(meals, date, { ...options, budgetTight: true });
+    }
+    if (isWeeklyBudgetTight(meals, preferences.weeklyBudget, countryCode, goal)) {
+      applyBatchCooking(meals, date, { ...options, budgetTight: true, plantOnly: true });
     }
   }
   if (preferences.planStyle === "lowCost") applyLowCostChoices(meals);
-  if (preferences.planStyle === "highProtein") applyHighProteinChoices(meals, preferences, countryCode);
+  if (preferences.planStyle === "highProtein") applyHighProteinChoices(meals, preferences, countryCode, goal);
 }
 
 /**
@@ -523,9 +539,10 @@ function applyPlanStyle(
 function applyHighProteinChoices(
   meals: Meal[],
   preferences: MealPreferences,
-  countryCode: CountryCode
+  countryCode: CountryCode,
+  goal: number
 ): void {
-  const budgetTight = isWeeklyBudgetTight(meals, preferences.weeklyBudget, countryCode);
+  const budgetTight = isWeeklyBudgetTight(meals, preferences.weeklyBudget, countryCode, goal);
   const starchOrFat = /rolled oats|basmati rice|pasta, dry|^bread|wrap|bread roll|potato|olive oil|vegetable oil|honey|jam|chia/i;
   const proteinFood = /beans|chickpeas|lentils|hummus|cottage cheese|skyr|yogurt/i;
 
@@ -612,25 +629,154 @@ function applyLowCostChoices(meals: Meal[]): void {
   });
 }
 
+function parseDailyBudgetCents(budgetInput: string): number | null {
+  if (!budgetInput.trim()) return null;
+  const weeklyBudget = Number(budgetInput.replace(",", "."));
+  if (!Number.isFinite(weeklyBudget) || weeklyBudget < 0) return null;
+  return (weeklyBudget * 100) / 7;
+}
+
+/** Day cost and protein if the meals were scaled to the calorie goal, as the calendar does. */
+function getScaledDayTotals(
+  meals: Meal[],
+  countryCode: CountryCode,
+  goal: number
+): { cost: number; protein: number } {
+  const baselineCalories = getDailyCalories(meals);
+  const scale = baselineCalories > 0 ? goal / baselineCalories : 1;
+  let cost = 0;
+  let protein = 0;
+  meals.forEach((meal) => meal.ingredients.forEach((ingredient) => {
+    const estimate = estimateIngredient(ingredient.name, ingredient.quantity, ingredient.unit, countryCode);
+    cost += estimate.estimatedCostCents;
+    protein += estimate.proteinGrams;
+  }));
+  return { cost: cost * scale, protein: protein * scale };
+}
+
 function isWeeklyBudgetTight(
   meals: Meal[],
   budgetInput: string,
-  countryCode: CountryCode
+  countryCode: CountryCode,
+  goal: number
 ): boolean {
-  if (!budgetInput.trim()) return false;
-  const weeklyBudget = Number(budgetInput.replace(",", "."));
-  if (!Number.isFinite(weeklyBudget) || weeklyBudget < 0) return false;
-  const mealCost = meals.reduce((total, meal) => total + meal.ingredients.reduce(
-    (sum, ingredient) => sum + estimateIngredient(
-      ingredient.name, ingredient.quantity, ingredient.unit, countryCode
-    ).estimatedCostCents,
-    0
-  ), 0);
-  const baselineCalories = getDailyCalories(meals);
-  const scaledCost = baselineCalories > 0
-    ? mealCost * (DEFAULT_DAILY_CALORIE_GOAL / baselineCalories)
-    : mealCost;
-  return scaledCost > (weeklyBudget * 100) / 7;
+  const dailyBudget = parseDailyBudgetCents(budgetInput);
+  return dailyBudget !== null && getScaledDayTotals(meals, countryCode, goal).cost > dailyBudget;
+}
+
+const MIN_PROTEIN_GRAMS = 40;
+const MIN_REASONABLE_WEEKLY_BUDGET_CENTS = 1500;
+const MIN_PROTEIN_PER_KCAL = 0.025;
+const COSTLY_PROTEIN = /\b(skyr|cottage cheese|cheddar|parmesan)\b/i;
+
+function swapToCheaperEquivalents(meals: Meal[]): void {
+  meals.forEach((meal) => {
+    let replaced = false;
+    meal.ingredients = meal.ingredients.map((ingredient) => {
+      if (/\bskyr\b|cottage cheese/i.test(ingredient.name)) {
+        replaced = true;
+        return { ...ingredient, name: "Plain yogurt" };
+      }
+      if (/bread roll|\bwrap\b/i.test(ingredient.name)) {
+        replaced = true;
+        const slices = Math.max(1, Math.round(parseQuantity(ingredient.quantity) * 2));
+        return { ...ingredient, name: "Bread", quantity: String(slices), unit: "slices" };
+      }
+      if (/\bapple\b/i.test(ingredient.name)) {
+        replaced = true;
+        return replaceIngredient(ingredient, "Banana");
+      }
+      if (/cooked chicken/i.test(ingredient.name)) {
+        replaced = true;
+        return replaceIngredient(ingredient, "Chicken thigh");
+      }
+      return ingredient;
+    });
+    if (replaced) {
+      const firstFood = meal.ingredients.find((ingredient) => ingredient.category === "main")?.name ?? "everyday ingredients";
+      meal.title = `Lower-cost ${meal.type.toLowerCase()} with ${firstFood}`;
+      meal.description = describeMealIngredients(meal);
+    }
+    refreshMealEstimates(meal);
+  });
+}
+
+/** Smaller portions of the priciest protein foods; the calorie scaler fills the gap with cheap staples. */
+function shrinkCostlyProtein(meals: Meal[], factor: number): void {
+  meals.forEach((meal) => {
+    meal.ingredients.forEach((ingredient) => {
+      if (!isMeat(ingredient.name) && !COSTLY_PROTEIN.test(ingredient.name)) return;
+      ingredient.quantity = formatScaledQuantity(parseQuantity(ingredient.quantity) * factor, ingredient.unit, ingredient.name);
+    });
+    refreshMealEstimates(meal);
+  });
+}
+
+function swapMeatForLegumes(meals: Meal[]): void {
+  meals.forEach((meal) => {
+    let replaced = false;
+    meal.ingredients = meal.ingredients.map((ingredient) => {
+      if (!isMeat(ingredient.name)) return ingredient;
+      replaced = true;
+      return replaceIngredient(ingredient, plantProteinReplacement(ingredient.name));
+    });
+    if (replaced) {
+      const firstFood = meal.ingredients.find((ingredient) => ingredient.category === "main")?.name ?? "everyday ingredients";
+      meal.title = `Lower-cost ${meal.type.toLowerCase()} with ${firstFood}`;
+      meal.description = describeMealIngredients(meal);
+    }
+    refreshMealEstimates(meal);
+  });
+}
+
+/**
+ * Try to bring the day's cost (at the selected calorie goal) under the weekly budget
+ * share. Calories always follow the goal; protein may drop but never below a
+ * reasonable floor. A budget that can't be met without breaking that is left as is.
+ */
+function fitMealsToBudget(
+  meals: Meal[],
+  preferences: MealPreferences,
+  countryCode: CountryCode,
+  goal: number
+): void {
+  const dailyBudget = parseDailyBudgetCents(preferences.weeklyBudget);
+  if (dailyBudget === null) return;
+  // A budget below a realistic weekly food cost can't be met sensibly: only apply the basic low-cost swaps.
+  if (dailyBudget * 7 < MIN_REASONABLE_WEEKLY_BUDGET_CENTS) {
+    if (getScaledDayTotals(meals, countryCode, goal).cost > dailyBudget) {
+      applyLowCostChoices(preferences.typicalBreakfast.mode === "none"
+        ? meals.filter((meal) => !meal.batch)
+        : meals.filter((meal) => meal.type !== "Breakfast" && !meal.batch));
+    }
+    return;
+  }
+  const proteinFloor = Math.max(MIN_PROTEIN_GRAMS, goal * MIN_PROTEIN_PER_KCAL);
+  const editableMeals = (): Meal[] => (preferences.typicalBreakfast.mode === "none"
+    ? meals
+    : meals.filter((meal) => meal.type !== "Breakfast")
+  ).filter((meal) => !meal.batch);
+  const steps: ((targets: Meal[]) => void)[] = [
+    applyLowCostChoices,
+    swapToCheaperEquivalents,
+    (targets) => shrinkCostlyProtein(targets, 0.8),
+    (targets) => shrinkCostlyProtein(targets, 0.8),
+    (targets) => shrinkCostlyProtein(targets, 0.8),
+    swapMeatForLegumes
+  ];
+
+  let totals = getScaledDayTotals(meals, countryCode, goal);
+  for (const step of steps) {
+    if (totals.cost <= dailyBudget) return;
+    const snapshot: Meal[] = JSON.parse(JSON.stringify(meals));
+    step(editableMeals());
+    const next = getScaledDayTotals(meals, countryCode, goal);
+    if (next.protein < proteinFloor && next.protein < totals.protein * 0.97) {
+      meals.splice(0, meals.length, ...snapshot);
+      return;
+    }
+    totals = next;
+  }
 }
 
 function applyIngredientBans(meals: Meal[], bannedIds: string[]): void {

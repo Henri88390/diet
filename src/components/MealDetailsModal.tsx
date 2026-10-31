@@ -6,6 +6,18 @@ import { formatMoney } from "../countryPricing";
 import { useTranslation } from "react-i18next";
 import { useFoodNames } from "../i18n";
 import { BatchNote } from "./BatchCooking";
+import { getShoppingCategory, type ShoppingCategory } from "../groceryEstimate";
+
+const categoryOrder: ShoppingCategory[] = [
+  "Grains & bakery",
+  "Meat & fish",
+  "Legumes",
+  "Dairy & eggs",
+  "Vegetables",
+  "Fruit",
+  "Pantry & seasonings",
+  "Other"
+];
 
 type Props = { meal: Meal | null; onClose: () => void };
 
@@ -21,8 +33,28 @@ export function MealDetailsModal({ meal, onClose }: Props): React.JSX.Element {
     (sum, item) => sum + (item.estimatedCost?.amountMinorUnits ?? item.estimatedCostCents),
     0
   ) ?? 0;
-  const mainIngredients = meal?.ingredients.filter((item) => item.category === "main") ?? [];
-  const seasonings = meal?.ingredients.filter((item) => item.category === "seasoning") ?? [];
+  const byCategory = (items: Meal["ingredients"]): Meal["ingredients"] =>
+    items
+      .map((item, index) => ({ item, index, rank: categoryOrder.indexOf(getShoppingCategory(item.name)) }))
+      .sort((a, b) => a.rank - b.rank || a.index - b.index)
+      .map(({ item }) => item);
+  const renderIngredients = (items: Meal["ingredients"], showCategories = true): React.JSX.Element[] =>
+    items.map((ingredient, index) => (
+      <React.Fragment key={`${ingredient.name}-${index}`}>
+        {showCategories && (index === 0 || getShoppingCategory(items[index - 1].name) !== getShoppingCategory(ingredient.name)) && (
+          <View style={[styles.categoryDivider, index === 0 && styles.categoryDividerFirst]}>
+            <View style={styles.categoryDividerLine} />
+            <Text style={styles.categoryDividerLabel}>
+              {t(`grocery.category.${getShoppingCategory(ingredient.name)}`, { defaultValue: getShoppingCategory(ingredient.name) })}
+            </Text>
+            <View style={styles.categoryDividerLine} />
+          </View>
+        )}
+        <IngredientRow ingredient={ingredient} formatCost={formatCost} />
+      </React.Fragment>
+    ));
+  const mainIngredients = byCategory(meal?.ingredients.filter((item) => item.category === "main") ?? []);
+  const seasonings = byCategory(meal?.ingredients.filter((item) => item.category === "seasoning") ?? []);
   return (
     <Modal animationType="slide" onRequestClose={onClose} transparent visible={meal !== null}>
       <View style={styles.overlay}>
@@ -34,6 +66,7 @@ export function MealDetailsModal({ meal, onClose }: Props): React.JSX.Element {
               <Text style={styles.typeIconText}>{mealTypeIcon[meal.type]}</Text>
             </View>
             <View style={styles.header}>
+              <Text accessible={false} style={styles.mealEmoji}>{meal.emoji}</Text>
               <View style={styles.heading}>
                 <Text accessibilityRole="header" style={styles.title}>{food(meal.title)}</Text>
               </View>
@@ -66,15 +99,11 @@ export function MealDetailsModal({ meal, onClose }: Props): React.JSX.Element {
             )}
             <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
               <Text style={styles.sectionTitle}>{t("details.mainIngredients")}</Text>
-              {mainIngredients.map((ingredient, index) => (
-                <IngredientRow key={`${ingredient.name}-${index}`} ingredient={ingredient} formatCost={formatCost} />
-              ))}
+              {renderIngredients(mainIngredients)}
               {seasonings.length > 0 && (
                 <View style={styles.seasoningGroup}>
                   <Text style={styles.seasoningTitle}>{t("details.seasonings")}</Text>
-                  {seasonings.map((ingredient, index) => (
-                    <IngredientRow key={`${ingredient.name}-${index}`} ingredient={ingredient} formatCost={formatCost} />
-                  ))}
+                  {renderIngredients(seasonings, false)}
                 </View>
               )}
               <View style={[styles.ingredient, styles.totalCard]}>
@@ -131,7 +160,8 @@ const styles = StyleSheet.create({
   overlay: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(25, 32, 26, 0.42)" },
   sheet: { maxHeight: "88%", backgroundColor: palette.paper, borderTopLeftRadius: 25, borderTopRightRadius: 25, paddingHorizontal: 21, paddingTop: 10, paddingBottom: 24 },
   handle: { width: 38, height: 4, borderRadius: 2, backgroundColor: "#D6D9D0", alignSelf: "center", marginBottom: 16 },
-  header: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" },
+  header: { flexDirection: "row", alignItems: "center" },
+  mealEmoji: { fontSize: 26, marginRight: 10 },
   heading: { flex: 1, paddingRight: 40 },
   typeIcon: { position: "absolute", top: 14, right: 16, width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center", zIndex: 1 },
   typeIconText: { fontSize: 17 },
@@ -154,6 +184,10 @@ const styles = StyleSheet.create({
   ingredient: { backgroundColor: palette.white, borderRadius: 12, paddingVertical: 11, paddingHorizontal: 12, marginBottom: 8 },
   ingredientTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   ingredientName: { flex: 1, color: palette.ink, fontSize: 13, fontWeight: "600" },
+  categoryDivider: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 6, marginBottom: 8 },
+  categoryDividerFirst: { marginTop: 0 },
+  categoryDividerLabel: { color: palette.muted, fontSize: 11, fontWeight: "600" },
+  categoryDividerLine: { flex: 1, height: 1, backgroundColor: "#D6D9D0" },
   quantity: { color: palette.muted, fontSize: 11, fontWeight: "600", marginLeft: 12 },
   chips: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 8 },
   chip: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, backgroundColor: "#F1EEE4" },

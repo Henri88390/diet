@@ -1,6 +1,6 @@
 import React, { useRef, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
-import type { Meal, MealsPerDay, PlanStyle } from "../models";
+import type { FruitPreference, Meal, MealsPerDay, PlanStyle } from "../models";
 import type { BatchPrep } from "../groceryEstimate";
 import { formatDateKey, getDailyProtein, getMealsInDisplayOrder, MAX_DAILY_CALORIE_GOAL, MIN_DAILY_CALORIE_GOAL } from "../sampleData";
 import { palette } from "../theme";
@@ -29,6 +29,11 @@ type Props = {
   onMealsPerDayChange: (mealsPerDay: MealsPerDay) => void;
   planStyle: PlanStyle;
   onPlanStyleChange: (planStyle: PlanStyle) => void;
+  fruitPreference: FruitPreference;
+  onFruitPreferenceChange: (fruitPreference: FruitPreference) => void;
+  weeklyBudget: string;
+  onWeeklyBudgetChange: (weeklyBudget: string) => void;
+  currencyCode: string;
   onEditPreferences: () => void;
   onOpenGroceries: () => void;
   onDateStripTouchChange: (touching: boolean) => void;
@@ -36,12 +41,18 @@ type Props = {
 
 const mealsPerDayOptions: MealsPerDay[] = [2, 3, 4, 5];
 const planStyleOptions: PlanStyle[] = ["balanced", "highProtein", "lowCost", "batchCooking"];
+const fruitOptions: FruitPreference[] = ["include", "optional", "avoid"];
 
 export function CalendarScreen(props: Props): React.JSX.Element {
   const { t } = useTranslation();
   const dateLocale = useDateLocale();
   const [mealMenuOpen, setMealMenuOpen] = useState(false);
   const [styleMenuOpen, setStyleMenuOpen] = useState(false);
+  const [fruitMenuOpen, setFruitMenuOpen] = useState(false);
+  const fruitLabel = (value: FruitPreference): string =>
+    t(`calendar.fruit${value.charAt(0).toUpperCase()}${value.slice(1)}`);
+  const budgetNumber = Number(props.weeklyBudget.replace(",", "."));
+  const budgetIsValid = props.weeklyBudget.trim() === "" || (Number.isFinite(budgetNumber) && budgetNumber >= 0);
   const styleLabel = (style: PlanStyle): string => t(`planStyle.${style}`);
   const planStyleLabel = styleLabel(props.planStyle);
   const goalInputRef = useRef<React.ComponentRef<typeof TextInput>>(null);
@@ -52,6 +63,14 @@ export function CalendarScreen(props: Props): React.JSX.Element {
     setGoalSelection({ start: end, end });
     goalInputRef.current?.focus();
   }
+  const budgetInputRef = useRef<React.ComponentRef<typeof TextInput>>(null);
+  const [budgetSelection, setBudgetSelection] = useState<{ start: number; end: number } | undefined>();
+
+  function focusBudgetInput(): void {
+    const end = props.weeklyBudget.length;
+    setBudgetSelection({ start: end, end });
+    budgetInputRef.current?.focus();
+  }
   const mealsPerDayLabel = t(`mealsPerDay.${props.mealsPerDay}`);
   const meals = getMealsInDisplayOrder(props.meals);
   const protein = getDailyProtein(meals);
@@ -59,12 +78,13 @@ export function CalendarScreen(props: Props): React.JSX.Element {
 
   return (
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-      {(mealMenuOpen || styleMenuOpen) && (
+      {(mealMenuOpen || styleMenuOpen || fruitMenuOpen) && (
         <Pressable
           accessible={false}
           onPress={() => {
             setMealMenuOpen(false);
             setStyleMenuOpen(false);
+            setFruitMenuOpen(false);
           }}
           style={styles.menuBackdrop}
         />
@@ -110,6 +130,7 @@ export function CalendarScreen(props: Props): React.JSX.Element {
               accessibilityState={{ expanded: mealMenuOpen }}
               onPress={() => {
                 setStyleMenuOpen(false);
+                setFruitMenuOpen(false);
                 setMealMenuOpen((open) => !open);
               }}
               style={[styles.statChip, styles.mealChip]}
@@ -149,6 +170,7 @@ export function CalendarScreen(props: Props): React.JSX.Element {
               accessibilityState={{ expanded: styleMenuOpen }}
               onPress={() => {
                 setMealMenuOpen(false);
+                setFruitMenuOpen(false);
                 setStyleMenuOpen((open) => !open);
               }}
               style={[styles.statChip, styles.styleChip]}
@@ -200,6 +222,61 @@ export function CalendarScreen(props: Props): React.JSX.Element {
             </View>
           )}
           </View>
+          <View style={[styles.menuAnchor, { zIndex: 0 }]}>
+            <View style={styles.calorieBottomRow}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t("calendar.fruitChange", { label: fruitLabel(props.fruitPreference) })}
+                accessibilityState={{ expanded: fruitMenuOpen }}
+                onPress={() => {
+                  setMealMenuOpen(false);
+                  setStyleMenuOpen(false);
+                  setFruitMenuOpen((open) => !open);
+                }}
+                style={[styles.statChip, styles.styleChip]}
+              >
+                <Text numberOfLines={1} style={[styles.statChipLabel, styles.styleChipLabel]}>🍎 {fruitLabel(props.fruitPreference)}</Text>
+                <Text style={styles.mealChipCaret}>{fruitMenuOpen ? "▴" : "▾"}</Text>
+              </Pressable>
+              <Pressable onPress={focusBudgetInput} style={[styles.statChip, styles.budgetChip, !budgetIsValid && styles.goalInputInvalid]}>
+                <TextInput
+                  ref={budgetInputRef}
+                  selection={budgetSelection}
+                  onSelectionChange={() => setBudgetSelection(undefined)}
+                  accessibilityLabel={t("prefs.budget")}
+                  keyboardType="decimal-pad"
+                  onChangeText={props.onWeeklyBudgetChange}
+                  placeholder="–"
+                  placeholderTextColor="#9DB3A0"
+                  style={styles.budgetInput}
+                  value={props.weeklyBudget}
+                />
+                <Text numberOfLines={1} style={styles.statChipLabel}>{t("prefs.perWeekCurrency", { currency: props.currencyCode })}</Text>
+                              </Pressable>
+            </View>
+            {fruitMenuOpen && (
+              <View style={styles.mealMenu}>
+                {fruitOptions.map((option) => {
+                  const selected = option === props.fruitPreference;
+                  return (
+                    <Pressable
+                      key={option}
+                      accessibilityRole="button"
+                      accessibilityLabel={t("prefs.fruitA11y", { label: t(`prefs.fruit${option.charAt(0).toUpperCase()}${option.slice(1)}`) })}
+                      accessibilityState={{ selected }}
+                      onPress={() => {
+                        setFruitMenuOpen(false);
+                        if (!selected) props.onFruitPreferenceChange(option);
+                      }}
+                      style={[styles.mealMenuItem, selected && styles.mealMenuItemSelected]}
+                    >
+                      <Text style={[styles.mealMenuText, selected && styles.mealMenuTextSelected]}>{fruitLabel(option)}</Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            )}
+          </View>
           {!props.hasValidGoal && <Text style={styles.goalError}>{t("calendar.goalError")}</Text>}
         </View>
       </View>
@@ -239,6 +316,8 @@ const styles = StyleSheet.create({
   mealChip: { gap: 6 },
   styleChip: { gap: 4, paddingHorizontal: 6 },
   styleChipLabel: { flexShrink: 1 },
+  budgetChip: { gap: 6, paddingVertical: 0, minHeight: 32 },
+  budgetInput: { minWidth: 36, color: palette.white, fontSize: 14, fontWeight: "700", paddingVertical: 4, textAlign: "right" },
   mealChipCaret: { color: "#D3E0D2", fontSize: 11 },
   mealMenu: { position: "absolute", top: "100%", left: 0, right: 0, marginTop: 4, zIndex: 20, borderRadius: 12, backgroundColor: palette.white, padding: 4, shadowColor: "#000", shadowOpacity: 0.2, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 8 },
   mealMenuItem: { minHeight: 40, justifyContent: "center", paddingHorizontal: 12, borderRadius: 9 },

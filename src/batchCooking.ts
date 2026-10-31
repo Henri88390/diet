@@ -203,6 +203,8 @@ export type BatchCookingOptions = {
   /** Weekdays (0 = Monday) on which the dinner should contain meat/fish. */
   meatWeekdays: number[];
   budgetTight: boolean;
+  /** Drop animal protein entirely when even the cheapest meat would break the budget. */
+  plantOnly?: boolean;
 };
 
 /**
@@ -225,7 +227,7 @@ export function applyBatchCooking(meals: Meal[], date: Date, options: BatchCooki
   const carbB = pick(carbOptions, seed + 1, (option) => allowed(option.name) && option !== carbA) ?? carbA;
   const carbs = [carbA, carbB];
   const animalPool = options.budgetTight ? budgetAnimalProteinOptions : animalProteinOptions;
-  const animal = options.meatWeekdays.some((weekday) => batchWeekdays.includes(weekday))
+  const animal = !options.plantOnly && options.meatWeekdays.some((weekday) => batchWeekdays.includes(weekday))
     ? pick(animalPool, seed + 1, (option) => allowed(option.name))
     : undefined;
   const legumeA = pick(legumeOptions, seed + 2, (option) => allowed(option.name));

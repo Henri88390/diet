@@ -4,6 +4,7 @@ import { getIngredientAggregationAmount, repriceMeals } from "./ingredientEstima
 import { getBatchDates } from "./batchCooking";
 import {
   DEFAULT_DAILY_CALORIE_GOAL,
+  formatDateKey,
   getPersonalizedDayPlan,
   scaleMealPlan
 } from "./sampleData";
@@ -155,11 +156,9 @@ export function getCalendarDayPlans(
   return Array.from({ length: days }, (_, index) => {
     const date = new Date(start);
     date.setDate(start.getDate() + index);
-    const plan = getPersonalizedDayPlan(date, preferences, countryCode);
-    const meals = scaleMealPlan(
-      plan.meals,
-      appliedGoals[plan.date] ?? DEFAULT_DAILY_CALORIE_GOAL
-    );
+    const goal = appliedGoals[formatDateKey(date)] ?? DEFAULT_DAILY_CALORIE_GOAL;
+    const plan = getPersonalizedDayPlan(date, preferences, countryCode, goal);
+    const meals = scaleMealPlan(plan.meals, goal);
     return repriceMeals(meals, countryCode);
   });
 }

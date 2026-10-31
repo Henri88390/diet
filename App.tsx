@@ -236,6 +236,8 @@ export default function App(): React.JSX.Element {
               onMealPress={setSelectedMeal}
               mealsPerDay={mealPreferences.mealsPerDay}
               onMealsPerDayChange={(mealsPerDay) => setMealPreferences((current) => ({ ...current, mealsPerDay }))}
+              planStyle={mealPreferences.planStyle}
+              onPlanStyleChange={(planStyle) => setMealPreferences((current) => ({ ...current, planStyle }))}
               onEditPreferences={() => navigateTo("preferences")}
               onOpenGroceries={() => navigateTo("groceries")}
               onDateStripTouchChange={handleDateStripTouch}

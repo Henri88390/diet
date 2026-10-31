@@ -47,7 +47,7 @@ const fruitOptions: { value: FruitPreference; labelKey: string }[] = [
 ];
 
 const mealsPerDayOptions: MealsPerDay[] = [2, 3, 4, 5];
-const planStyleOptions: PlanStyle[] = ["balanced", "highProtein", "lowCost", "moreVariety", "simpleIngredients"];
+const planStyleOptions: PlanStyle[] = ["balanced", "highProtein", "lowCost", "batchCooking"];
 
 export function OnboardingScreen({
   bannedIngredients,
@@ -93,6 +93,9 @@ export function OnboardingScreen({
               />
             ))}
           </View>
+          {mealPreferences.planStyle === "batchCooking" && (
+            <Text style={styles.planStyleHint}>{t("planStyle.batchCookingDesc")}</Text>
+          )}
         </View>
         <View style={styles.choiceGroup}>
           <Text style={styles.choiceTitle}>{t("prefs.budget")}</Text>
@@ -446,6 +449,7 @@ const styles = StyleSheet.create({
   choiceTextSelected: { color: palette.green, fontWeight: "700" },
   sectionTitle: { color: palette.ink, fontSize: 19, fontWeight: "700", letterSpacing: -0.4 },
   planStyles: { flexDirection: "row", flexWrap: "wrap", gap: 7 },
+  planStyleHint: { color: palette.muted, fontSize: 11, lineHeight: 16, marginTop: 8 },
   budgetRow: { flexDirection: "row", alignItems: "center", backgroundColor: "#F7F7F3", borderRadius: 10, paddingHorizontal: 11, minHeight: 44 },
   budgetInput: { minWidth: 70, color: palette.ink, fontSize: 15, fontWeight: "700", paddingVertical: 8 },
   budgetCurrency: { color: palette.muted, fontSize: 11, marginLeft: 8 },

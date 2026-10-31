@@ -22,6 +22,8 @@ import {
 } from "./src/sampleData";
 import { DEFAULT_COUNTRY, type CountryCode } from "./src/countryPricing";
 import { repriceMeals } from "./src/ingredientEstimates";
+import { getBatchPrep } from "./src/groceryEstimate";
+import { setBatchCalendar } from "./src/batchCooking";
 import { palette } from "./src/theme";
 
 type Screen = "preferences" | "calendar" | "groceries";
@@ -51,6 +53,7 @@ export default function App(): React.JSX.Element {
   const screenTransition = useRef(new Animated.Value(0)).current;
 
   const dates = useMemo(() => getPlanningDates(today), [today]);
+  setBatchCalendar(dates[0], dates[dates.length - 1]);
   const selectedDateKey = formatDateKey(selectedDate);
   const appliedGoal = appliedGoals[selectedDateKey];
   const personalizedPlan = getPersonalizedDayPlan(selectedDate, mealPreferences, countryCode);
@@ -59,6 +62,7 @@ export default function App(): React.JSX.Element {
     appliedGoals[selectedDateKey] ?? DEFAULT_DAILY_CALORIE_GOAL
   );
   const meals = repriceMeals(unpricedMeals, countryCode);
+  const batchPrep = getBatchPrep(selectedDate, mealPreferences, appliedGoals, countryCode, today, dates[dates.length - 1]);
   const parsedGoal = Number(goalInput);
   const hasValidGoal =
     goalInput.length > 0 &&
@@ -229,6 +233,7 @@ export default function App(): React.JSX.Element {
               onSelectDate={setSelectedDate}
               onTodayPress={goToToday}
               meals={meals}
+              batchPrep={batchPrep}
               dailyCalorieGoal={dailyCalorieGoal}
               goalInput={goalInput}
               setGoalInput={changeDailyGoalInput}

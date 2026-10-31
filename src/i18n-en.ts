@@ -25,9 +25,18 @@ export const en: Translation = {
     balanced: "Balanced",
     highProtein: "Higher protein",
     lowCost: "Lower cost",
-    moreVariety: "More ingredient variety",
-    moreVarietyShort: "More variety",
-    simpleIngredients: "Simple ingredients"
+    batchCooking: "Batch cooking",
+    batchCookingDesc: "Cook a few base ingredients once, then reuse them for lunches and dinners over 3–4 days."
+  },
+  batch: {
+    note: "Batch cooking · from your batch prep",
+    prepTitle: "Batch prep",
+    prepSubtitle_one: "Cook on {{day}} · covers {{count}} day",
+    prepSubtitle_other: "Cook on {{day}} · covers {{count}} days",
+    prepToday_one: "Cook today · covers {{count}} day",
+    prepToday_other: "Cook today · covers {{count}} days",
+    raw: "raw",
+    cooked: "pre-cooked"
   },
   mealsPerDay: {
     "2": "2 meals",

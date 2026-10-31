@@ -5,6 +5,8 @@ const order: FoodLanguage[] = ["fr", "de", "es", "ru", "pl"];
 // English -> [fr, de, es, ru, pl]
 const foods: Record<string, [string, string, string, string, string]> = {
   "Adjusted meal": ["Repas adapté", "Angepasste Mahlzeit", "Comida adaptada", "Скорректированное блюдо", "Dostosowany posiłek"],
+  "Rice": ["Riz", "Reis", "Arroz", "Рис", "Ryż"],
+  "Beef": ["Bœuf", "Rindfleisch", "Ternera", "Говядина", "Wołowina"],
   "Banana & oat snack": ["Collation banane-avoine", "Bananen-Hafer-Snack", "Tentempié de plátano y avena", "Перекус из банана и овсянки", "Przekąska bananowo-owsiana"],
   "Bean": ["Haricots", "Bohnen", "Alubias", "Фасоль", "Fasola"],
   "Canned sardines, drained": ["Sardines en conserve, égouttées", "Sardinen aus der Dose, abgetropft", "Sardinas en conserva, escurridas", "Консервированные сардины, без жидкости", "Sardynki z puszki, odsączone"],
@@ -187,12 +189,12 @@ const typeWords: Record<string, string[]> = {
   snack: ["Collation", "Snack", "Tentempié", "Перекус", "Przekąska"]
 };
 const cheapWords = ["économique", "günstig", "económico", "бюджетный", "budżetowy"];
-const simpleWords = ["simple", "einfach", "sencillo", "простой", "prosty"];
 const mealWords = ["Repas", "Mahlzeit", "Comida", "Блюдо", "Posiłek"];
 const withWords = ["avec", "mit", "con", "с", "z"];
 const berryWords = ["aux fruits rouges", "mit Beeren", "con frutos rojos", "с ягодами", "z jagodami"];
 const yogurtWords = ["Yaourt avec", "Joghurt mit", "Yogur con", "Йогурт с", "Jogurt z"];
 const dishWords = ["Plat", "Gericht", "Plato", "Блюдо", "Danie"];
+const bowlWords = ["Bol", "Bowl", "Bowl", "Боул", "Miska"];
 
 // Translates generated meal titles by pattern, falling back to the English text.
 export function translateTitle(title: string, language: string): string {
@@ -203,8 +205,6 @@ export function translateTitle(title: string, language: string): string {
   const tr = (value: string) => translateTitle(value, language);
   let m = title.match(/^(.+) meal$/);
   if (m) return `${mealWords[index]}: ${m[1].split(" & ").map(tr).join(" & ")}`;
-  m = title.match(/^Simple (\w+)$/i);
-  if (m && typeWords[m[1].toLowerCase()]) return `${typeWords[m[1].toLowerCase()][index]} ${simpleWords[index]}`;
   m = title.match(/^Lower-cost (\w+) with (.+)$/i);
   if (m && typeWords[m[1].toLowerCase()]) {
     return `${typeWords[m[1].toLowerCase()][index]} ${cheapWords[index]} ${withWords[index]} ${tr(m[2])}`;
@@ -215,6 +215,10 @@ export function translateTitle(title: string, language: string): string {
   if (m) return `${yogurtWords[index]} ${tr(m[1])}`;
   m = title.match(/^(.+?),? tomato & spinach pasta$/i);
   if (m) return `${translateFood("Tomato & spinach pasta", language)} (${tr(m[1])})`;
+  m = title.match(/^(.+?) & (.+) bowl$/);
+  if (m && findFood(m[1], language) && findFood(m[2], language)) {
+    return `${bowlWords[index]}: ${tr(m[1])} & ${tr(m[2])}`;
+  }
   m = title.match(/^(.+) (?:& (?:vegetable rice|tomato soup|sweet potato tray|potato bowl|vegetable stir-fry)|(?:& )?greens)$/i);
   if (m) return `${dishWords[index]}: ${tr(m[1].replace(/^Lemony /i, ""))}`;
   m = title.match(/^(?:Lemony|One-pan tomato) (.+?)(?: & greens)?$/i);

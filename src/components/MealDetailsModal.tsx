@@ -6,6 +6,7 @@ import { palette } from "../theme";
 import { formatMoney } from "../countryPricing";
 import { useTranslation } from "react-i18next";
 import { useFoodNames } from "../i18n";
+import { BatchNote } from "./BatchCooking";
 
 type Props = { meal: Meal | null; onClose: () => void };
 
@@ -58,6 +59,11 @@ export function MealDetailsModal({ meal, onClose }: Props): React.JSX.Element {
                 <Text style={styles.statLabel}>{t("details.estCost")}</Text>
               </View>
             </View>
+            {meal.batch && (
+              <View style={styles.batchNote}>
+                <BatchNote />
+              </View>
+            )}
             {meal.banConflicts && meal.banConflicts.length > 0 && (
               <Text style={styles.banWarning}>
                 {t("details.banWarning", { list: meal.banConflicts.map(food).join(", ") })}
@@ -143,6 +149,7 @@ const styles = StyleSheet.create({
   statValueCost: { color: "#8A5A1F" },
   statLabel: { color: palette.muted, fontSize: 10, fontWeight: "600", marginTop: 2 },
   banWarning: { color: "#8B3027", fontSize: 11, lineHeight: 16, marginTop: 10 },
+  batchNote: { marginTop: 2 },
   scrollContent: { paddingBottom: 12 },
   sectionTitle: { color: palette.ink, fontSize: 16, fontWeight: "700", marginTop: 19 },
   helper: { color: palette.muted, fontSize: 10, marginTop: 4, marginBottom: 8 },

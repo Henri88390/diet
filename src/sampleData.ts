@@ -13,6 +13,7 @@ import {
   isValidPositiveIngredientQuantity
 } from "./ingredientEstimates";
 import { isIngredientBanned } from "./ingredientCatalog";
+import { applyBatchCooking } from "./batchCooking";
 import type { CountryCode } from "./countryPricing";
 import { typicalBreakfastPresets } from "./typicalBreakfast";
 
@@ -442,12 +443,13 @@ export function getPersonalizedDayPlan(
     }
   }
 
-  applyPlanStyle(meals, preferences, weekday, countryCode);
+  applyPlanStyle(meals, preferences, countryCode, date);
   applyTypicalBreakfast(meals, preferences.typicalBreakfast);
   if (isWeeklyBudgetTight(meals, preferences.weeklyBudget, countryCode)) {
-    const mealsForBudgetAdjustment = preferences.typicalBreakfast.mode === "none"
+    const mealsForBudgetAdjustment = (preferences.typicalBreakfast.mode === "none"
       ? meals
-      : meals.filter((meal) => meal.type !== "Breakfast");
+      : meals.filter((meal) => meal.type !== "Breakfast")
+    ).filter((meal) => !meal.batch);
     applyLowCostChoices(mealsForBudgetAdjustment);
   }
   applyIngredientBans(meals, preferences.bannedIngredients);
@@ -490,23 +492,23 @@ function mergeDuplicateIngredients(meal: Meal): void {
 function applyPlanStyle(
   meals: Meal[],
   preferences: MealPreferences,
-  weekday: number,
-  countryCode: CountryCode
+  countryCode: CountryCode,
+  date: Date
 ): void {
-  if (preferences.planStyle === "lowCost") applyLowCostChoices(meals);
-  if (preferences.planStyle === "simpleIngredients") applySimpleIngredientChoices(meals);
-  if (preferences.planStyle === "highProtein") applyHighProteinChoices(meals, preferences, countryCode);
-  if (preferences.planStyle === "moreVariety") {
-    const proteinRotation = ["Black beans, drained", "Chickpeas, drained", "Lentils, dry"];
-    meals.forEach((meal) => {
-      meal.ingredients.forEach((ingredient) => {
-        if (/black beans, drained|white beans, drained|chickpeas, drained|lentils, dry/i.test(ingredient.name)) {
-          const replacement = proteinRotation[(weekday + meal.ingredients.indexOf(ingredient)) % proteinRotation.length];
-          if (ingredient.unit === "g") ingredient.name = replacement;
-        }
-      });
-    });
+  if (preferences.planStyle === "batchCooking") {
+    const options = {
+      bannedIngredients: preferences.bannedIngredients,
+      meatWeekdays: getWeeklyAssignmentDays(preferences.meatPerWeek),
+      budgetTight: isWeeklyBudgetTight(meals, preferences.weeklyBudget, countryCode)
+    };
+    applyBatchCooking(meals, date, options);
+    // Re-run with cheaper components if the batch itself pushes past the budget.
+    if (!options.budgetTight && isWeeklyBudgetTight(meals, preferences.weeklyBudget, countryCode)) {
+      applyBatchCooking(meals, date, { ...options, budgetTight: true });
+    }
   }
+  if (preferences.planStyle === "lowCost") applyLowCostChoices(meals);
+  if (preferences.planStyle === "highProtein") applyHighProteinChoices(meals, preferences, countryCode);
 }
 
 /**
@@ -562,34 +564,6 @@ function applyHighProteinChoices(
       if (budgetTight) addOrIncrease(meal, "Black beans, drained", 100, "g");
       else addOrIncrease(meal, "Canned tuna, drained", 90, "g");
     }
-    refreshMealEstimates(meal);
-  });
-}
-
-function applySimpleIngredientChoices(meals: Meal[]): void {
-  const substitutions: Array<[RegExp, string]> = [
-    [/pasta, dry/i, "Basmati rice, dry"],
-    [/wrap/i, "Bread"],
-    [/chicken breast|cooked chicken/i, "Chicken thigh"],
-    [/beef mince|ground beef|pork mince|ground pork|frozen minced beef/i, "Frozen minced beef"],
-    [/canned sardines/i, "Canned tuna, drained"],
-    [/red beans, drained|black beans, drained|white beans, drained|chickpeas, drained|lentils, dry|hummus/i, "Black beans, drained"],
-    [/frozen tomatoes|cherry tomatoes|^tomatoes?$/i, "Chopped tomatoes"],
-    [/baby spinach|leafy greens|lettuce|green beans|cucumber/i, "Frozen mixed vegetables"],
-    [/frozen berries|^apple$/i, "Banana"]
-  ];
-  meals.forEach((meal) => {
-    meal.ingredients = meal.ingredients.map((ingredient) => {
-      const replacement = substitutions.find(([pattern]) => pattern.test(ingredient.name));
-      if (!replacement) return ingredient;
-      const [, name] = replacement;
-      if (name === "Banana") {
-        return { ...ingredient, name, quantity: "1", unit: "medium" };
-      }
-      return { ...ingredient, name };
-    });
-    meal.title = `Simple ${meal.type.toLowerCase()}`;
-    meal.description = describeMealIngredients(meal);
     refreshMealEstimates(meal);
   });
 }

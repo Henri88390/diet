@@ -29,6 +29,7 @@ const {
   isCalendarDateAvailable,
   getCalendarMonthNavigationAvailability,
   getShoppingCategory,
+  getBatchPrep,
   formatShoppingQuantity,
   toShoppingUnit,
   toAggregationUnit
@@ -267,7 +268,7 @@ for (let offset = 0; offset < 7; offset += 1) {
     ...preferences,
     meatPerWeek: 7,
     dairyPerWeek: 7,
-    planStyle: "moreVariety",
+    planStyle: "lowCost",
     weeklyBudget: "1000"
   });
   assert.ok(day.meals.flatMap((meal) => meal.ingredients).every(
@@ -386,27 +387,6 @@ assert.ok(repeatedBreakfasts.every((meal) =>
   JSON.stringify(meal.ingredients.map(({ name, quantity, unit }) => ({ name, quantity, unit }))) ===
     JSON.stringify(repeatedBreakfasts[0].ingredients.map(({ name, quantity, unit }) => ({ name, quantity, unit })))
 ), "a selected preset breakfast repeats identically on every date");
-const balancedWeekIngredientNames = new Set(Array.from({ length: 7 }, (_, index) => {
-  const date = new Date(2026, 9, 26 + index);
-  return getPersonalizedDayPlan(date, preferences).meals.flatMap((meal) =>
-    meal.ingredients.map((ingredient) => ingredient.name)
-  );
-}).flat());
-const simpleWeekPreferences = { ...preferences, planStyle: "simpleIngredients" };
-const simpleWeekPlans = Array.from({ length: 7 }, (_, index) => {
-  const date = new Date(2026, 9, 26 + index);
-  return getPersonalizedDayPlan(date, simpleWeekPreferences);
-});
-const simpleWeekIngredientNames = new Set(simpleWeekPlans.flatMap((day) =>
-  day.meals.flatMap((meal) => meal.ingredients.map((ingredient) => ingredient.name))
-));
-assert.ok(simpleWeekIngredientNames.size < balancedWeekIngredientNames.size,
-  "simple ingredients style uses fewer distinct ingredients across a week");
-assert.deepEqual(
-  getPersonalizedDayPlan(new Date(2026, 9, 26), simpleWeekPreferences),
-  getPersonalizedDayPlan(new Date(2026, 9, 26), simpleWeekPreferences),
-  "simple ingredients choices are deterministic"
-);
 const breadJamPlan = getPersonalizedDayPlan(today, {
   ...preferences,
   typicalBreakfast: { mode: "preset", presetId: "bread-jam" }
@@ -705,24 +685,6 @@ const highProteinPlan = getPersonalizedDayPlan(new Date(2026, 9, 26), {
 });
 assert.ok(highProteinPlan.meals[0].ingredients.some((ingredient) => /^eggs?$/i.test(ingredient.name)),
   "higher-protein style selects additional protein-rich food");
-const varietyDate = new Date(2026, 10, 1);
-const balancedVarietyDay = getPersonalizedDayPlan(varietyDate, {
-  ...preferences,
-  meatPerWeek: 0,
-  planStyle: "balanced",
-  weeklyBudget: "1000"
-});
-const variedDay = getPersonalizedDayPlan(varietyDate, {
-  ...preferences,
-  meatPerWeek: 0,
-  planStyle: "moreVariety",
-  weeklyBudget: "1000"
-});
-assert.notEqual(
-  balancedVarietyDay.meals[1].ingredients.find((ingredient) => /beans|chickpeas/i.test(ingredient.name)).name,
-  variedDay.meals[1].ingredients.find((ingredient) => /beans|chickpeas/i.test(ingredient.name)).name,
-  "more-variety style rotates the legume selection"
-);
 const budgetDay = new Date(2026, 10, 6);
 const unrestrictedBudgetPlan = getPersonalizedDayPlan(budgetDay, {
   ...preferences,
@@ -777,7 +739,7 @@ assert.equal(getDailyCalories(scaleMealPlan(allFoodsBanned.meals, DEFAULT_DAILY_
 
 assert.equal(en.prefs.banIngredients, "Ban ingredients");
 assert.equal(en.prefs.budget, "Weekly food budget");
-assert.equal(en.planStyle.moreVariety, "More ingredient variety");
+assert.equal(en.planStyle.lowCost, "Lower cost");
 assert.equal(en.prefs.country, "Country and currency");
 
 const { hasFoodTranslation, translateTitle } = require("../src/foodNames.ts");
@@ -801,5 +763,204 @@ for (const [code, locale] of Object.entries({ fr, de, es, ru, pl })) {
   assert.deepEqual([...keys].filter((key) => !englishKeys.has(key)), [],
     `${code} locale has no unknown translation keys`);
 }
+
+// ---- Batch cooking plan style ----
+const meatPattern = /\b(chicken|beef|pork|turkey|lamb|ham|bacon|sausage|fish|tuna|salmon|sardines?)\b/i;
+const batchPreferences = {
+  ...preferences,
+  planStyle: "batchCooking",
+  meatPerWeek: 2,
+  weeklyBudget: "1000"
+};
+const batchDay = (date, prefs = batchPreferences, goal = DEFAULT_DAILY_CALORIE_GOAL) =>
+  scaleMealPlan(getPersonalizedDayPlan(date, prefs).meals, goal);
+const batchMonday = new Date(2026, 10, 2);
+const batchWeek = Array.from({ length: 7 }, (_, index) => new Date(2026, 10, 2 + index));
+
+assert.deepEqual(
+  getPersonalizedDayPlan(batchMonday, batchPreferences),
+  getPersonalizedDayPlan(new Date(2026, 10, 2, 17), batchPreferences),
+  "batch cooking plans are deterministic and independent of the time of day"
+);
+assert.ok(en.planStyle.batchCooking && en.planStyle.batchCookingDesc,
+  "the batch cooking style has a label and description");
+assert.match(preferencesSource, /"batchCooking"/, "preferences offer the batch cooking style");
+assert.match(calendarSource, /"batchCooking"/, "calendar style menu offers the batch cooking style");
+assert.ok(getPersonalizedDayPlan(batchMonday, preferences).meals.every((meal) => !meal.batch),
+  "other plan styles never carry batch metadata");
+assert.equal(getBatchPrep(batchMonday, preferences, {}, "DE"), null,
+  "other plan styles have no batch prep summary");
+
+// Days group into a 4-day (Mon-Thu) and a 3-day (Fri-Sun) batch.
+const batchLunches = batchWeek.map((date) =>
+  getPersonalizedDayPlan(date, batchPreferences).meals.find((meal) => meal.type === "Lunch"));
+batchLunches.forEach((lunch, index) => {
+  assert.ok(lunch.batch, "lunch is assembled from a batch");
+  assert.equal(lunch.batch.startDate, index < 4 ? "2026-11-02" : "2026-11-06",
+    "a date always falls in the same Monday-anchored batch");
+  assert.equal(lunch.batch.days, index < 4 ? 4 : 3, "a week splits into 4 + 3 days");
+});
+assert.deepEqual(batchLunches[0].batch, batchLunches[3].batch, "batch components are shared inside a batch");
+assert.notDeepEqual(batchLunches[0].batch.components, batchLunches[4].batch.components,
+  "consecutive batches rotate their components");
+assert.equal(
+  getPersonalizedDayPlan(new Date(2026, 10, 9), batchPreferences).meals[1].batch.startDate, "2026-11-09",
+  "the next Monday starts a new batch"
+);
+
+// A small cooked base is shared by the batch, but meals combine it differently.
+[[0, 4], [4, 7]].forEach(([from, to]) => {
+  const days = batchWeek.slice(from, to).map((date) => batchDay(date));
+  const components = batchLunches[from].batch.components.filter((name) => !meatPattern.test(name));
+  assert.ok(components.length >= 4, "a batch cooks carbs, legumes and a vegetable mix");
+  const batchMeals = days.flatMap((meals) => meals.filter((meal) => meal.type !== "Breakfast" && meal.type !== "Snack"));
+  components.forEach((name) => assert.ok(
+    batchMeals.filter((meal) => meal.ingredients.some((ingredient) => ingredient.name === name)).length >= 2,
+    `batch component ${name} is reused in at least two meals of its batch`));
+  batchMeals.forEach((meal) => assert.ok(
+    meal.ingredients.some((ingredient) => components.includes(ingredient.name)),
+    "every batch meal is built from the cooked base"));
+  assert.ok(new Set(batchMeals.map((meal) => meal.title)).size >= 3,
+    "batch meals combine the cooked base into varied dishes");
+  days.slice(1).forEach((meals, index) => {
+    const lunch = (list) => list.find((meal) => meal.type === "Lunch");
+    assert.notEqual(lunch(meals).title, lunch(days[index]).title, "consecutive lunches are not the same dish");
+  });
+});
+
+// Calories, protein, meals per day and duplicates.
+for (const mealsPerDay of [2, 3, 4, 5]) {
+  for (const goal of [1800, 2000, 2500]) {
+    batchWeek.forEach((date) => {
+      const meals = batchDay(date, { ...batchPreferences, mealsPerDay }, goal);
+      assert.equal(meals.length, mealsPerDay, "batch plans keep the meals-per-day preference");
+      assert.equal(getDailyCalories(meals), goal, "batch plans hit the daily calorie goal exactly");
+      assert.ok(getDailyProtein(meals) >= 45, `batch plans keep a sensible protein level (${getDailyProtein(meals)} g)`);
+      meals.forEach((meal) => {
+        const names = meal.ingredients.map((ingredient) => ingredient.name.toLowerCase());
+        assert.equal(new Set(names).size, names.length, "no duplicate ingredient inside a meal");
+      });
+    });
+  }
+}
+
+// Meat preference, bans and budget.
+const meatDinners = (prefs, dates) => dates.filter((date) =>
+  getPersonalizedDayPlan(date, prefs).meals.find((meal) => meal.type === "Dinner")
+    .ingredients.some((ingredient) => meatPattern.test(ingredient.name))).length;
+assert.equal(meatDinners({ ...batchPreferences, meatPerWeek: 0 }, batchWeek), 0, "meat never appears when set to never");
+assert.equal(meatDinners({ ...batchPreferences, meatPerWeek: 2 }, batchWeek), 2, "meat appears the requested number of days");
+assert.equal(meatDinners({ ...batchPreferences, meatPerWeek: 7 }, batchWeek), 7, "meat appears every day when requested");
+assert.ok(batchWeek.every((date) => getPersonalizedDayPlan(date, { ...batchPreferences, meatPerWeek: 0 }).meals
+  .filter((meal) => meal.type !== "Breakfast")
+  .every((meal) => meal.ingredients.every((ingredient) => !meatPattern.test(ingredient.name)))),
+"no meat in lunches or dinners when meat is set to never");
+const batchBans = ["basmati-rice", "lentils-dry", "chicken-breast", "frozen-vegetables", "olive-oil", "potato"];
+for (let weekOffset = 0; weekOffset < 6; weekOffset += 1) {
+  for (let dayOffset = 0; dayOffset < 7; dayOffset += 1) {
+    const date = new Date(2026, 10, 2 + weekOffset * 7 + dayOffset);
+    for (const bans of [batchBans, ingredientCatalog.map((ingredient) => ingredient.id)]) {
+      const meals = getPersonalizedDayPlan(date, { ...batchPreferences, meatPerWeek: 7, bannedIngredients: bans }).meals;
+      assert.ok(meals.every((meal) => meal.ingredients.every((ingredient) => !isIngredientBanned(ingredient.name, bans))),
+        "batch plans never contain banned ingredients");
+      meals.forEach((meal) => {
+        const names = meal.ingredients.map((ingredient) => ingredient.name.toLowerCase());
+        assert.equal(new Set(names).size, names.length, "no duplicate ingredient inside a banned-ingredient batch meal");
+      });
+    }
+  }
+}
+const tightBudgetMeals = batchWeek.flatMap((date) =>
+  getPersonalizedDayPlan(date, { ...batchPreferences, meatPerWeek: 7, weeklyBudget: "0" }).meals);
+assert.ok(tightBudgetMeals.every((meal) => meal.ingredients.every((ingredient) =>
+  !/chicken breast|leafy greens|beef mince|pork mince/i.test(ingredient.name))),
+"a tight budget uses the lower-cost batch components");
+assert.ok(tightBudgetMeals.filter((meal) => meal.batch).every((meal) =>
+  meal.batch.components.some((name) => meal.ingredients.some((ingredient) => ingredient.name === name))),
+"budget adjustments keep batch metadata consistent with the meal ingredients");
+
+// Batch prep summary and shopping list.
+const prepPlans = getCalendarDayPlans(new Date(2026, 10, 2), new Date(2026, 10, 5), batchPreferences, {}, "DE");
+const prep = getBatchPrep(new Date(2026, 10, 4), batchPreferences, {}, "DE");
+assert.equal(prep.startDate, "2026-11-02");
+assert.equal(prep.days, 4);
+assert.deepEqual(prep.items.map((item) => item.name), batchLunches[0].batch.components,
+  "the prep summary lists every batch component");
+const prepCarb = prep.items[0];
+const carbTotal = prepPlans.flat().flatMap((meal) => meal.ingredients)
+  .filter((ingredient) => ingredient.name === prepCarb.name)
+  .reduce((sum, ingredient) => sum + getIngredientAggregationAmount(ingredient.name, ingredient.quantity, ingredient.unit).quantity, 0);
+assert.ok(Math.abs(prepCarb.quantity * (prepCarb.unit === "kg" ? 1000 : 1) - carbTotal) < 1e-6,
+  "prep totals add up every portion in the batch");
+assert.deepEqual(getBatchPrep(new Date(2026, 10, 2), batchPreferences, {}, "DE"), getBatchPrep(new Date(2026, 10, 5), batchPreferences, {}, "DE"),
+  "every day of a batch shows the same prep summary");
+const midBatchPrep = getBatchPrep(new Date(2026, 10, 7), batchPreferences, {}, "DE", new Date(2026, 10, 7, 9));
+assert.equal(midBatchPrep.startDate, "2026-11-07", "a running batch is prepped today, never in the past");
+assert.equal(midBatchPrep.days, 2, "a running batch only covers the remaining days");
+assert.equal(getBatchPrep(new Date(2026, 10, 6), batchPreferences, {}, "DE", new Date(2026, 10, 2), new Date(2026, 10, 6)).days, 1,
+  "the last calendar day is still covered by a batch prep");
+{
+  const { setBatchCalendar, getBatchWindow } = require("../src/batchCooking.ts");
+  // Calendar ends on Monday 2026-11-09: the Fri-Sun batch grows to 4 days instead of leaving a 1-day batch.
+  setBatchCalendar(new Date(2026, 10, 2), new Date(2026, 10, 9));
+  const extended = getBatchPrep(new Date(2026, 10, 7), batchPreferences, {}, "DE", new Date(2026, 10, 2), new Date(2026, 10, 9));
+  assert.equal(extended.days, 4, "a lone final calendar day joins the previous batch");
+  assert.equal(extended.startDate, "2026-11-06");
+  assert.equal(getBatchWindow(new Date(2026, 10, 9)).dayIndex, 3, "the final day is not its own cook day");
+  assert.equal(getBatchWindow(new Date(2026, 10, 2)).days, 4, "earlier batches are unchanged");
+  // Today Wednesday 11/4: the 2 left days merge with the next batches and re-split into 3-day batches.
+  setBatchCalendar(new Date(2026, 10, 4), new Date(2026, 10, 15));
+  assert.deepEqual([4, 7, 10, 13].map((day) => getBatchWindow(new Date(2026, 10, day)).days), [3, 3, 3, 3]);
+  // Today Saturday 11/7: the 2 left days merge with Mon-Thu (6) and split into 3 + 3.
+  setBatchCalendar(new Date(2026, 10, 7), new Date(2026, 10, 15));
+  assert.deepEqual([7, 10, 13].map((day) => getBatchWindow(new Date(2026, 10, day)).days), [3, 3, 3]);
+  for (let offset = 0; offset < 14; offset += 1) {
+    const today = new Date(2026, 10, 2 + offset);
+    setBatchCalendar(today, new Date(today.getFullYear(), today.getMonth(), today.getDate() + 30));
+    for (let day = 0; day <= 30; day += 1) {
+      const window = getBatchWindow(new Date(today.getFullYear(), today.getMonth(), today.getDate() + day));
+      assert.ok(window.days >= 3 && window.days <= 4, "every calendar batch covers 3-4 days");
+    }
+  }
+  setBatchCalendar(undefined, undefined);
+}
+assert.equal(getBatchPrep(new Date(2026, 10, 6), batchPreferences, {}, "DE", new Date(2026, 10, 2), new Date(2026, 10, 7)).days, 2,
+  "a batch is clipped to the last calendar day");
+assert.equal(getBatchPrep(new Date(2026, 10, 5), batchPreferences, {}, "DE", new Date(2026, 10, 7)).startDate, "2026-11-02",
+  "past dates keep their original batch prep day");
+const batchShopping = buildShoppingEstimate(new Date(2026, 10, 2), new Date(2026, 10, 5), batchPreferences, {}, "DE");
+assert.ok(prep.items.every((item) => batchShopping.items.some((entry) => entry.name === item.name)),
+  "the shopping list aggregates the batch components");
+
+// Translations.
+const batchTitles = new Set();
+const batchIngredientNames = new Set();
+for (let weekOffset = 0; weekOffset < 12; weekOffset += 1) {
+  for (let dayOffset = 0; dayOffset < 7; dayOffset += 1) {
+    const date = new Date(2026, 10, 2 + weekOffset * 7 + dayOffset);
+    for (const prefs of [
+      { ...batchPreferences, meatPerWeek: 7 }, { ...batchPreferences, meatPerWeek: 0 },
+      { ...batchPreferences, meatPerWeek: 3, weeklyBudget: "0" },
+      { ...batchPreferences, bannedIngredients: ["lentils-dry", "carrot"] }
+    ]) {
+      getPersonalizedDayPlan(date, prefs).meals.filter((meal) => meal.batch).forEach((meal) => {
+        batchTitles.add(meal.title);
+        meal.description.split("·").forEach((part) => batchIngredientNames.add(part.trim()));
+        meal.ingredients.forEach((ingredient) => batchIngredientNames.add(ingredient.name));
+      });
+    }
+  }
+}
+for (const title of batchTitles) {
+  for (const language of ["fr", "de", "es", "ru", "pl"]) {
+    assert.ok(hasFoodTranslation(title) || translateTitle(title, language) !== title,
+      `batch title "${title}" is translated to ${language}`);
+  }
+}
+assert.deepEqual([...batchIngredientNames].filter((name) => name && !hasFoodTranslation(name)), [],
+  "every batch ingredient and description part has a translation");
+assert.equal(translateTitle("Rice & lentils bowl", "fr"), "Bol: Riz & lentilles",
+  "generated batch bowl titles are composed from translated foods");
+assert.equal(translateTitle("Rice & lentils bowl", "ru"), "Боул: Рис & чечевица");
 
 console.log("Domain checks passed: seven-day calendar shopping aggregation, applied portions, modeled country pricing, currency formatting, and navigation contracts.");

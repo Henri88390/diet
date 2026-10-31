@@ -1,10 +1,12 @@
 import React, { useRef, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import type { Meal, MealsPerDay, PlanStyle } from "../models";
-import { getDailyProtein, getMealsInDisplayOrder, MAX_DAILY_CALORIE_GOAL, MIN_DAILY_CALORIE_GOAL } from "../sampleData";
+import type { BatchPrep } from "../groceryEstimate";
+import { formatDateKey, getDailyProtein, getMealsInDisplayOrder, MAX_DAILY_CALORIE_GOAL, MIN_DAILY_CALORIE_GOAL } from "../sampleData";
 import { palette } from "../theme";
 import { CalendarDateStrip } from "../components/CalendarDateStrip";
 import { MealCard } from "../components/MealCard";
+import { BatchPrepCard } from "../components/BatchCooking";
 import { ArrowButton } from "../components/ArrowButton";
 import { useTranslation } from "react-i18next";
 import { useDateLocale } from "../i18n";
@@ -16,6 +18,7 @@ type Props = {
   onSelectDate: (date: Date) => void;
   onTodayPress: () => void;
   meals: Meal[];
+  batchPrep: BatchPrep | null;
   dailyCalorieGoal: string;
   goalInput: string;
   setGoalInput: (goal: string) => void;
@@ -32,14 +35,14 @@ type Props = {
 };
 
 const mealsPerDayOptions: MealsPerDay[] = [2, 3, 4, 5];
-const planStyleOptions: PlanStyle[] = ["balanced", "highProtein", "lowCost", "moreVariety", "simpleIngredients"];
+const planStyleOptions: PlanStyle[] = ["balanced", "highProtein", "lowCost", "batchCooking"];
 
 export function CalendarScreen(props: Props): React.JSX.Element {
   const { t } = useTranslation();
   const dateLocale = useDateLocale();
   const [mealMenuOpen, setMealMenuOpen] = useState(false);
   const [styleMenuOpen, setStyleMenuOpen] = useState(false);
-  const styleLabel = (style: PlanStyle): string => t(style === "moreVariety" ? "planStyle.moreVarietyShort" : `planStyle.${style}`);
+  const styleLabel = (style: PlanStyle): string => t(`planStyle.${style}`);
   const planStyleLabel = styleLabel(props.planStyle);
   const goalInputRef = useRef<React.ComponentRef<typeof TextInput>>(null);
   const [goalSelection, setGoalSelection] = useState<{ start: number; end: number } | undefined>();
@@ -56,6 +59,16 @@ export function CalendarScreen(props: Props): React.JSX.Element {
 
   return (
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      {(mealMenuOpen || styleMenuOpen) && (
+        <Pressable
+          accessible={false}
+          onPress={() => {
+            setMealMenuOpen(false);
+            setStyleMenuOpen(false);
+          }}
+          style={styles.menuBackdrop}
+        />
+      )}
       <View style={styles.header}>
         <ArrowButton variant="compact" direction="left" label={t("calendar.preferences")} accessibilityLabel={t("calendar.preferencesA11y")} onPress={props.onEditPreferences} />
         <ArrowButton variant="compact" style={{ flexShrink: 1, marginLeft: 10 }} label={t("calendar.weeklyGrocery")} accessibilityLabel={t("calendar.weeklyGroceryA11y")} onPress={props.onOpenGroceries} />
@@ -78,12 +91,14 @@ export function CalendarScreen(props: Props): React.JSX.Element {
         dates={props.dates}
         selectedDate={props.selectedDate}
         today={props.today}
+        batchCooking={props.planStyle === "batchCooking"}
         onSelectDate={props.onSelectDate}
         onTouchChange={props.onDateStripTouchChange}
       />
 
       <View style={styles.calorieCard}>
         <View style={styles.cardMain}>
+          <View style={[styles.menuAnchor, { zIndex: 2 }]}>
           <View style={styles.calorieBottomRow}>
             <View style={styles.statChip}>
               <Text style={styles.statChipValue}>{protein}</Text>
@@ -93,7 +108,10 @@ export function CalendarScreen(props: Props): React.JSX.Element {
               accessibilityRole="button"
               accessibilityLabel={t("calendar.mealsPerDayChange", { label: mealsPerDayLabel })}
               accessibilityState={{ expanded: mealMenuOpen }}
-              onPress={() => setMealMenuOpen((open) => !open)}
+              onPress={() => {
+                setStyleMenuOpen(false);
+                setMealMenuOpen((open) => !open);
+              }}
               style={[styles.statChip, styles.mealChip]}
             >
               <Text style={styles.statChipLabel}>{mealsPerDayLabel}</Text>
@@ -122,12 +140,17 @@ export function CalendarScreen(props: Props): React.JSX.Element {
               })}
             </View>
           )}
+          </View>
+          <View style={[styles.menuAnchor, { zIndex: 1 }]}>
           <View style={styles.stepperRow}>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={t("calendar.planStyleChange", { label: planStyleLabel })}
               accessibilityState={{ expanded: styleMenuOpen }}
-              onPress={() => setStyleMenuOpen((open) => !open)}
+              onPress={() => {
+                setMealMenuOpen(false);
+                setStyleMenuOpen((open) => !open);
+              }}
               style={[styles.statChip, styles.styleChip]}
             >
               <Text numberOfLines={1} style={[styles.statChipLabel, styles.styleChipLabel]}>{planStyleLabel}</Text>
@@ -176,10 +199,14 @@ export function CalendarScreen(props: Props): React.JSX.Element {
               })}
             </View>
           )}
+          </View>
           {!props.hasValidGoal && <Text style={styles.goalError}>{t("calendar.goalError")}</Text>}
         </View>
       </View>
 
+      {meals.length > 0 && props.batchPrep && (
+        <BatchPrepCard prep={props.batchPrep} selectedDateKey={formatDateKey(props.selectedDate)} todayKey={formatDateKey(props.today)} />
+      )}
       {meals.length > 0 ? (
         <View style={styles.mealsList}>{meals.map((meal) => <MealCard key={meal.id} meal={meal} onPress={props.onMealPress} />)}</View>
       ) : (
@@ -201,7 +228,9 @@ const styles = StyleSheet.create({
   monthLabel: { color: palette.ink, fontSize: 16, fontWeight: "700" },
   todayButton: { minHeight: 34, justifyContent: "center", paddingHorizontal: 13, borderRadius: 10, borderWidth: 1, borderColor: "#C9D9C9", backgroundColor: palette.softGreen },
   todayButtonText: { color: palette.green, fontSize: 12, fontWeight: "700" },
-  calorieCard: { backgroundColor: palette.green, borderRadius: 20, padding: 12 },
+  calorieCard: { backgroundColor: palette.green, borderRadius: 20, padding: 12, zIndex: 10, elevation: 4 },
+  menuAnchor: { position: "relative" },
+  menuBackdrop: { position: "absolute", top: 0, right: 0, bottom: 0, left: 0, zIndex: 5 },
   cardMain: { gap: 8 },
   calorieBottomRow: { flexDirection: "row", alignItems: "stretch", gap: 6 },
   statChip: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", backgroundColor: "#456A4E", borderRadius: 10, paddingHorizontal: 8, paddingVertical: 6 },
@@ -211,7 +240,7 @@ const styles = StyleSheet.create({
   styleChip: { gap: 4, paddingHorizontal: 6 },
   styleChipLabel: { flexShrink: 1 },
   mealChipCaret: { color: "#D3E0D2", fontSize: 11 },
-  mealMenu: { borderRadius: 12, backgroundColor: palette.white, padding: 4 },
+  mealMenu: { position: "absolute", top: "100%", left: 0, right: 0, marginTop: 4, zIndex: 20, borderRadius: 12, backgroundColor: palette.white, padding: 4, shadowColor: "#000", shadowOpacity: 0.2, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 8 },
   mealMenuItem: { minHeight: 40, justifyContent: "center", paddingHorizontal: 12, borderRadius: 9 },
   mealMenuItemSelected: { backgroundColor: palette.softGreen },
   mealMenuText: { color: palette.ink, fontSize: 13, fontWeight: "600" },

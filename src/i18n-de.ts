@@ -17,9 +17,18 @@ export const de: Translation = {
     balanced: "Ausgewogen",
     highProtein: "Mehr Eiweiß",
     lowCost: "Günstiger",
-    moreVariety: "Mehr Zutatenvielfalt",
-    moreVarietyShort: "Mehr Vielfalt",
-    simpleIngredients: "Einfache Zutaten"
+    batchCooking: "Vorkochen",
+    batchCookingDesc: "Wenige Basiszutaten einmal vorkochen und für Mittag- und Abendessen an 3–4 Tagen wiederverwenden."
+  },
+  batch: {
+    note: "Vorkochen · aus deiner Vorbereitung",
+    prepTitle: "Vorkochen",
+    prepSubtitle_one: "Kochen am {{day}} · reicht für {{count}} Tag",
+    prepSubtitle_other: "Kochen am {{day}} · reicht für {{count}} Tage",
+    prepToday_one: "Heute kochen · reicht für {{count}} Tag",
+    prepToday_other: "Heute kochen · reicht für {{count}} Tage",
+    raw: "roh",
+    cooked: "vorgegart"
   },
   mealsPerDay: {
     "2": "2 Mahlzeiten",

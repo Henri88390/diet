@@ -1,6 +1,7 @@
 import type { Meal, MealPreferences, Money } from "./models";
 import { getCountry, type CountryCode } from "./countryPricing";
 import { getIngredientAggregationAmount, repriceMeals } from "./ingredientEstimates";
+import { getBatchDates } from "./batchCooking";
 import {
   DEFAULT_DAILY_CALORIE_GOAL,
   getPersonalizedDayPlan,
@@ -243,4 +244,71 @@ export function buildSevenDayShoppingEstimate(
 export function formatShoppingQuantity(quantity: number, unit: string, locale: string): string {
   const formatted = new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(quantity);
   return `${formatted} ${unit}`;
+}
+
+function startOfLocalDay(date: Date): number {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+}
+
+function formatLocalDateKey(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+export type BatchPrepItem = { name: string; quantity: number; unit: string };
+
+export type BatchPrep = {
+  /** Date key of the prep day. */
+  startDate: string;
+  days: number;
+  /** Components with total raw quantities for the whole batch. */
+  items: BatchPrepItem[];
+};
+
+/**
+ * Bulk-prep summary for the batch that contains `date`: every component with the
+ * total quantity needed across all of the batch's days, using the same applied
+ * calorie portions as the calendar and the shopping list.
+ */
+export function getBatchPrep(
+  date: Date,
+  preferences: MealPreferences,
+  appliedGoals: Record<string, number>,
+  countryCode: CountryCode,
+  today?: Date,
+  lastDate?: Date
+): BatchPrep | null {
+  if (preferences.planStyle !== "batchCooking") return null;
+  const batchDates = getBatchDates(date);
+  const selectedDay = startOfLocalDay(date);
+  const todayStart = today ? startOfLocalDay(today) : undefined;
+  // Cooking can't happen in the past: a running batch is prepped today and only covers the days left.
+  let dates = todayStart && selectedDay >= todayStart
+    ? batchDates.filter((day) => startOfLocalDay(day) >= todayStart)
+    : batchDates;
+  // A batch never covers days beyond the planning calendar, but it covers every calendar day up to the last one.
+  if (lastDate) {
+    const lastStart = startOfLocalDay(lastDate);
+    dates = dates.filter((day) => startOfLocalDay(day) <= lastStart);
+  }
+  if (dates.length === 0) return null;
+  const dayPlans = getCalendarDayPlans(dates[0], dates[dates.length - 1], preferences, appliedGoals, countryCode);
+  const batchMeals = dayPlans.flat().filter((meal) => meal.batch);
+  if (batchMeals.length === 0) return null;
+  const { components } = batchMeals[0].batch!;
+  const startDate = formatLocalDateKey(dates[0]);
+  const days = dates.length;
+  const totals = new Map<string, BatchPrepItem>();
+  batchMeals.forEach((meal) => meal.ingredients
+    .filter((ingredient) => components.includes(ingredient.name))
+    .forEach((ingredient) => {
+      const amount = getIngredientAggregationAmount(ingredient.name, ingredient.quantity, ingredient.unit);
+      const key = `${ingredient.name}|${amount.unit}`;
+      const current = totals.get(key) ?? { name: ingredient.name, quantity: 0, unit: amount.unit };
+      current.quantity += amount.quantity;
+      totals.set(key, current);
+    }));
+  const items = [...totals.values()]
+    .map((item) => ({ ...item, ...toShoppingUnit(item.quantity, item.unit), name: item.name }))
+    .sort((a, b) => components.indexOf(a.name) - components.indexOf(b.name));
+  return { startDate, days, items };
 }

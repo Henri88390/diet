@@ -5,6 +5,7 @@ import { mealAccent, mealBadge, palette } from "../theme";
 import { formatMoney } from "../countryPricing";
 import { useTranslation } from "react-i18next";
 import { useFoodNames } from "../i18n";
+import { BatchNote } from "./BatchCooking";
 
 type Props = { meal: Meal; onPress: (meal: Meal) => void };
 
@@ -59,6 +60,7 @@ export function MealCard({ meal, onPress }: Props): React.JSX.Element {
             <Text style={[styles.chipText, styles.chipTextCost]}>~{cost}</Text>
           </View>
         </View>
+        {meal.batch && <BatchNote />}
         </View>
       </View>
     </Pressable>

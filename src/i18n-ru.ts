@@ -17,9 +17,22 @@ export const ru: Translation = {
     balanced: "Сбалансированный",
     highProtein: "Больше белка",
     lowCost: "Дешевле",
-    moreVariety: "Больше разнообразия ингредиентов",
-    moreVarietyShort: "Больше разнообразия",
-    simpleIngredients: "Простые ингредиенты"
+    batchCooking: "Готовка впрок",
+    batchCookingDesc: "Приготовьте несколько базовых продуктов один раз и используйте их для обедов и ужинов в течение 3–4 дней."
+  },
+  batch: {
+    note: "Готовка впрок · из вашей заготовки",
+    prepTitle: "Заготовка",
+    prepSubtitle_one: "Готовить: {{day}} · хватит на {{count}} день",
+    prepSubtitle_few: "Готовить: {{day}} · хватит на {{count}} дня",
+    prepSubtitle_many: "Готовить: {{day}} · хватит на {{count}} дней",
+    prepSubtitle_other: "Готовить: {{day}} · хватит на {{count}} дня",
+    prepToday_one: "Готовить сегодня · хватит на {{count}} день",
+    prepToday_few: "Готовить сегодня · хватит на {{count}} дня",
+    prepToday_many: "Готовить сегодня · хватит на {{count}} дней",
+    prepToday_other: "Готовить сегодня · хватит на {{count}} дня",
+    raw: "сырое",
+    cooked: "готовое"
   },
   mealsPerDay: {
     "2": "2 приёма пищи",

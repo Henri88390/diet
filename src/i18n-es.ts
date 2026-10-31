@@ -17,9 +17,18 @@ export const es: Translation = {
     balanced: "Equilibrado",
     highProtein: "Más proteína",
     lowCost: "Más económico",
-    moreVariety: "Más variedad de ingredientes",
-    moreVarietyShort: "Más variedad",
-    simpleIngredients: "Ingredientes simples"
+    batchCooking: "Cocina por lotes",
+    batchCookingDesc: "Cocina unos pocos ingredientes base una sola vez y reutilízalos en comidas y cenas durante 3–4 días."
+  },
+  batch: {
+    note: "Cocina por lotes · de tu preparación",
+    prepTitle: "Preparación por lotes",
+    prepSubtitle_one: "Cocinar el {{day}} · cubre {{count}} día",
+    prepSubtitle_other: "Cocinar el {{day}} · cubre {{count}} días",
+    prepToday_one: "Cocinar hoy · cubre {{count}} día",
+    prepToday_other: "Cocinar hoy · cubre {{count}} días",
+    raw: "crudo",
+    cooked: "ya cocido"
   },
   mealsPerDay: {
     "2": "2 comidas",

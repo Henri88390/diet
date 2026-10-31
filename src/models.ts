@@ -20,8 +20,7 @@ export type PlanStyle =
   | "balanced"
   | "highProtein"
   | "lowCost"
-  | "moreVariety"
-  | "simpleIngredients";
+  | "batchCooking";
 
 export type WeeklyFrequency = 0 | 1 | 2 | 3 | 7;
 
@@ -74,10 +73,21 @@ export type MealIngredient = {
   estimatedCost?: Money;
 };
 
+/** Batch-cooking membership: which prep session a meal is assembled from. */
+export type MealBatch = {
+  /** Date key (YYYY-MM-DD) of the batch's first day, the prep day. */
+  startDate: string;
+  /** Number of calendar days (3 or 4) the batch covers. */
+  days: number;
+  /** Ingredient names cooked in bulk and reused across the batch. */
+  components: string[];
+};
+
 export type Meal = {
   id: string;
   type: MealType;
   slot?: MealSlot;
+  batch?: MealBatch;
   banConflicts?: string[];
   title: string;
   description: string;

@@ -17,9 +17,22 @@ export const pl: Translation = {
     balanced: "Zbilansowany",
     highProtein: "Więcej białka",
     lowCost: "Taniej",
-    moreVariety: "Większa różnorodność składników",
-    moreVarietyShort: "Większa różnorodność",
-    simpleIngredients: "Proste składniki"
+    batchCooking: "Gotowanie na zapas",
+    batchCookingDesc: "Ugotuj kilka podstawowych składników jednorazowo i wykorzystaj je w obiadach i kolacjach przez 3–4 dni."
+  },
+  batch: {
+    note: "Gotowanie na zapas · z twojego przygotowania",
+    prepTitle: "Przygotowanie na zapas",
+    prepSubtitle_one: "Gotuj: {{day}} · wystarczy na {{count}} dzień",
+    prepSubtitle_few: "Gotuj: {{day}} · wystarczy na {{count}} dni",
+    prepSubtitle_many: "Gotuj: {{day}} · wystarczy na {{count}} dni",
+    prepSubtitle_other: "Gotuj: {{day}} · wystarczy na {{count}} dnia",
+    prepToday_one: "Gotuj dziś · wystarczy na {{count}} dzień",
+    prepToday_few: "Gotuj dziś · wystarczy na {{count}} dni",
+    prepToday_many: "Gotuj dziś · wystarczy na {{count}} dni",
+    prepToday_other: "Gotuj dziś · wystarczy na {{count}} dnia",
+    raw: "surowe",
+    cooked: "gotowe"
   },
   mealsPerDay: {
     "2": "2 posiłki",

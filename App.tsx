@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Animated, AppState, Easing, PanResponder, StatusBar, StyleSheet } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import "./src/i18n";
 import { MealDetailsModal } from "./src/components/MealDetailsModal";
 import { CalendarScreen } from "./src/screens/CalendarScreen";
 import { GroceryScreen } from "./src/screens/GroceryScreen";

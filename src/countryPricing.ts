@@ -36,6 +36,12 @@ export function getCountry(code: CountryCode): CountryOption {
 }
 
 /** All currently supported currencies have two minor-unit digits. */
+const currencySymbols: Record<string, string> = { EUR: "€", PLN: "zł", GBP: "£", USD: "$", AUD: "A$" };
+
+export function getCurrencySymbol(currencyCode: string): string {
+  return currencySymbols[currencyCode] ?? currencyCode;
+}
+
 export function formatMoney(money: Money, locale?: string): string {
   return new Intl.NumberFormat(locale, {
     style: "currency",

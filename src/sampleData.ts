@@ -568,11 +568,11 @@ function applyHighProteinChoices(
       if (!Number.isFinite(quantity)) return;
       if (isMeat(ingredient.name) && ingredient.unit === "g") {
         hasMeatOrFish = true;
-        ingredient.quantity = String(Math.round(quantity * 1.5));
+        ingredient.quantity = String(Math.round(quantity * 1.25));
       } else if (proteinFood.test(ingredient.name) && ingredient.unit === "g") {
-        ingredient.quantity = String(Math.round(quantity * 1.5));
+        ingredient.quantity = String(Math.round(quantity * 1.25));
       } else if (starchOrFat.test(ingredient.name)) {
-        const shrunk = quantity * 0.65;
+        const shrunk = quantity * 0.8;
         ingredient.quantity = ingredient.unit === "g" || ingredient.unit === "ml"
           ? String(Math.round(shrunk))
           : String(Math.max(0.5, Math.round(shrunk * 2) / 2));
@@ -580,11 +580,11 @@ function applyHighProteinChoices(
     });
 
     if (meal.type === "Breakfast") {
-      addOrIncrease(meal, "Eggs", 2, "large");
-      if (!budgetTight) addOrIncrease(meal, "Skyr", 120, "g");
+      addOrIncrease(meal, "Eggs", 1, "large");
+      if (!budgetTight) addOrIncrease(meal, "Skyr", 80, "g");
     } else if (!hasMeatOrFish) {
-      if (budgetTight) addOrIncrease(meal, "Black beans, drained", 100, "g");
-      else addOrIncrease(meal, "Canned tuna, drained", 90, "g");
+      if (budgetTight) addOrIncrease(meal, "Black beans, drained", 70, "g");
+      else addOrIncrease(meal, "Canned tuna, drained", 60, "g");
     }
     refreshMealEstimates(meal);
   });
@@ -742,8 +742,9 @@ function fitMealsToBudget(
 ): void {
   const dailyBudget = parseDailyBudgetCents(preferences.weeklyBudget);
   if (dailyBudget === null) return;
+  const relaxation = preferences.budgetRelaxation ?? 0;
   // A budget below a realistic weekly food cost can't be met sensibly: only apply the basic low-cost swaps.
-  if (dailyBudget * 7 < MIN_REASONABLE_WEEKLY_BUDGET_CENTS) {
+  if (relaxation === 0 && dailyBudget * 7 < MIN_REASONABLE_WEEKLY_BUDGET_CENTS) {
     if (getScaledDayTotals(meals, countryCode, goal).cost > dailyBudget) {
       applyLowCostChoices(preferences.typicalBreakfast.mode === "none"
         ? meals.filter((meal) => !meal.batch)
@@ -751,7 +752,9 @@ function fitMealsToBudget(
     }
     return;
   }
-  const proteinFloor = Math.max(MIN_PROTEIN_GRAMS, goal * MIN_PROTEIN_PER_KCAL);
+  const proteinFloor = relaxation >= 1
+    ? Math.max(30, goal * 0.015)
+    : Math.max(MIN_PROTEIN_GRAMS, goal * MIN_PROTEIN_PER_KCAL);
   const editableMeals = (): Meal[] => (preferences.typicalBreakfast.mode === "none"
     ? meals
     : meals.filter((meal) => meal.type !== "Breakfast")
@@ -764,6 +767,12 @@ function fitMealsToBudget(
     (targets) => shrinkCostlyProtein(targets, 0.8),
     swapMeatForLegumes
   ];
+  if (relaxation >= 1) {
+    steps.push((targets) => shrinkCostlyProtein(targets, 0.6), (targets) => shrinkCostlyProtein(targets, 0.6));
+  }
+  if (relaxation >= 2) {
+    steps.push((targets) => reduceToStaples(targets, preferences.dairyPerWeek > 0));
+  }
 
   let totals = getScaledDayTotals(meals, countryCode, goal);
   for (const step of steps) {
@@ -771,12 +780,38 @@ function fitMealsToBudget(
     const snapshot: Meal[] = JSON.parse(JSON.stringify(meals));
     step(editableMeals());
     const next = getScaledDayTotals(meals, countryCode, goal);
-    if (next.protein < proteinFloor && next.protein < totals.protein * 0.97) {
+    if (relaxation < 2 && next.protein < proteinFloor && next.protein < totals.protein * 0.97) {
       meals.splice(0, meals.length, ...snapshot);
       return;
     }
     totals = next;
   }
+}
+
+const STAPLE_RECIPES: Record<Meal["type"], [string, string, string][]> = {
+  Breakfast: [["Rolled oats", "80", "g"]],
+  Lunch: [["Basmati rice, dry", "80", "g"], ["Black beans, drained", "120", "g"], ["Frozen mixed vegetables", "120", "g"]],
+  Dinner: [["Pasta, dry", "80", "g"], ["Chickpeas, drained", "120", "g"], ["Frozen mixed vegetables", "120", "g"]],
+  Snack: [["Bread", "2", "slices"], ["Hummus", "2", "tbsp"]]
+};
+
+/** Last resort: the same few cheap staples every day, trading variety for cost. */
+function reduceToStaples(meals: Meal[], withDairy: boolean): void {
+  meals.forEach((meal) => {
+    const recipe: [string, string, string][] = [...STAPLE_RECIPES[meal.type]];
+    if (meal.type === "Breakfast" && withDairy) recipe.push(["Milk", "200", "ml"]);
+    meal.ingredients = recipe.map(([name, quantity, unit]) => {
+      const estimate = estimateIngredient(name, quantity, unit);
+      return {
+        name, quantity, unit, category: estimate.category,
+        calories: estimate.calories, proteinGrams: estimate.proteinGrams,
+        estimatedCostCents: estimate.estimatedCostCents
+      };
+    });
+    meal.title = `Lower-cost ${meal.type.toLowerCase()} with ${recipe[0][0]}`;
+    meal.description = describeMealIngredients(meal);
+    refreshMealEstimates(meal);
+  });
 }
 
 function applyIngredientBans(meals: Meal[], bannedIds: string[]): void {

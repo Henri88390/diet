@@ -23,6 +23,7 @@ import {
 import { DEFAULT_COUNTRY, getCountry, type CountryCode } from "./src/countryPricing";
 import { repriceMeals } from "./src/ingredientEstimates";
 import { getBatchPrep } from "./src/groceryEstimate";
+import { getBudgetPlan } from "./src/budgetPlan";
 import { setBatchCalendar } from "./src/batchCooking";
 import { palette } from "./src/theme";
 
@@ -54,11 +55,19 @@ export default function App(): React.JSX.Element {
 
   const dates = useMemo(() => getPlanningDates(today), [today]);
   setBatchCalendar(dates[0], dates[dates.length - 1]);
+  const budgetPlan = useMemo(
+    () => getBudgetPlan(today, mealPreferences, appliedGoals, countryCode),
+    [today, mealPreferences, appliedGoals, countryCode]
+  );
+  const planPreferences = budgetPlan.preferences;
+  const budgetWarning = budgetPlan.status === "impossible"
+    ? { budget: budgetPlan.budget, weeklyCost: budgetPlan.weeklyCost }
+    : null;
   const selectedDateKey = formatDateKey(selectedDate);
   const appliedGoal = appliedGoals[selectedDateKey];
   const personalizedPlan = getPersonalizedDayPlan(
     selectedDate,
-    mealPreferences,
+    planPreferences,
     countryCode,
     appliedGoals[selectedDateKey] ?? DEFAULT_DAILY_CALORIE_GOAL
   );
@@ -67,7 +76,7 @@ export default function App(): React.JSX.Element {
     appliedGoals[selectedDateKey] ?? DEFAULT_DAILY_CALORIE_GOAL
   );
   const meals = repriceMeals(unpricedMeals, countryCode);
-  const batchPrep = getBatchPrep(selectedDate, mealPreferences, appliedGoals, countryCode, today, dates[dates.length - 1]);
+  const batchPrep = getBatchPrep(selectedDate, planPreferences, appliedGoals, countryCode, today, dates[dates.length - 1]);
   const parsedGoal = Number(goalInput);
   const hasValidGoal =
     goalInput.length > 0 &&
@@ -219,13 +228,14 @@ export default function App(): React.JSX.Element {
               mealPreferences={mealPreferences}
               onMealPreferencesChange={(next) => setMealPreferences(next)}
               countryCode={countryCode}
+              budgetWarning={budgetWarning}
               onCountryChange={setCountryCode}
               onContinue={() => navigateTo("calendar")}
             />
           ) : screen === "groceries" ? (
             <GroceryScreen
               today={today}
-              preferences={mealPreferences}
+              preferences={planPreferences}
               appliedGoals={appliedGoals}
               countryCode={countryCode}
               onBackToCalendar={() => navigateTo("calendar")}
@@ -253,6 +263,8 @@ export default function App(): React.JSX.Element {
               onFruitPreferenceChange={(fruitPreference) => setMealPreferences((current) => ({ ...current, fruitPreference }))}
               weeklyBudget={mealPreferences.weeklyBudget}
               onWeeklyBudgetChange={(weeklyBudget) => setMealPreferences((current) => ({ ...current, weeklyBudget }))}
+              budgetWarning={budgetWarning}
+              budgetStatus={budgetPlan.status}
               currencyCode={getCountry(countryCode).currencyCode}
               onEditPreferences={() => navigateTo("preferences")}
               onOpenGroceries={() => navigateTo("groceries")}

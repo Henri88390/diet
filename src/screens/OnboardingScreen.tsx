@@ -11,7 +11,9 @@ import type {
 } from "../models";
 import { ingredientCatalog, ingredientCategoryOrder } from "../ingredientCatalog";
 import { palette } from "../theme";
-import { countries, formatMoney, getCountry, type CountryCode } from "../countryPricing";
+import { getBudgetStep, stepBudget } from "../budgetPlan";
+import type { BudgetWarning } from "../budgetPlan";
+import { countries, formatMoney, getCountry, getCurrencySymbol, type CountryCode } from "../countryPricing";
 import {
   estimateIngredient,
   isValidPositiveIngredientQuantity
@@ -28,6 +30,7 @@ type Props = {
   mealPreferences: MealPreferences;
   onMealPreferencesChange: (preferences: MealPreferences) => void;
   countryCode: CountryCode;
+  budgetWarning: BudgetWarning | null;
   onCountryChange: (countryCode: CountryCode) => void;
   onContinue: () => void;
 };
@@ -55,11 +58,19 @@ export function OnboardingScreen({
   mealPreferences,
   onMealPreferencesChange,
   countryCode,
+  budgetWarning,
   onCountryChange,
   onContinue
 }: Props): React.JSX.Element {
   const { t } = useTranslation();
   const { food } = useFoodNames();
+  const budgetInputRef = React.useRef<React.ComponentRef<typeof TextInput>>(null);
+  const [budgetSelection, setBudgetSelection] = React.useState<{ start: number; end: number } | undefined>();
+  const focusBudgetInput = (): void => {
+    const end = mealPreferences.weeklyBudget.length;
+    setBudgetSelection({ start: end, end });
+    budgetInputRef.current?.focus();
+  };
   const parsedBudget = Number(mealPreferences.weeklyBudget.replace(",", "."));
   const budgetIsValid = mealPreferences.weeklyBudget.trim() === "" ||
     (Number.isFinite(parsedBudget) && parsedBudget >= 0);
@@ -99,18 +110,36 @@ export function OnboardingScreen({
         </View>
         <View style={styles.choiceGroup}>
           <Text style={styles.choiceTitle}>{t("prefs.budget")}</Text>
-          <View style={styles.budgetRow}>
+          <View style={styles.budgetLine}>
+          <Pressable onPress={focusBudgetInput} style={[styles.budgetRow, budgetWarning && styles.budgetRowWarn]}>
+            <Pressable accessibilityRole="button" accessibilityLabel={t("calendar.decrease")} hitSlop={6} onPress={() => onMealPreferencesChange({ ...mealPreferences, weeklyBudget: stepBudget(mealPreferences.weeklyBudget, -getBudgetStep(getCountry(countryCode).currencyCode)) })} style={styles.budgetStepButton}>
+              <Text style={styles.budgetStepText}>−</Text>
+            </Pressable>
             <TextInput
+              ref={budgetInputRef}
               accessibilityLabel={t("prefs.budget")}
               keyboardType="decimal-pad"
               maxLength={9}
               onChangeText={(weeklyBudget) =>
                 onMealPreferencesChange({ ...mealPreferences, weeklyBudget })
               }
+              onSelectionChange={() => setBudgetSelection(undefined)}
+              selection={budgetSelection}
               style={styles.budgetInput}
               value={mealPreferences.weeklyBudget}
             />
-            <Text style={styles.budgetCurrency}>{t("prefs.perWeekCurrency", { currency: getCountry(countryCode).currencyCode })}</Text>
+            <Text style={styles.budgetCurrency}>{getCurrencySymbol(getCountry(countryCode).currencyCode)}</Text>
+            <Pressable accessibilityRole="button" accessibilityLabel={t("calendar.increase")} hitSlop={6} onPress={() => onMealPreferencesChange({ ...mealPreferences, weeklyBudget: stepBudget(mealPreferences.weeklyBudget, getBudgetStep(getCountry(countryCode).currencyCode)) })} style={styles.budgetStepButton}>
+              <Text style={styles.budgetStepText}>+</Text>
+            </Pressable>
+          </Pressable>
+            {budgetWarning && (
+              <Text style={[styles.budgetWarnText, styles.budgetWarnInline]}>
+                {t("calendar.budgetWarning", {
+                  cost: formatMoney({ amountMinorUnits: budgetWarning.weeklyCost, currencyCode: getCountry(countryCode).currencyCode })
+                })}
+              </Text>
+            )}
           </View>
           {!budgetIsValid && (
             <Text style={styles.budgetError}>{t("prefs.budgetError")}</Text>
@@ -450,9 +479,17 @@ const styles = StyleSheet.create({
   sectionTitle: { color: palette.ink, fontSize: 19, fontWeight: "700", letterSpacing: -0.4 },
   planStyles: { flexDirection: "row", flexWrap: "wrap", gap: 7 },
   planStyleHint: { color: palette.muted, fontSize: 11, lineHeight: 16, marginTop: 8 },
-  budgetRow: { flexDirection: "row", alignItems: "center", backgroundColor: "#F7F7F3", borderRadius: 10, paddingHorizontal: 11, minHeight: 44 },
-  budgetInput: { minWidth: 70, color: palette.ink, fontSize: 15, fontWeight: "700", paddingVertical: 8 },
-  budgetCurrency: { color: palette.muted, fontSize: 11, marginLeft: 8 },
+  budgetRow: { flexDirection: "row", alignItems: "center", alignSelf: "flex-start", backgroundColor: "#F7F7F3", borderRadius: 10, paddingLeft: 11, paddingRight: 6, minHeight: 36 },
+  budgetRowError: { borderWidth: 1, borderColor: "#C0392B", backgroundColor: "#FBEDEB" },
+  budgetRowWarn: { borderWidth: 1, borderColor: "#E08A1E", backgroundColor: "#FFF4E3" },
+  budgetWarnInline: { flex: 1, marginLeft: 10, fontSize: 12, lineHeight: 16 },
+  budgetWarnText: { color: "#B36A0B" },
+  budgetLine: { flexDirection: "row", alignItems: "center" },
+  budgetInput: { minWidth: 44, color: palette.ink, fontSize: 15, fontWeight: "700", paddingVertical: 4, textAlign: "right" },
+  budgetCurrencyPress: { justifyContent: "center", alignSelf: "stretch" },
+  budgetStepButton: { width: 28, height: 28, borderRadius: 8, backgroundColor: "#E5EEE5", alignItems: "center", justifyContent: "center" },
+  budgetStepText: { color: palette.green, fontSize: 18, lineHeight: 22, fontWeight: "800", includeFontPadding: false },
+  budgetCurrency: { color: palette.muted, fontSize: 11, marginLeft: 8, marginRight: 8 },
   budgetError: { color: "#8B3027", fontSize: 10, marginTop: 6 },
   banSection: { marginBottom: 16 },
   banCategory: { backgroundColor: palette.white, borderRadius: 13, padding: 12, marginTop: 10, borderWidth: 1, borderColor: "#E3E7DE" },

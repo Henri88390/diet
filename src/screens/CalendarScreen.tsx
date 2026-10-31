@@ -1,13 +1,17 @@
-import React, { useRef, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import React, { useState } from "react";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import type { FruitPreference, Meal, MealsPerDay, PlanStyle } from "../models";
 import type { BatchPrep } from "../groceryEstimate";
+import type { BudgetPlan, BudgetWarning } from "../budgetPlan";
+import { getBudgetStep, stepBudget } from "../budgetPlan";
+import { formatMoney, getCurrencySymbol } from "../countryPricing";
 import { formatDateKey, getDailyProtein, getMealsInDisplayOrder, MAX_DAILY_CALORIE_GOAL, MIN_DAILY_CALORIE_GOAL } from "../sampleData";
 import { palette } from "../theme";
 import { CalendarDateStrip } from "../components/CalendarDateStrip";
 import { MealCard } from "../components/MealCard";
 import { BatchPrepCard } from "../components/BatchCooking";
 import { ArrowButton } from "../components/ArrowButton";
+import { AmountStepper } from "../components/AmountStepper";
 import { useTranslation } from "react-i18next";
 import { useDateLocale } from "../i18n";
 
@@ -33,6 +37,8 @@ type Props = {
   onFruitPreferenceChange: (fruitPreference: FruitPreference) => void;
   weeklyBudget: string;
   onWeeklyBudgetChange: (weeklyBudget: string) => void;
+  budgetWarning: BudgetWarning | null;
+  budgetStatus: BudgetPlan["status"];
   currencyCode: string;
   onEditPreferences: () => void;
   onOpenGroceries: () => void;
@@ -55,22 +61,6 @@ export function CalendarScreen(props: Props): React.JSX.Element {
   const budgetIsValid = props.weeklyBudget.trim() === "" || (Number.isFinite(budgetNumber) && budgetNumber >= 0);
   const styleLabel = (style: PlanStyle): string => t(`planStyle.${style}`);
   const planStyleLabel = styleLabel(props.planStyle);
-  const goalInputRef = useRef<React.ComponentRef<typeof TextInput>>(null);
-  const [goalSelection, setGoalSelection] = useState<{ start: number; end: number } | undefined>();
-
-  function focusGoalInput(): void {
-    const end = props.goalInput.length;
-    setGoalSelection({ start: end, end });
-    goalInputRef.current?.focus();
-  }
-  const budgetInputRef = useRef<React.ComponentRef<typeof TextInput>>(null);
-  const [budgetSelection, setBudgetSelection] = useState<{ start: number; end: number } | undefined>();
-
-  function focusBudgetInput(): void {
-    const end = props.weeklyBudget.length;
-    setBudgetSelection({ start: end, end });
-    budgetInputRef.current?.focus();
-  }
   const mealsPerDayLabel = t(`mealsPerDay.${props.mealsPerDay}`);
   const meals = getMealsInDisplayOrder(props.meals);
   const protein = getDailyProtein(meals);
@@ -178,26 +168,18 @@ export function CalendarScreen(props: Props): React.JSX.Element {
               <Text numberOfLines={1} style={[styles.statChipLabel, styles.styleChipLabel]}>{planStyleLabel}</Text>
               <Text style={styles.mealChipCaret}>{styleMenuOpen ? "▴" : "▾"}</Text>
             </Pressable>
-            <Pressable accessibilityRole="button" accessibilityLabel={t("calendar.decrease")} onPress={() => props.onAdjustGoal(-100)} style={styles.stepperButton}>
-              <Text style={styles.stepperText}>−</Text>
-            </Pressable>
-            <Pressable onPress={focusGoalInput} style={[styles.goalInputContainer, !props.hasValidGoal && styles.goalInputInvalid]}>
-              <TextInput
-                ref={goalInputRef}
-                selection={goalSelection}
-                onSelectionChange={() => setGoalSelection(undefined)}
-                accessibilityLabel={t("calendar.goalLabel")}
-                accessibilityHint={t("calendar.goalHint", { min: MIN_DAILY_CALORIE_GOAL, max: MAX_DAILY_CALORIE_GOAL })}
-                keyboardType="number-pad"
-                onChangeText={props.setGoalInput}
-                style={styles.goalInput}
-                value={props.goalInput}
-              />
-              <Text style={styles.goalUnit}>{t("common.kcal")}</Text>
-            </Pressable>
-            <Pressable accessibilityRole="button" accessibilityLabel={t("calendar.increase")} onPress={() => props.onAdjustGoal(100)} style={styles.stepperButton}>
-              <Text style={styles.stepperText}>+</Text>
-            </Pressable>
+            <AmountStepper
+              value={props.goalInput}
+              onChangeText={props.setGoalInput}
+              onStep={(direction) => props.onAdjustGoal(direction * 100)}
+              unit={t("common.kcal")}
+              keyboardType="number-pad"
+              inputLabel={t("calendar.goalLabel")}
+              inputHint={t("calendar.goalHint", { min: MIN_DAILY_CALORIE_GOAL, max: MAX_DAILY_CALORIE_GOAL })}
+              decreaseLabel={t("calendar.decrease")}
+              increaseLabel={t("calendar.increase")}
+              invalid={!props.hasValidGoal}
+            />
           </View>
           {styleMenuOpen && (
             <View style={styles.mealMenu}>
@@ -223,7 +205,7 @@ export function CalendarScreen(props: Props): React.JSX.Element {
           )}
           </View>
           <View style={[styles.menuAnchor, { zIndex: 0 }]}>
-            <View style={styles.calorieBottomRow}>
+            <View style={styles.stepperRow}>
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={t("calendar.fruitChange", { label: fruitLabel(props.fruitPreference) })}
@@ -238,21 +220,19 @@ export function CalendarScreen(props: Props): React.JSX.Element {
                 <Text numberOfLines={1} style={[styles.statChipLabel, styles.styleChipLabel]}>🍎 {fruitLabel(props.fruitPreference)}</Text>
                 <Text style={styles.mealChipCaret}>{fruitMenuOpen ? "▴" : "▾"}</Text>
               </Pressable>
-              <Pressable onPress={focusBudgetInput} style={[styles.statChip, styles.budgetChip, !budgetIsValid && styles.goalInputInvalid]}>
-                <TextInput
-                  ref={budgetInputRef}
-                  selection={budgetSelection}
-                  onSelectionChange={() => setBudgetSelection(undefined)}
-                  accessibilityLabel={t("prefs.budget")}
-                  keyboardType="decimal-pad"
-                  onChangeText={props.onWeeklyBudgetChange}
-                  placeholder="–"
-                  placeholderTextColor="#9DB3A0"
-                  style={styles.budgetInput}
-                  value={props.weeklyBudget}
-                />
-                <Text numberOfLines={1} style={styles.statChipLabel}>{t("prefs.perWeekCurrency", { currency: props.currencyCode })}</Text>
-                              </Pressable>
+              <AmountStepper
+                value={props.weeklyBudget}
+                onChangeText={props.onWeeklyBudgetChange}
+                onStep={(direction) => props.onWeeklyBudgetChange(stepBudget(props.weeklyBudget, direction * getBudgetStep(props.currencyCode)))}
+                unit={getCurrencySymbol(props.currencyCode)}
+                keyboardType="decimal-pad"
+                inputLabel={t("prefs.budget")}
+                decreaseLabel={t("calendar.decrease")}
+                increaseLabel={t("calendar.increase")}
+                placeholder="–"
+                invalid={!budgetIsValid}
+                warning={!!props.budgetWarning}
+              />
             </View>
             {fruitMenuOpen && (
               <View style={styles.mealMenu}>
@@ -280,6 +260,21 @@ export function CalendarScreen(props: Props): React.JSX.Element {
           {!props.hasValidGoal && <Text style={styles.goalError}>{t("calendar.goalError")}</Text>}
         </View>
       </View>
+
+      {props.budgetStatus === "compromised" && (
+        <View style={styles.budgetNotice}>
+          <Text style={styles.budgetNoticeText}>{t("calendar.budgetCompromised")}</Text>
+        </View>
+      )}
+      {props.budgetWarning && (
+        <View style={styles.budgetNotice}>
+          <Text style={styles.budgetNoticeText}>
+            {t("calendar.budgetWarning", {
+              cost: formatMoney({ amountMinorUnits: props.budgetWarning.weeklyCost, currencyCode: props.currencyCode })
+            })}
+          </Text>
+        </View>
+      )}
 
       {meals.length > 0 && props.batchPrep && (
         <BatchPrepCard prep={props.batchPrep} selectedDateKey={formatDateKey(props.selectedDate)} todayKey={formatDateKey(props.today)} />
@@ -316,8 +311,9 @@ const styles = StyleSheet.create({
   mealChip: { gap: 6 },
   styleChip: { gap: 4, paddingHorizontal: 6 },
   styleChipLabel: { flexShrink: 1 },
-  budgetChip: { gap: 6, paddingVertical: 0, minHeight: 32 },
-  budgetInput: { minWidth: 36, color: palette.white, fontSize: 14, fontWeight: "700", paddingVertical: 4, textAlign: "right" },
+  budgetNotice: { backgroundColor: "#FFF4DC", borderRadius: 14, padding: 12, marginTop: 12, gap: 4 },
+  budgetNoticeImpossible: { backgroundColor: "#F8E7E4" },
+  budgetNoticeText: { color: palette.ink, fontSize: 12, lineHeight: 17 },
   mealChipCaret: { color: "#D3E0D2", fontSize: 11 },
   mealMenu: { position: "absolute", top: "100%", left: 0, right: 0, marginTop: 4, zIndex: 20, borderRadius: 12, backgroundColor: palette.white, padding: 4, shadowColor: "#000", shadowOpacity: 0.2, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 8 },
   mealMenuItem: { minHeight: 40, justifyContent: "center", paddingHorizontal: 12, borderRadius: 9 },
@@ -325,12 +321,6 @@ const styles = StyleSheet.create({
   mealMenuText: { color: palette.ink, fontSize: 13, fontWeight: "600" },
   mealMenuTextSelected: { color: palette.green, fontWeight: "800" },
   stepperRow: { flex: 1, flexDirection: "row", alignItems: "stretch", gap: 6, minHeight: 44 },
-  stepperButton: { width: 40, borderRadius: 10, backgroundColor: "#E5EEE5", borderWidth: 1, borderColor: "#FFFFFF", alignItems: "center", justifyContent: "center", shadowColor: "#000", shadowOpacity: 0.25, shadowRadius: 3, shadowOffset: { width: 0, height: 2 }, elevation: 3 },
-  stepperText: { color: palette.green, fontSize: 22, lineHeight: 26, fontWeight: "800", includeFontPadding: false },
-  goalInputContainer: { width: 92, flexDirection: "row", alignItems: "center", justifyContent: "center", borderRadius: 10, backgroundColor: palette.white, paddingHorizontal: 6 },
-  goalInputInvalid: { borderWidth: 1, borderColor: "#F0A899" },
-  goalInput: { flex: 1, minWidth: 48, paddingVertical: 7, color: palette.ink, fontSize: 14, fontWeight: "700", textAlign: "right" },
-  goalUnit: { color: palette.muted, fontSize: 10, marginLeft: 5 },
   goalError: { color: "#FFE1DA", fontSize: 10, textAlign: "right", marginTop: 7 },
   pressed: { opacity: 0.84 },
   mealsList: { gap: 10, marginTop: 20 },

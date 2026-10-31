@@ -969,4 +969,36 @@ assert.equal(translateTitle("Rice & lentils bowl", "fr"), "Bol: Riz & lentilles"
   "generated batch bowl titles are composed from translated foods");
 assert.equal(translateTitle("Rice & lentils bowl", "ru"), "Боул: Рис & чечевица");
 
+// Budget plan.
+{
+  const { getBudgetPlan } = require("../src/budgetPlan.ts");
+  const goalsFor = (goal) => Object.fromEntries(dateKeys.map((key) => [key, goal]));
+  const soft = { ...preferences, weeklyBudget: "300" };
+  const plan = (prefs, goal = 2000) => getBudgetPlan(today, prefs, goalsFor(goal), "DE");
+  assert.equal(plan(soft).status, "ok", "a comfortable budget needs no compromise");
+  assert.deepEqual(plan(soft).sacrificed, []);
+  assert.equal(plan({ ...soft, weeklyBudget: "" }).status, "off", "a blank budget is not enforced");
+  assert.equal(plan({ ...soft, weeklyBudget: "0" }).status, "off", "a zero budget is not enforced");
+
+  for (const goal of [1500, 2000, 2800]) {
+    const tight = { ...soft, weeklyBudget: "20", fruitPreference: "include", meatPerWeek: 7, planStyle: "highProtein" };
+    const result = plan(tight, goal);
+    assert.ok(["compromised", "impossible"].includes(result.status), `a tight budget needs compromises at ${goal} kcal`);
+    assert.ok(result.sacrificed.length > 0, `compromises are reported at ${goal} kcal`);
+    const cost = buildSevenDayShoppingEstimate(today, result.preferences, goalsFor(goal), "DE").estimatedTotal.amountMinorUnits;
+    assert.equal(result.weeklyCost, cost, "the reported cost matches the generated plan");
+    if (result.status === "compromised") assert.ok(result.weeklyCost <= result.budget, "a compromised plan fits the budget");
+    getSevenCalendarDayPlans(today, result.preferences, goalsFor(goal), "DE").forEach((day) => {
+      assert.ok(day.length > 0, "every day still has meals");
+      assert.ok(Math.abs(getDailyCalories(day) - goal) <= goal * 0.02, `calories stay at the ${goal} kcal goal`);
+    });
+  }
+
+  const impossible = plan({ ...soft, weeklyBudget: "5" });
+  assert.equal(impossible.status, "impossible", "a budget below the cheapest plan is reported as impossible");
+  assert.ok(impossible.weeklyCost > impossible.budget, "the cheapest achievable cost is reported");
+  assert.ok(getSevenCalendarDayPlans(today, impossible.preferences, goalsFor(2000), "DE").every((day) => day.length > 0),
+    "an impossible budget still produces a plan");
+}
+
 console.log("Domain checks passed: seven-day calendar shopping aggregation, applied portions, modeled country pricing, currency formatting, and navigation contracts.");

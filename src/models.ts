@@ -34,6 +34,8 @@ export type MealPreferences = {
   mealsPerDay: MealsPerDay;
   planStyle: PlanStyle;
   weeklyBudget: string;
+  /** Internal, set by the budget planner: 1 relaxes the protein floor, 2 also reduces food variety. */
+  budgetRelaxation?: 0 | 1 | 2;
   bannedIngredients: IngredientBans;
   typicalBreakfast: TypicalBreakfast;
 };

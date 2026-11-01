@@ -466,13 +466,13 @@ const plans = getSevenCalendarDayPlans(today, preferences, appliedGoals, "DE");
   console.log(`Ingredient-ban regressions passed: ${offeredCaseCount} offered replacement cases and all eight QA bugs.`);
 }
 
-// Frozen plan digests guard legacy behavior; generated snacks intentionally add date/slot occurrence keys.
+// Frozen plan digests guard legacy behavior (display emojis excluded); generated snacks intentionally add date/slot occurrence keys.
 // 57 catalog bans x 4 styles x 4 meal counts x 7 days = 6,384 automatic cases.
 {
   const { createHash } = require("node:crypto");
   for (const [withBans, expected] of [
-    [false, "a1e62e9934199adf991107855fd8aa669013bbea6dca6d433e1a441e4d30df66"],
-    [true, "3eace8df68a40ca186c2b9d2e7fdcd6453d448e43574b57ad5e910b58534455e"]
+    [false, "e25e833be5eb4b11302297629510a7deaa36722a866f08fac4b04570d34fe43e"],
+    [true, "86b4b2a0a65ae696add5e505beba472e53c49d79fdf94073955e826ef035e49f"]
   ]) {
     const hash = createHash("sha256");
     let count = 0;
@@ -481,7 +481,7 @@ const plans = getSevenCalendarDayPlans(today, preferences, appliedGoals, "DE");
         for (const mealsPerDay of [2, 3, 4, 5]) for (let day = 2; day <= 8; day++) {
           const p = { ...preferences, planStyle, mealsPerDay, bannedIngredients: id ? [id] : [] };
           const plan = getPersonalizedDayPlan(new Date(2026, 10, day), p);
-          hash.update(JSON.stringify(plan));
+          hash.update(JSON.stringify(plan, (key, value) => key === "emoji" ? undefined : value));
           assert.ok(plan.meals.every((meal) => meal.ingredients.every((item) => !isIngredientBanned(item.name, p.bannedIngredients))), "automatic bans remain leak-free");
           count++;
         }

@@ -29,17 +29,17 @@ const mealTemplates: MealTemplate[][] = [
   [
     { id: "monday-b", type: "Breakfast", title: "Berry overnight oats", description: "Oats · yogurt · frozen berries", ingredients: [{ name: "Rolled oats", quantity: "50", unit: "g" }, { name: "Plain yogurt", quantity: "120", unit: "g" }, { name: "Frozen berries", quantity: "75", unit: "g" }, { name: "Milk", quantity: "60", unit: "ml" }], calories: 360, estimatedCostCents: 95, durationMinutes: 5, emoji: "🫐" },
     { id: "monday-l", type: "Lunch", title: "Chickpea crunch bowl", description: "Chickpeas · cucumber · lemon", ingredients: [{ name: "Chickpeas, drained", quantity: "150", unit: "g" }, { name: "Cucumber", quantity: "100", unit: "g" }, { name: "Cherry tomatoes", quantity: "100", unit: "g" }, { name: "Lemon juice", quantity: "1", unit: "tbsp" }, { name: "Olive oil", quantity: "1", unit: "tsp" }], calories: 485, estimatedCostCents: 135, durationMinutes: 20, emoji: "🥗" },
-    { id: "monday-d", type: "Dinner", title: "One-pan tomato chicken", description: "Chicken · tomatoes · basmati rice", ingredients: [{ name: "Chicken breast", quantity: "150", unit: "g" }, { name: "Chopped tomatoes", quantity: "150", unit: "g" }, { name: "Basmati rice, dry", quantity: "75", unit: "g" }, { name: "Onion", quantity: "1/2", unit: "medium" }, { name: "Olive oil", quantity: "1", unit: "tsp" }], calories: 610, estimatedCostCents: 185, durationMinutes: 30, emoji: "🍅" }
+    { id: "monday-d", type: "Dinner", title: "One-pan tomato chicken", description: "Chicken · tomatoes · basmati rice", ingredients: [{ name: "Chicken breast", quantity: "150", unit: "g" }, { name: "Chopped tomatoes", quantity: "150", unit: "g" }, { name: "Basmati rice, dry", quantity: "75", unit: "g" }, { name: "Onion", quantity: "1/2", unit: "medium" }, { name: "Olive oil", quantity: "1", unit: "tsp" }], calories: 610, estimatedCostCents: 185, durationMinutes: 30, emoji: "🍗" }
   ],
   [
     { id: "tuesday-b", type: "Breakfast", title: "Egg & spinach toast", description: "Eggs · spinach · bread", ingredients: [{ name: "Eggs", quantity: "2", unit: "large" }, { name: "Baby spinach", quantity: "30", unit: "g" }, { name: "Bread", quantity: "2", unit: "slices" }, { name: "Olive oil", quantity: "1", unit: "tsp" }], calories: 390, estimatedCostCents: 110, durationMinutes: 12, emoji: "🍳" },
     { id: "tuesday-l", type: "Lunch", title: "Chicken wrap", description: "Chicken · lettuce · yogurt dressing", ingredients: [{ name: "Chicken breast", quantity: "120", unit: "g" }, { name: "Wrap", quantity: "1", unit: "large" }, { name: "Lettuce", quantity: "30", unit: "g" }, { name: "Plain yogurt", quantity: "2", unit: "tbsp" }, { name: "Cucumber", quantity: "50", unit: "g" }], calories: 470, estimatedCostCents: 145, durationMinutes: 10, emoji: "🌯" },
-    { id: "tuesday-d", type: "Dinner", title: "Lentil tomato soup", description: "Lentils · tomatoes · carrots", ingredients: [{ name: "Lentils, dry", quantity: "75", unit: "g" }, { name: "Chopped tomatoes", quantity: "150", unit: "g" }, { name: "Carrot", quantity: "1", unit: "medium" }, { name: "Vegetable stock", quantity: "350", unit: "ml" }, { name: "Onion", quantity: "1/2", unit: "medium" }], calories: 560, estimatedCostCents: 125, durationMinutes: 35, emoji: "🥣" }
+    { id: "tuesday-d", type: "Dinner", title: "Lentil tomato soup", description: "Lentils · tomatoes · carrots", ingredients: [{ name: "Lentils, dry", quantity: "75", unit: "g" }, { name: "Chopped tomatoes", quantity: "150", unit: "g" }, { name: "Carrot", quantity: "1", unit: "medium" }, { name: "Vegetable stock", quantity: "350", unit: "ml" }, { name: "Onion", quantity: "1/2", unit: "medium" }], calories: 560, estimatedCostCents: 125, durationMinutes: 35, emoji: "🍲" }
   ],
   [
-    { id: "wednesday-b", type: "Breakfast", title: "Apple cinnamon porridge", description: "Oats · apple · milk", ingredients: [{ name: "Rolled oats", quantity: "50", unit: "g" }, { name: "Apple", quantity: "1", unit: "medium" }, { name: "Milk", quantity: "200", unit: "ml" }, { name: "Ground cinnamon", quantity: "1/4", unit: "tsp" }], calories: 370, estimatedCostCents: 75, durationMinutes: 10, emoji: "🍎" },
-    { id: "wednesday-l", type: "Lunch", title: "Egg & potato salad", description: "Eggs · potatoes · green beans", ingredients: [{ name: "Eggs", quantity: "2", unit: "large" }, { name: "Potatoes", quantity: "200", unit: "g" }, { name: "Green beans", quantity: "100", unit: "g" }, { name: "Plain yogurt", quantity: "1", unit: "tbsp" }, { name: "Mustard", quantity: "1", unit: "tsp" }], calories: 490, estimatedCostCents: 120, durationMinutes: 25, emoji: "🥔" },
-    { id: "wednesday-d", type: "Dinner", title: "Bean & vegetable basmati rice stir-fry", description: "Canned beans · frozen vegetables · basmati rice", ingredients: [{ name: "Black beans, drained", quantity: "150", unit: "g" }, { name: "Frozen mixed vegetables", quantity: "180", unit: "g" }, { name: "Basmati rice, dry", quantity: "75", unit: "g" }, { name: "Soy sauce", quantity: "1", unit: "tbsp" }, { name: "Vegetable oil", quantity: "1", unit: "tsp" }], calories: 590, estimatedCostCents: 160, durationMinutes: 25, emoji: "🥦" }
+    { id: "wednesday-b", type: "Breakfast", title: "Apple cinnamon porridge", description: "Oats · apple · milk", ingredients: [{ name: "Rolled oats", quantity: "50", unit: "g" }, { name: "Apple", quantity: "1", unit: "medium" }, { name: "Milk", quantity: "200", unit: "ml" }, { name: "Ground cinnamon", quantity: "1/4", unit: "tsp" }], calories: 370, estimatedCostCents: 75, durationMinutes: 10, emoji: "🥣" },
+    { id: "wednesday-l", type: "Lunch", title: "Egg & potato salad", description: "Eggs · potatoes · green beans", ingredients: [{ name: "Eggs", quantity: "2", unit: "large" }, { name: "Potatoes", quantity: "200", unit: "g" }, { name: "Green beans", quantity: "100", unit: "g" }, { name: "Plain yogurt", quantity: "1", unit: "tbsp" }, { name: "Mustard", quantity: "1", unit: "tsp" }], calories: 490, estimatedCostCents: 120, durationMinutes: 25, emoji: "🥗" },
+    { id: "wednesday-d", type: "Dinner", title: "Bean & vegetable basmati rice stir-fry", description: "Canned beans · frozen vegetables · basmati rice", ingredients: [{ name: "Black beans, drained", quantity: "150", unit: "g" }, { name: "Frozen mixed vegetables", quantity: "180", unit: "g" }, { name: "Basmati rice, dry", quantity: "75", unit: "g" }, { name: "Soy sauce", quantity: "1", unit: "tbsp" }, { name: "Vegetable oil", quantity: "1", unit: "tsp" }], calories: 590, estimatedCostCents: 160, durationMinutes: 25, emoji: "🥘" }
   ],
   [
     { id: "thursday-b", type: "Breakfast", title: "Yogurt & banana bowl", description: "Plain yogurt · banana · oats", ingredients: [{ name: "Plain yogurt", quantity: "170", unit: "g" }, { name: "Banana", quantity: "1", unit: "medium" }, { name: "Rolled oats", quantity: "30", unit: "g" }, { name: "Honey", quantity: "1", unit: "tsp" }], calories: 350, estimatedCostCents: 85, durationMinutes: 5, emoji: "🍌" },
@@ -48,7 +48,7 @@ const mealTemplates: MealTemplate[][] = [
   ],
   [
     { id: "friday-b", type: "Breakfast", title: "Savory breakfast burrito", description: "Eggs · beans · salsa", ingredients: [{ name: "Eggs", quantity: "2", unit: "large" }, { name: "Black beans, drained", quantity: "80", unit: "g" }, { name: "Wrap", quantity: "1", unit: "large" }, { name: "Salsa", quantity: "2", unit: "tbsp" }, { name: "Cheddar", quantity: "20", unit: "g" }], calories: 410, estimatedCostCents: 115, durationMinutes: 15, emoji: "🌯" },
-    { id: "friday-l", type: "Lunch", title: "Carrot & lentil soup", description: "Lentils · carrots · bread", ingredients: [{ name: "Lentils, dry", quantity: "65", unit: "g" }, { name: "Carrots", quantity: "2", unit: "medium" }, { name: "Vegetable stock", quantity: "350", unit: "ml" }, { name: "Bread roll", quantity: "1", unit: "roll" }, { name: "Onion", quantity: "1/2", unit: "medium" }], calories: 455, estimatedCostCents: 100, durationMinutes: 30, emoji: "🥕" },
+    { id: "friday-l", type: "Lunch", title: "Carrot & lentil soup", description: "Lentils · carrots · bread", ingredients: [{ name: "Lentils, dry", quantity: "65", unit: "g" }, { name: "Carrots", quantity: "2", unit: "medium" }, { name: "Vegetable stock", quantity: "350", unit: "ml" }, { name: "Bread roll", quantity: "1", unit: "roll" }, { name: "Onion", quantity: "1/2", unit: "medium" }], calories: 455, estimatedCostCents: 100, durationMinutes: 30, emoji: "🍲" },
     { id: "friday-d", type: "Dinner", title: "Tomato & spinach pasta", description: "Pasta · spinach · tomato", ingredients: [{ name: "Pasta, dry", quantity: "80", unit: "g" }, { name: "Baby spinach", quantity: "50", unit: "g" }, { name: "Chopped tomatoes", quantity: "150", unit: "g" }, { name: "Parmesan", quantity: "15", unit: "g" }, { name: "Olive oil", quantity: "1", unit: "tsp" }], calories: 590, estimatedCostCents: 135, durationMinutes: 25, emoji: "🍝" }
   ],
   [
@@ -58,8 +58,8 @@ const mealTemplates: MealTemplate[][] = [
   ],
   [
     { id: "sunday-b", type: "Breakfast", title: "Berry yogurt oats", description: "Oats · yogurt · frozen berries", ingredients: [{ name: "Rolled oats", quantity: "40", unit: "g" }, { name: "Plain yogurt", quantity: "150", unit: "g" }, { name: "Frozen berries", quantity: "80", unit: "g" }, { name: "Chia seeds", quantity: "1", unit: "tsp" }], calories: 365, estimatedCostCents: 90, durationMinutes: 5, emoji: "🍓" },
-    { id: "sunday-l", type: "Lunch", title: "Roasted veg & hummus bowl", description: "Chickpeas · frozen mixed vegetables · basmati rice", ingredients: [{ name: "Chickpeas, drained", quantity: "100", unit: "g" }, { name: "Frozen mixed vegetables", quantity: "180", unit: "g" }, { name: "Basmati rice, dry", quantity: "65", unit: "g" }, { name: "Hummus", quantity: "2", unit: "tbsp" }, { name: "Olive oil", quantity: "1", unit: "tsp" }], calories: 495, estimatedCostCents: 140, durationMinutes: 30, emoji: "🥙" },
-    { id: "sunday-d", type: "Dinner", title: "Lemony chicken & greens", description: "Chicken · greens · potatoes", ingredients: [{ name: "Chicken breast", quantity: "150", unit: "g" }, { name: "Potatoes", quantity: "200", unit: "g" }, { name: "Leafy greens", quantity: "100", unit: "g" }, { name: "Lemon juice", quantity: "1", unit: "tbsp" }, { name: "Olive oil", quantity: "1", unit: "tsp" }], calories: 625, estimatedCostCents: 185, durationMinutes: 35, emoji: "🍋" }
+    { id: "sunday-l", type: "Lunch", title: "Roasted veg & hummus bowl", description: "Chickpeas · frozen mixed vegetables · basmati rice", ingredients: [{ name: "Chickpeas, drained", quantity: "100", unit: "g" }, { name: "Frozen mixed vegetables", quantity: "180", unit: "g" }, { name: "Basmati rice, dry", quantity: "65", unit: "g" }, { name: "Hummus", quantity: "2", unit: "tbsp" }, { name: "Olive oil", quantity: "1", unit: "tsp" }], calories: 495, estimatedCostCents: 140, durationMinutes: 30, emoji: "🥗" },
+    { id: "sunday-d", type: "Dinner", title: "Lemony chicken & greens", description: "Chicken · greens · potatoes", ingredients: [{ name: "Chicken breast", quantity: "150", unit: "g" }, { name: "Potatoes", quantity: "200", unit: "g" }, { name: "Leafy greens", quantity: "100", unit: "g" }, { name: "Lemon juice", quantity: "1", unit: "tbsp" }, { name: "Olive oil", quantity: "1", unit: "tsp" }], calories: 625, estimatedCostCents: 185, durationMinutes: 35, emoji: "🍗" }
   ]
 ];
 
@@ -83,19 +83,19 @@ const alternativeTemplates: MealTemplate[] = [
   alternativeTemplate("alt-breakfast-cottage-oats", "Breakfast", "Cottage cheese oats", "Cottage cheese · oats · banana", "🥣", 5, [
     { name: "Cottage cheese", quantity: "100", unit: "g" }, { name: "Rolled oats", quantity: "35", unit: "g" }, { name: "Banana", quantity: "1", unit: "medium" }
   ]),
-  alternativeTemplate("alt-breakfast-potato-egg", "Breakfast", "Potato & egg skillet", "Potatoes · eggs · spinach", "🥔", 20, [
+  alternativeTemplate("alt-breakfast-potato-egg", "Breakfast", "Potato & egg skillet", "Potatoes · eggs · spinach", "🍳", 20, [
     { name: "Potatoes", quantity: "180", unit: "g" }, { name: "Eggs", quantity: "2", unit: "large" }, { name: "Baby spinach", quantity: "30", unit: "g" }, { name: "Olive oil", quantity: "1", unit: "tsp" }
   ]),
   alternativeTemplate("alt-breakfast-yogurt-apple", "Breakfast", "Apple yogurt oats", "Yogurt · apple · oats", "🍎", 5, [
     { name: "Plain yogurt", quantity: "150", unit: "g" }, { name: "Apple", quantity: "1", unit: "medium" }, { name: "Rolled oats", quantity: "30", unit: "g" }
   ]),
-  alternativeTemplate("alt-breakfast-hummus-toast", "Breakfast", "Hummus tomato toast", "Bread · hummus · tomatoes", "🥙", 8, [
+  alternativeTemplate("alt-breakfast-hummus-toast", "Breakfast", "Hummus tomato toast", "Bread · hummus · tomatoes", "🍞", 8, [
     { name: "Bread", quantity: "2", unit: "slices" }, { name: "Hummus", quantity: "2", unit: "tbsp" }, { name: "Cherry tomatoes", quantity: "100", unit: "g" }
   ]),
-  alternativeTemplate("alt-lunch-lentil-rice", "Lunch", "Lentil rice bowl", "Lentils · rice · tomatoes", "🍚", 25, [
+  alternativeTemplate("alt-lunch-lentil-rice", "Lunch", "Lentil rice bowl", "Lentils · rice · tomatoes", "🍛", 25, [
     { name: "Lentils, dry", quantity: "55", unit: "g" }, { name: "Basmati rice, dry", quantity: "45", unit: "g" }, { name: "Chopped tomatoes", quantity: "120", unit: "g" }, { name: "Onion", quantity: "1/2", unit: "medium" }
   ]),
-  alternativeTemplate("alt-lunch-tuna-bean", "Lunch", "Tuna & bean salad", "Tuna · beans · cucumber", "🥗", 10, [
+  alternativeTemplate("alt-lunch-tuna-bean", "Lunch", "Tuna & bean salad", "Tuna · beans · cucumber", "🐟", 10, [
     { name: "Canned tuna, drained", quantity: "80", unit: "g" }, { name: "White beans, drained", quantity: "100", unit: "g" }, { name: "Cucumber", quantity: "100", unit: "g" }, { name: "Cherry tomatoes", quantity: "80", unit: "g" }
   ]),
   alternativeTemplate("alt-lunch-chickpea-potato", "Lunch", "Chickpea potato bowl", "Chickpeas · potatoes · spinach", "🥔", 20, [
@@ -113,13 +113,13 @@ const alternativeTemplates: MealTemplate[] = [
   alternativeTemplate("alt-dinner-chicken-rice", "Dinner", "Chicken vegetable rice", "Chicken · rice · vegetables", "🍗", 30, [
     { name: "Chicken thigh", quantity: "120", unit: "g" }, { name: "Basmati rice, dry", quantity: "65", unit: "g" }, { name: "Frozen mixed vegetables", quantity: "150", unit: "g" }, { name: "Soy sauce", quantity: "1", unit: "tbsp" }
   ]),
-  alternativeTemplate("alt-dinner-bean-potato", "Dinner", "Bean & potato stew", "Beans · potatoes · tomatoes", "🥘", 30, [
+  alternativeTemplate("alt-dinner-bean-potato", "Dinner", "Bean & potato stew", "Beans · potatoes · tomatoes", "🍲", 30, [
     { name: "Red beans, drained", quantity: "140", unit: "g" }, { name: "Potatoes", quantity: "180", unit: "g" }, { name: "Chopped tomatoes", quantity: "150", unit: "g" }, { name: "Onion", quantity: "1/2", unit: "medium" }
   ]),
-  alternativeTemplate("alt-dinner-sardine-rice", "Dinner", "Sardine tomato rice", "Sardines · rice · tomatoes", "🍚", 25, [
+  alternativeTemplate("alt-dinner-sardine-rice", "Dinner", "Sardine tomato rice", "Sardines · rice · tomatoes", "🐟", 25, [
     { name: "Canned sardines, drained", quantity: "90", unit: "g" }, { name: "Basmati rice, dry", quantity: "70", unit: "g" }, { name: "Chopped tomatoes", quantity: "150", unit: "g" }
   ]),
-  alternativeTemplate("alt-dinner-lentil-sweet-potato", "Dinner", "Lentil sweet potato tray", "Lentils · sweet potato · carrots", "🥕", 35, [
+  alternativeTemplate("alt-dinner-lentil-sweet-potato", "Dinner", "Lentil sweet potato tray", "Lentils · sweet potato · carrots", "🍠", 35, [
     { name: "Lentils, dry", quantity: "65", unit: "g" }, { name: "Sweet potato", quantity: "180", unit: "g" }, { name: "Carrots", quantity: "1", unit: "medium" }, { name: "Olive oil", quantity: "1", unit: "tsp" }
   ])
 ];

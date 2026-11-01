@@ -102,7 +102,7 @@ export const pl: Translation = {
   },
   mealActions: {
     replace: "Zamien", ban: "Zablokuj posilek", scopeTitle: "Wybierz zakres zmiany", thisDay: "Tylko ten dzien", allOccurrences: "Wszystkie wystapienia",
-    replaced: "Zamieniono", revert: "Przywroc ten dzien", batchUnavailable: "Posilkow przygotowanych z wyprzedzeniem nie mozna tu zmieniac.", bannedUnavailable: "Ten posiłek jest wykluczony. Przywróć go w zakładce Menu, aby znów go używać.", typicalUnavailable: "Typowe sniadanie zmienisz w Preferencjach."
+    replaced: "Zamieniono", revert: "Przywroc ten dzien", batchUnavailable: "Posilkow przygotowanych z wyprzedzeniem nie mozna tu zmieniac.", typicalUnavailable: "Typowe sniadanie zmienisz w Preferencjach."
   },
   picker: {
     scopeTitle: "Wybierz zakres zmiany", banTitle: "Wybierz alternatywe", replaceTitle: "Wybierz zamiennik", thisDay: "Tylko ten dzien", allOccurrences: "Wszystkie wystapienia",
@@ -111,7 +111,7 @@ export const pl: Translation = {
   menu: {
     title: "Menu", empty: "Brak zaplanowanych posilkow w tym zakresie dat.", occurrences: "\u00d7{{count}}", showAll: "Pokaz wszystkie", showLess: "Pokaz mniej",
     ban: "Zablokuj", replaceAll: "Zamien wszystkie", batchUnavailable: "Posilkow przygotowanych z wyprzedzeniem nie mozna tu zmieniac.", typicalUnavailable: "Typowe sniadanie zmienisz w Preferencjach.", bannedTitle: "Zablokowane posilki",
-    substitute: "\u2192 {{name}}", unban: "Przywroc", noBanned: "Brak zablokowanych posilkow."
+    substitute: "\u2192 {{name}}", unban: "Przywroc", unbanConfirmTitle: "Przywrócić posiłek?", unbanConfirmMessage: "{{name}} będzie znów dostępny w Twoim planie.", noBanned: "Brak zablokowanych posilkow."
   },
   meal: {
     a11y: "{{label}}: {{title}}, {{calories}} kilokalorii, {{protein}} gramów białka",

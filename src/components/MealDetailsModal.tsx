@@ -28,9 +28,11 @@ type Props = {
   canRevert?: boolean;
   onRevert?: (meal: Meal) => void;
   restrictionReason?: string | null;
+  /** When set, the meal is banned and only an Unban action is offered. */
+  onUnban?: (meal: Meal) => void;
 };
 
-export function MealDetailsModal({ meal, onClose, onReplace, onBan, canRevert = false, onRevert, restrictionReason }: Props): React.JSX.Element {
+export function MealDetailsModal({ meal, onClose, onReplace, onBan, canRevert = false, onRevert, restrictionReason, onUnban }: Props): React.JSX.Element {
   const { t } = useTranslation();
   const { food } = useFoodNames();
   const currencyCode = meal?.currencyCode ?? "EUR";
@@ -105,12 +107,16 @@ export function MealDetailsModal({ meal, onClose, onReplace, onBan, canRevert = 
             )}
             {meal.type !== "Snack" && !meal.isTypicalBreakfast && (
               <View style={styles.actions}>
-                {restrictionReason ? <Text style={styles.restriction}>{restrictionReason}</Text> : (
+                {onUnban ? (
+                  <Pressable accessibilityRole="button" onPress={() => onUnban(meal)} style={({ pressed }) => [styles.actionButton, pressed && styles.actionPressed]}>
+                    <Text style={styles.actionText}>{t("menu.unban")}</Text>
+                  </Pressable>
+                ) : restrictionReason ? <Text style={styles.restriction}>{restrictionReason}</Text> : (
                   <>
-                    <Pressable accessibilityRole="button" onPress={() => onReplace?.(meal)} style={styles.actionButton}>
+                    <Pressable accessibilityRole="button" onPress={() => onReplace?.(meal)} style={({ pressed }) => [styles.actionButton, pressed && styles.actionPressed]}>
                       <Text style={styles.actionText}>{t("mealActions.replace")}</Text>
                     </Pressable>
-                    <Pressable accessibilityRole="button" onPress={() => onBan?.(meal)} style={[styles.actionButton, styles.banButton]}>
+                    <Pressable accessibilityRole="button" onPress={() => onBan?.(meal)} style={({ pressed }) => [styles.actionButton, styles.banButton, pressed && styles.actionPressed]}>
                       <Text style={styles.banActionText}>{t("mealActions.ban")}</Text>
                     </Pressable>
                     {canRevert && <Pressable accessibilityRole="button" onPress={() => onRevert?.(meal)} style={styles.revertButton}>
@@ -196,11 +202,23 @@ const styles = StyleSheet.create({
   statLabel: { color: palette.muted, fontSize: 10, fontWeight: "600", marginTop: 2 },
   banWarning: { color: "#8B3027", fontSize: 11, lineHeight: 16, marginTop: 10 },
   batchNote: { marginTop: 2 },
-  actions: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 14 },
-  actionButton: { backgroundColor: palette.softGreen, borderRadius: 10, paddingHorizontal: 13, paddingVertical: 9 },
-  actionText: { color: palette.green, fontSize: 12, fontWeight: "700" },
-  banButton: { backgroundColor: "#F5E7E2" },
-  banActionText: { color: "#8B3027", fontSize: 12, fontWeight: "700" },
+  actions: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 10, marginTop: 16 },
+  actionButton: {
+    flexGrow: 1,
+    flexBasis: 120,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: palette.softGreen,
+    borderWidth: 1,
+    borderColor: "#BFD3BF",
+    borderRadius: 11,
+    paddingHorizontal: 14,
+    paddingVertical: 11
+  },
+  actionPressed: { opacity: 0.75 },
+  actionText: { color: palette.green, fontSize: 13, fontWeight: "800" },
+  banButton: { backgroundColor: "#F8E9E5", borderColor: "#E6C3BB" },
+  banActionText: { color: "#A23A2B", fontSize: 13, fontWeight: "800" },
   revertButton: { justifyContent: "center", paddingHorizontal: 8 },
   revertText: { color: palette.muted, fontSize: 11, fontWeight: "600" },
   restriction: { color: palette.muted, fontSize: 11, lineHeight: 16 },

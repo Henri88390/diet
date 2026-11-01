@@ -106,7 +106,7 @@ export const en: Translation = {
   },
   mealActions: {
     replace: "Replace", ban: "Ban meal", scopeTitle: "Choose how to replace", thisDay: "This day only", allOccurrences: "All occurrences",
-    replaced: "Replaced", revert: "Revert this day", batchUnavailable: "Batch-cooked meals cannot be changed here.", bannedUnavailable: "This meal is banned. Unban it in the Menu tab to use it again.", typicalUnavailable: "Your typical breakfast is managed in Preferences."
+    replaced: "Replaced", revert: "Revert this day", batchUnavailable: "Batch-cooked meals cannot be changed here.", typicalUnavailable: "Your typical breakfast is managed in Preferences."
   },
   picker: {
     scopeTitle: "Choose how to replace", banTitle: "Choose a substitute", replaceTitle: "Choose a replacement", thisDay: "This day only", allOccurrences: "All occurrences",
@@ -115,7 +115,7 @@ export const en: Translation = {
   menu: {
     title: "Menu", empty: "No meals are planned in this date range.", occurrences: "\u00d7{{count}}", showAll: "Show all", showLess: "Show less",
     ban: "Ban", replaceAll: "Replace all", batchUnavailable: "Batch-cooked meals cannot be changed here.", typicalUnavailable: "Your typical breakfast is managed in Preferences.", bannedTitle: "Banned meals",
-    substitute: "\u2192 {{name}}", unban: "Unban", noBanned: "No banned meals."
+    substitute: "\u2192 {{name}}", unban: "Unban", unbanConfirmTitle: "Unban meal?", unbanConfirmMessage: "{{name}} will be available again in your plan.", noBanned: "No banned meals."
   },
   meal: {
     a11y: "{{label}}: {{title}}, {{calories}} kilocalories, {{protein}} grams protein",

@@ -119,8 +119,8 @@ export function MenuScreen(props: Props): React.JSX.Element {
                   {entry.batch && <Text style={styles.restriction}>{t("menu.batchUnavailable")}</Text>}
                   {entry.typical && <Text style={styles.restriction}>{t("menu.typicalUnavailable")}</Text>}
                   {!restricted && <View style={styles.actions}>
-                    <Pressable accessibilityRole="button" onPress={() => props.onBan(meal)} style={styles.banButton}><Text style={styles.banText}>{t("menu.ban")}</Text></Pressable>
-                    <Pressable accessibilityRole="button" onPress={() => props.onReplaceAll(meal, [...entry.sourceRecipeKeys])} style={styles.replaceButton}><Text style={styles.replaceText}>{t("menu.replaceAll")}</Text></Pressable>
+                    <Pressable accessibilityRole="button" onPress={() => props.onReplaceAll(meal, [...entry.sourceRecipeKeys])} style={({ pressed }) => [styles.actionButton, pressed && styles.actionPressed]}><Text style={styles.actionText}>{t("menu.replaceAll")}</Text></Pressable>
+                    <Pressable accessibilityRole="button" onPress={() => props.onBan(meal)} style={({ pressed }) => [styles.actionButton, styles.banButton, pressed && styles.actionPressed]}><Text style={[styles.actionText, styles.banText]}>{t("menu.ban")}</Text></Pressable>
                   </View>}
                 </View>
               </Pressable>
@@ -133,7 +133,7 @@ export function MenuScreen(props: Props): React.JSX.Element {
 
   function renderUnbanButton(recipeKey: string): React.JSX.Element {
     return (
-      <Pressable accessibilityRole="button" hitSlop={6} onPress={() => props.onUnban(recipeKey)} style={styles.unbanButton}>
+      <Pressable accessibilityRole="button" hitSlop={6} onPress={() => props.onUnban(recipeKey)} style={({ pressed }) => [styles.unbanButton, pressed && styles.actionPressed]}>
         <Text style={styles.unbanText}>{t("menu.unban")}</Text>
       </Pressable>
     );
@@ -210,18 +210,29 @@ const styles = StyleSheet.create({
   dateText: { color: palette.ink, fontSize: 11, fontWeight: "600" },
   moreChip: { borderRadius: 8, paddingHorizontal: 9, paddingVertical: 4, backgroundColor: palette.softGreen },
   more: { color: palette.green, fontSize: 11, fontWeight: "700" },
-  actions: { flexDirection: "row", gap: 8, marginTop: 9 },
-  banButton: { backgroundColor: "#F5E7E2", paddingHorizontal: 11, paddingVertical: 6, borderRadius: 8 },
-  banText: { color: "#8B3027", fontSize: 10, fontWeight: "700" },
-  replaceButton: { backgroundColor: palette.softGreen, paddingHorizontal: 11, paddingVertical: 6, borderRadius: 8 },
-  replaceText: { color: palette.green, fontSize: 10, fontWeight: "700" },
+  actions: { flexDirection: "row", gap: 8, marginTop: 10 },
+  actionButton: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: palette.softGreen,
+    borderWidth: 1,
+    borderColor: "#BFD3BF",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10
+  },
+  actionPressed: { opacity: 0.75 },
+  actionText: { color: palette.green, fontSize: 11, fontWeight: "800" },
+  banButton: { backgroundColor: "#F8E9E5", borderColor: "#E6C3BB" },
+  banText: { color: "#A23A2B" },
   restriction: { color: palette.muted, fontSize: 10, lineHeight: 14, marginTop: 7 },
   bannedSection: { marginTop: 12 },
   sectionTitle: { color: palette.ink, fontSize: 18, fontWeight: "800", marginBottom: 9 },
   substitute: { color: palette.muted, fontSize: 10, marginTop: 6 },
   unknownBanned: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  unbanButton: { paddingHorizontal: 10, paddingVertical: 8, borderRadius: 8, backgroundColor: palette.softGreen },
-  unbanText: { color: palette.green, fontSize: 10, fontWeight: "700" },
+  unbanButton: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10, backgroundColor: palette.softGreen, borderWidth: 1, borderColor: "#BFD3BF" },
+  unbanText: { color: palette.green, fontSize: 11, fontWeight: "800" },
   emptyCard: { backgroundColor: palette.white, borderRadius: 16, padding: 17, marginBottom: 8 },
   emptyText: { color: palette.muted, fontSize: 12 }
 });

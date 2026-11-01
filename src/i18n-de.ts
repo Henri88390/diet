@@ -98,7 +98,7 @@ export const de: Translation = {
   },
   mealActions: {
     replace: "Ersetzen", ban: "Mahlzeit meiden", scopeTitle: "Umfang des Ersatzes waehlen", thisDay: "Nur dieser Tag", allOccurrences: "Alle Vorkommen",
-    replaced: "Ersetzt", revert: "Diesen Tag zuruecksetzen", batchUnavailable: "Mahlzeiten aus dem Batch-Kochen koennen hier nicht geaendert werden.", bannedUnavailable: "Diese Mahlzeit ist gesperrt. Entsperre sie im Tab Menü, um sie wieder zu verwenden.", typicalUnavailable: "Dein typisches Fruehstueck wird unter Einstellungen verwaltet."
+    replaced: "Ersetzt", revert: "Diesen Tag zuruecksetzen", batchUnavailable: "Mahlzeiten aus dem Batch-Kochen koennen hier nicht geaendert werden.", typicalUnavailable: "Dein typisches Fruehstueck wird unter Einstellungen verwaltet."
   },
   picker: {
     scopeTitle: "Umfang des Ersatzes waehlen", banTitle: "Ersatz auswaehlen", replaceTitle: "Ersatz waehlen", thisDay: "Nur dieser Tag", allOccurrences: "Alle Vorkommen",
@@ -107,7 +107,7 @@ export const de: Translation = {
   menu: {
     title: "Men\u00fc", empty: "Fuer diesen Zeitraum sind keine Mahlzeiten geplant.", occurrences: "\u00d7{{count}}", showAll: "Alle anzeigen", showLess: "Weniger anzeigen",
     ban: "Meiden", replaceAll: "Alle ersetzen", batchUnavailable: "Mahlzeiten aus dem Batch-Kochen koennen hier nicht geaendert werden.", typicalUnavailable: "Dein typisches Fruehstueck wird unter Einstellungen verwaltet.", bannedTitle: "Gemiedene Mahlzeiten",
-    substitute: "\u2192 {{name}}", unban: "Wieder aufnehmen", noBanned: "Keine gemiedenen Mahlzeiten."
+    substitute: "\u2192 {{name}}", unban: "Wieder aufnehmen", unbanConfirmTitle: "Mahlzeit wieder aufnehmen?", unbanConfirmMessage: "{{name}} ist wieder in deinem Plan verfügbar.", noBanned: "Keine gemiedenen Mahlzeiten."
   },
   meal: {
     a11y: "{{label}}: {{title}}, {{calories}} Kilokalorien, {{protein}} Gramm Eiweiß",

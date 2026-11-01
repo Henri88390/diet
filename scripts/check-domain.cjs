@@ -721,7 +721,7 @@ assert.doesNotMatch(preferencesSource, /MADE FOR YOUR EVERYDAY|Good food,|your w
 assert.doesNotMatch(preferencesSource, /breakfastEstimate|estimatePresetBreakfast/,
   "standard breakfast choices do not display a cost, calorie, or protein preview");
 assert.match(mealDetailsSource, /formatMoney/);
-assert.match(appSource, /meal=\{pickerRequest \? null : selectedMeal\}/,
+assert.match(appSource, /meal=\{pickerRequest \|\| unbanRequest \? null : selectedMeal\}/,
   "the details modal is hidden while the alternatives picker is open");
 assert.match(appSource, /onClose=\{\(\) => setPickerRequest\(null\)\}/,
   "canceling the picker preserves the selected meal so its details can return");
@@ -735,6 +735,8 @@ assert.match(appSource, /pagingEnabled/, "tabs are a native horizontal pager tha
 assert.match(appSource, /scrollEnabled=\{!pagerSwipeBlocked\}/,
   "the date strip blocks tab swipes while it is touched");
 assert.match(appSource, /<MemoTopTabBar/, "screens are reachable from top tabs");
+assert.match(appSource, /<UnbanConfirmSheet meal=\{unbanRequest\}/, "unbanning a meal asks for confirmation in a sheet");
+assert.doesNotMatch(appSource, /bannedUnavailable/, "banned meal details offer Unban instead of a caption");
 {
   const sheetSource = fs.readFileSync(require.resolve("../src/components/BottomSheet.tsx"), "utf8");
   assert.doesNotMatch(sheetSource, /if \(finished\) setMounted\(false\)/, "bottom sheet must unmount even when the exit animation is interrupted");

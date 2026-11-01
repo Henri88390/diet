@@ -98,7 +98,7 @@ export const es: Translation = {
   },
   mealActions: {
     replace: "Reemplazar", ban: "Excluir comida", scopeTitle: "Elige el alcance del cambio", thisDay: "Solo este dia", allOccurrences: "Todas las apariciones",
-    replaced: "Reemplazado", revert: "Restaurar este dia", batchUnavailable: "Las comidas preparadas por lotes no se pueden cambiar aqui.", bannedUnavailable: "Esta comida está excluida. Vuelve a permitirla en la pestaña Menú para usarla de nuevo.", typicalUnavailable: "Tu desayuno habitual se configura en Preferencias."
+    replaced: "Reemplazado", revert: "Restaurar este dia", batchUnavailable: "Las comidas preparadas por lotes no se pueden cambiar aqui.", typicalUnavailable: "Tu desayuno habitual se configura en Preferencias."
   },
   picker: {
     scopeTitle: "Elige el alcance del cambio", banTitle: "Elige un sustituto", replaceTitle: "Elige un reemplazo", thisDay: "Solo este dia", allOccurrences: "Todas las apariciones",
@@ -107,7 +107,7 @@ export const es: Translation = {
   menu: {
     title: "Men\u00fa", empty: "No hay comidas previstas para este periodo.", occurrences: "\u00d7{{count}}", showAll: "Mostrar todas", showLess: "Mostrar menos",
     ban: "Excluir", replaceAll: "Reemplazar todas", batchUnavailable: "Las comidas preparadas por lotes no se pueden cambiar aqui.", typicalUnavailable: "Tu desayuno habitual se configura en Preferencias.", bannedTitle: "Comidas excluidas",
-    substitute: "\u2192 {{name}}", unban: "Restaurar", noBanned: "No hay comidas excluidas."
+    substitute: "\u2192 {{name}}", unban: "Restaurar", unbanConfirmTitle: "¿Restaurar esta comida?", unbanConfirmMessage: "{{name}} volverá a estar disponible en tu plan.", noBanned: "No hay comidas excluidas."
   },
   meal: {
     a11y: "{{label}}: {{title}}, {{calories}} kilocalorías, {{protein}} gramos de proteína",

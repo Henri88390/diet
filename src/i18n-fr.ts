@@ -98,7 +98,7 @@ export const fr: Translation = {
   },
   mealActions: {
     replace: "Remplacer", ban: "Bannir le repas", scopeTitle: "Choisir la portee du remplacement", thisDay: "Ce jour uniquement", allOccurrences: "Toutes les occurrences",
-    replaced: "Remplace", revert: "Retablir ce jour", batchUnavailable: "Les repas prepares en lot ne peuvent pas etre modifies ici.", bannedUnavailable: "Ce repas est exclu. Réautorisez-le dans l'onglet Menu pour l'utiliser à nouveau.", typicalUnavailable: "Votre petit-dejeuner habituel se gere dans Preferences."
+    replaced: "Remplace", revert: "Retablir ce jour", batchUnavailable: "Les repas prepares en lot ne peuvent pas etre modifies ici.", typicalUnavailable: "Votre petit-dejeuner habituel se gere dans Preferences."
   },
   picker: {
     scopeTitle: "Choisir la portee du remplacement", banTitle: "Choisir un substitut", replaceTitle: "Choisir un remplacement", thisDay: "Ce jour uniquement", allOccurrences: "Toutes les occurrences",
@@ -107,7 +107,7 @@ export const fr: Translation = {
   menu: {
     title: "Menu", empty: "Aucun repas n'est prevu pour cette periode.", occurrences: "\u00d7{{count}}", showAll: "Tout afficher", showLess: "Afficher moins",
     ban: "Bannir", replaceAll: "Tout remplacer", batchUnavailable: "Les repas prepares en lot ne peuvent pas etre modifies ici.", typicalUnavailable: "Votre petit-dejeuner habituel se gere dans Preferences.", bannedTitle: "Repas bannis",
-    substitute: "\u2192 {{name}}", unban: "Retablir", noBanned: "Aucun repas banni."
+    substitute: "\u2192 {{name}}", unban: "Retablir", unbanConfirmTitle: "Rétablir ce repas ?", unbanConfirmMessage: "{{name}} sera de nouveau disponible dans votre plan.", noBanned: "Aucun repas banni."
   },
   meal: {
     a11y: "{{label}} : {{title}}, {{calories}} kilocalories, {{protein}} grammes de protéines",

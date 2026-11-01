@@ -16,6 +16,7 @@ import { useTranslation } from "react-i18next";
 import "./src/i18n";
 import { MealDetailsModal } from "./src/components/MealDetailsModal";
 import { MealAlternativePicker } from "./src/components/MealAlternativePicker";
+import { UnbanConfirmSheet } from "./src/components/UnbanConfirmSheet";
 import { TopTabBar } from "./src/components/TopTabBar";
 import { CalendarScreen } from "./src/screens/CalendarScreen";
 import { GroceryScreen } from "./src/screens/GroceryScreen";
@@ -101,6 +102,7 @@ export default function App(): React.JSX.Element {
   const [appliedGoals, setAppliedGoals] = useState<Record<string, number>>({});
   const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null);
   const [pickerRequest, setPickerRequest] = useState<PickerRequest | null>(null);
+  const [unbanRequest, setUnbanRequest] = useState<Meal | null>(null);
   const [countryCode, setCountryCode] = useState<CountryCode>(DEFAULT_COUNTRY);
   const [activeTab, setActiveTab] = useState(0);
   const activeTabRef = useRef(0);
@@ -214,8 +216,17 @@ export default function App(): React.JSX.Element {
   }
 
   const unbanMeal = useStableCallback((recipeKey: string): void => {
-    setMealPreferences((current) => removeMealBan(current, recipeKey));
+    const meal = selectedMeal?.recipeKey === recipeKey
+      ? selectedMeal
+      : recipeCatalog.find((item) => item.recipeKey === recipeKey);
+    if (meal) setUnbanRequest(meal);
   });
+
+  function confirmUnban(meal: Meal): void {
+    setMealPreferences((current) => removeMealBan(current, meal.recipeKey));
+    setUnbanRequest(null);
+    setSelectedMeal((current) => current?.recipeKey === meal.recipeKey ? null : current);
+  }
 
   function revertOccurrence(meal: Meal): void {
     if (!meal.occurrenceKey) return;
@@ -423,17 +434,18 @@ export default function App(): React.JSX.Element {
         </Animated.ScrollView>
       </SafeAreaView>
       <MealDetailsModal
-        meal={pickerRequest ? null : selectedMeal}
+        meal={pickerRequest || unbanRequest ? null : selectedMeal}
         onClose={() => setSelectedMeal(null)}
         onReplace={requestReplacement}
         onBan={requestBan}
         canRevert={Boolean(selectedMeal?.occurrenceKey && mealPreferences.mealOccurrenceOverrides[selectedMeal.occurrenceKey])}
         onRevert={revertOccurrence}
-        restrictionReason={selectedMeal && mealPreferences.bannedMeals.includes(selectedMeal.recipeKey)
-          ? t("mealActions.bannedUnavailable")
-          : selectedMeal?.isTypicalBreakfast
+        restrictionReason={selectedMeal?.isTypicalBreakfast
           ? t("mealActions.typicalUnavailable")
           : selectedMeal?.batch ? t("mealActions.batchUnavailable") : null}
+        onUnban={selectedMeal && mealPreferences.bannedMeals.includes(selectedMeal.recipeKey)
+          ? (meal) => unbanMeal(meal.recipeKey)
+          : undefined}
       />
       <MealAlternativePicker
         visible={pickerRequest !== null}
@@ -449,6 +461,7 @@ export default function App(): React.JSX.Element {
         } : null)}
         onSelect={applyPickerChoice}
       />
+      <UnbanConfirmSheet meal={unbanRequest} onCancel={() => setUnbanRequest(null)} onConfirm={confirmUnban} />
     </SafeAreaProvider>
   );
 }

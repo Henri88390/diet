@@ -244,6 +244,10 @@ export default function App(): React.JSX.Element {
               countryCode={countryCode}
               budgetWarning={budgetWarning}
               onCountryChange={setCountryCode}
+              goalInput={goalInput}
+              onGoalInputChange={changeDailyGoalInput}
+              onAdjustGoal={adjustGoal}
+              hasValidGoal={hasValidGoal}
             />
           </View>
           <View style={pageStyle}>
@@ -255,20 +259,8 @@ export default function App(): React.JSX.Element {
               onTodayPress={goToToday}
               meals={meals}
               batchPrep={batchPrep}
-              dailyCalorieGoal={dailyCalorieGoal}
-              goalInput={goalInput}
-              setGoalInput={changeDailyGoalInput}
-              hasValidGoal={hasValidGoal}
-              onAdjustGoal={adjustGoal}
               onMealPress={setSelectedMeal}
-              mealsPerDay={mealPreferences.mealsPerDay}
-              onMealsPerDayChange={(mealsPerDay) => setMealPreferences((current) => ({ ...current, mealsPerDay }))}
               planStyle={mealPreferences.planStyle}
-              onPlanStyleChange={(planStyle) => setMealPreferences((current) => ({ ...current, planStyle }))}
-              fruitPreference={mealPreferences.fruitPreference}
-              onFruitPreferenceChange={(fruitPreference) => setMealPreferences((current) => ({ ...current, fruitPreference }))}
-              weeklyBudget={mealPreferences.weeklyBudget}
-              onWeeklyBudgetChange={(weeklyBudget) => setMealPreferences((current) => ({ ...current, weeklyBudget }))}
               budgetWarning={budgetWarning}
               budgetStatus={budgetPlan.status}
               currencyCode={getCountry(countryCode).currencyCode}

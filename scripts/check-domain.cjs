@@ -289,8 +289,6 @@ assert.match(grocerySource, /hasCustomRange/,
   "user-selected grocery date ranges are preserved when today rolls over");
 assert.match(appSource, /setGoalInput\(selectedGoal\)/,
   "changing selected dates synchronizes the calorie input to that date's saved goal or default");
-assert.match(calendarSource, /mealsPerDayLabel/,
-  "calendar meals chip reflects the selected meal and snack preference");
 assert.doesNotMatch(calendarSource, /\{meals\.length\}\s*\/\s*3/,
   "calendar no longer hard-codes a three-meal count");
 const mealCardSource = fs.readFileSync(require.resolve("../src/components/MealCard.tsx"), "utf8");
@@ -793,7 +791,8 @@ assert.deepEqual(
 assert.ok(en.planStyle.batchCooking && en.planStyle.batchCookingDesc,
   "the batch cooking style has a label and description");
 assert.match(preferencesSource, /"batchCooking"/, "preferences offer the batch cooking style");
-assert.match(calendarSource, /"batchCooking"/, "calendar style menu offers the batch cooking style");
+assert.match(preferencesSource, /AmountStepper[\s\S]*calendar\.goalLabel|calendar\.goalLabel[\s\S]*AmountStepper/,
+  "the daily calorie target is edited on the Preferences tab");
 assert.ok(getPersonalizedDayPlan(batchMonday, preferences).meals.every((meal) => !meal.batch),
   "other plan styles never carry batch metadata");
 assert.equal(getBatchPrep(batchMonday, preferences, {}, "DE"), null,

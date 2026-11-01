@@ -554,6 +554,26 @@ const plans = getSevenCalendarDayPlans(today, preferences, appliedGoals, "DE");
     "the details sheet offers revert for every revertible replacement");
 }
 
+// Personalized titles (protein swaps, batch bowls) get an icon matching the final dish.
+{
+  const seen = new Set();
+  for (const planStyle of ["balanced", "batchCooking", "lowCost"]) {
+    for (const meatPerWeek of [0, 2, 7]) {
+      for (let offset = 0; offset < 28; offset += 1) {
+        getPersonalizedDayPlan(new Date(2026, 10, 2 + offset), { ...preferences, planStyle, meatPerWeek }).meals.forEach((meal) => {
+          seen.add(`${meal.emoji} ${meal.title}`);
+          if (meal.emoji === "🍗") assert.match(meal.title, /chicken|lower-cost/i, `${meal.title} should not use a chicken icon`);
+          if (meal.emoji === "🐟") assert.match(meal.title, /tuna|sardine|salmon|fish|lower-cost/i, `${meal.title} should not use a fish icon`);
+          if (/^(Rice|Potatoes|Pasta) & .+ bowl$/.test(meal.title)) {
+            assert.equal(meal.emoji, { Rice: "🍚", Potatoes: "🥔", Pasta: "🍝" }[meal.title.split(" ")[0]], `${meal.title} icon`);
+          }
+        });
+      }
+    }
+  }
+  assert.ok(seen.has("🫘 Lemony bean & greens") && seen.has("🫘 One-pan tomato bean"), "bean versions of chicken dinners show a bean icon");
+}
+
 // Recipe substitutions resolve before personalization and are shared by Calendar and Groceries.
 {
   const monday = new Date(2026, 10, 2);

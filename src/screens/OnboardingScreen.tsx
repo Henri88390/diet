@@ -98,8 +98,21 @@ export function OnboardingScreen({
         {sections.map((section) => {
           const selected = activeSection === section;
           const label = section === "settings" ? t("prefs.tabGeneral") : section === "bannedMeals" ? t("menu.tabBannedMeals") : t("menu.tabBannedIngredients");
-          return <Pressable key={section} accessibilityRole="button" accessibilityState={{ selected }} onPress={() => setActiveSection(section)} style={[styles.subTab, selected && styles.subTabSelected]}>
+          const count = section === "bannedMeals" ? bannedMeals.length : section === "bannedIngredients" ? bannedIngredients.length : null;
+          return <Pressable
+            key={section}
+            accessibilityRole="button"
+            accessibilityLabel={count === null ? label : `${label}, ${count}`}
+            accessibilityState={{ selected }}
+            onPress={() => setActiveSection(section)}
+            style={[styles.subTab, selected && styles.subTabSelected]}
+          >
             <Text numberOfLines={1} style={[styles.subTabText, selected && styles.subTabTextSelected]}>{label}</Text>
+            {count !== null && (
+              <View style={[styles.subTabCount, selected && styles.subTabCountSelected]}>
+                <Text style={[styles.subTabCountText, selected && styles.subTabCountTextSelected]}>{count}</Text>
+              </View>
+            )}
           </Pressable>;
         })}
       </View>
@@ -480,8 +493,12 @@ const styles = StyleSheet.create({
   budgetLine: { flexDirection: "row", alignItems: "center" },
   budgetError: { color: "#8B3027", fontSize: 10, marginTop: 6 },
   subTabs: { flexDirection: "row", gap: 5, padding: 4, marginBottom: 16, backgroundColor: "#ECEAE1", borderRadius: 13 },
-  subTab: { flex: 1, alignItems: "center", justifyContent: "center", minHeight: 34, paddingHorizontal: 4, borderRadius: 10 },
+  subTab: { flex: 1, gap: 3, alignItems: "center", justifyContent: "center", minHeight: 42, paddingHorizontal: 4, paddingVertical: 5, borderRadius: 10 },
   subTabSelected: { backgroundColor: palette.white, borderWidth: 1, borderColor: palette.line },
   subTabText: { color: palette.muted, fontSize: 10, fontWeight: "700" },
-  subTabTextSelected: { color: palette.green }
+  subTabTextSelected: { color: palette.green },
+  subTabCount: { minWidth: 20, height: 14, borderRadius: 7, paddingHorizontal: 5, alignItems: "center", justifyContent: "center", backgroundColor: "#DEDBD0" },
+  subTabCountSelected: { backgroundColor: palette.softGreen },
+  subTabCountText: { color: palette.muted, fontSize: 9, lineHeight: 12, fontWeight: "800" },
+  subTabCountTextSelected: { color: palette.green }
 });

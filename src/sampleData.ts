@@ -504,7 +504,7 @@ export function getPersonalizedDayPlan(
     ...meal,
     ingredients: meal.ingredients.map((ingredient) => ({ ...ingredient }))
   }));
-
+  const originalTitles = new Map(meals.map((meal) => [meal, meal.title]));
   meals.forEach((meal) => {
     meal.ingredients = meal.ingredients.map((ingredient) => {
       if (isMeat(ingredient.name) && !(meatDay && meal.type === "Dinner")) {
@@ -583,7 +583,47 @@ export function getPersonalizedDayPlan(
   applyIngredientBans(meals, preferences.bannedIngredients, preferences, date);
   meals.forEach(mergeDuplicateIngredients);
   meals.forEach(refreshMealEstimates);
+  meals.forEach((meal) => {
+    const originalTitle = originalTitles.get(meal);
+    if (originalTitle !== undefined && !meal.isTypicalBreakfast) syncMealEmoji(meal, originalTitle);
+  });
   return { date: basePlan.date, meals };
+}
+
+const mealEmojiRules: Array<[RegExp, string]> = [
+  [/soup|stew/i, "🍲"],
+  [/pasta|spaghetti|noodle/i, "🍝"],
+  [/burrito|wrap/i, "🌯"],
+  [/pancake/i, "🥞"],
+  [/porridge|\boats?\b|overnight/i, "🥣"],
+  [/salad/i, "🥗"],
+  [/stir-fry|fried rice/i, "🥘"],
+  [/sweet potato/i, "🍠"],
+  [/toast|bread|sandwich/i, "🍞"],
+  [/\brice\b/i, "🍚"],
+  [/potato/i, "🥔"],
+  [/chicken/i, "🍗"],
+  [/tuna|sardine|salmon|mackerel|fish/i, "🐟"],
+  [/beef|pork|mince/i, "🥩"],
+  [/\beggs?\b/i, "🍳"],
+  [/lentil|bean|chickpea/i, "🫘"],
+  [/hummus|greens|veg/i, "🥗"],
+  [/banana/i, "🍌"],
+  [/berr/i, "🫐"],
+  [/yogurt|skyr/i, "🥣"]
+];
+
+/**
+ * Personalization rewrites titles (protein swaps, batch bowls, budget meals), so the template's
+ * emoji can stop matching. "Lower-cost …" titles name a single food, so they are matched on the main ingredients.
+ */
+function syncMealEmoji(meal: Meal, originalTitle: string): void {
+  if (meal.title === originalTitle || meal.title.toLowerCase().includes(originalTitle.toLowerCase())) return;
+  const text = /^lower-cost /i.test(meal.title)
+    ? meal.ingredients.filter((ingredient) => ingredient.category !== "seasoning").map((ingredient) => ingredient.name).join(" ")
+    : meal.title;
+  const match = mealEmojiRules.find(([pattern]) => pattern.test(text));
+  if (match) meal.emoji = match[1];
 }
 
 /** Substitutions can reintroduce an ingredient the meal already has (e.g. olive oil). */

@@ -1045,8 +1045,20 @@ const replacementPortions: Record<string, [string, string, string]> = {
   "bread": ["Bread", "1", "slices"],
   "wrap": ["Wrap", "1", "large"],
   "basmati-rice": ["Basmati rice, dry", "100", "g"],
+  "brown-rice": ["Brown rice, dry", "100", "g"],
+  "couscous": ["Couscous, dry", "100", "g"],
   "pasta": ["Pasta, dry", "100", "g"],
-  "tomato": ["Tomatoes", "100", "g"]
+  "tomato": ["Tomatoes", "100", "g"],
+  "orange": ["Orange", "1", "medium"],
+  "pear": ["Pear", "1", "medium"],
+  "raisins": ["Raisins", "30", "g"],
+  "butter": ["Butter", "5", "g"],
+  "peanut-butter": ["Peanut butter", "15", "g"],
+  "salt": ["Salt", "1", "g"],
+  "black-pepper": ["Black pepper", "1", "g"],
+  "paprika": ["Ground paprika", "1", "g"],
+  "curry-powder": ["Curry powder", "2", "g"],
+  "flour": ["Flour", "15", "g"]
 };
 
 function isReplacementAllowed(name: string, meal: Meal, preferences: MealPreferences, date?: Date): boolean {
@@ -1070,7 +1082,7 @@ function getSelectedIngredientReplacement(
   if (!option) return null;
   const [name, baseQuantity, unit] = replacementPortions[id] ?? [
     option.matches[0], option.category === "Pantry & seasonings" ? "5" : "100",
-    /milk|oil|stock|sauce|juice|water/i.test(option.name) ? "ml" : "g"
+    /milk|oil|stock|sauce|juice|water|vinegar/i.test(option.name) ? "ml" : "g"
   ];
   if (!isReplacementAllowed(name, meal, preferences, date)) return null;
   try {
@@ -1089,15 +1101,18 @@ function getSelectedIngredientReplacement(
 }
 
 const pantryReplacementTypes: Record<string, string> = {
-  "olive-oil": "oil", "sesame-oil": "oil", "vegetable-oil": "oil",
-  honey: "sweet", jam: "sweet",
-  "baking-powder": "baking", "chia-seeds": "seeds", water: "liquid"
+  "olive-oil": "oil", "sesame-oil": "oil", "vegetable-oil": "oil", "sunflower-oil": "oil",
+  "rapeseed-oil": "oil", "peanut-oil": "oil", "coconut-oil": "oil", butter: "oil",
+  honey: "sweet", jam: "sweet", sugar: "sweet", "peanut-butter": "sweet",
+  "baking-powder": "baking", flour: "flour",
+  "chia-seeds": "seeds", "sunflower-seeds": "seeds", peanuts: "seeds", water: "liquid"
 };
 
 /** Replacement ingredients must be of the same kind: catalog category, with pantry items split into finer kinds. */
 function getReplacementType(ingredientId: string): string | undefined {
   const category = ingredientCatalog.find((option) => option.id === ingredientId)?.category;
-  if (category !== "Pantry & seasonings") return category;
+  // Butter cooks like the oils, so it is grouped with them although it is listed under dairy.
+  if (category !== "Pantry & seasonings" && !pantryReplacementTypes[ingredientId]) return category;
   return `pantry:${pantryReplacementTypes[ingredientId] ?? "seasoning"}`;
 }
 
@@ -1120,17 +1135,17 @@ function getBanReplacement(
   occupiedNames: Set<string>
 ): MealIngredient | null {
   const choices: Array<[string, string, string]> =
-    /jam/i.test(ingredient.name)
+    /jam|peanut butter|sugar/i.test(ingredient.name)
       ? [["Honey", "1", "tsp"], ["Rolled oats", "20", "g"]]
-      : /meat|fish|chicken|tuna|sardine|beans|chickpeas|lentils|hummus/i.test(ingredient.name)
+      : /meat|fish|chicken|tuna|sardine|beans|chickpeas|lentils|hummus|tofu/i.test(ingredient.name)
     ? [["Black beans, drained", "100", "g"], ["Chickpeas, drained", "100", "g"], ["Lentils, dry", "100", "g"]]
     : isDairy(ingredient.name) || isEgg(ingredient.name)
       ? [["Rolled oats", "30", "g"], ["Hummus", "1", "tbsp"], ["Water", "100", "ml"]]
       : isFruit(ingredient.name)
         ? [["Rolled oats", "30", "g"], ["Black beans, drained", "80", "g"]]
-        : /oil|herb|garlic|pepper|spice|cinnamon|soy sauce|mustard|salsa|chive|lemon juice|stock|honey|baking powder/i.test(ingredient.name)
+        : /oil|herb|garlic|black pepper|spice|cinnamon|soy sauce|mustard|salsa|chive|lemon juice|stock|honey|baking powder|vinegar|salt|paprika|curry|flour|sunflower seeds|peanuts/i.test(ingredient.name)
           ? []
-          : /rice|pasta|bread|wrap|roll|oat|potato/i.test(ingredient.name)
+          : /rice|pasta|bread|wrap|roll|oat|potato|couscous/i.test(ingredient.name)
             ? [["Basmati rice, dry", "60", "g"], ["Pasta, dry", "60", "g"], ["Potatoes", "150", "g"]]
             : [["Frozen mixed vegetables", "100", "g"], ["Carrots", "1", "medium"], ["Tomatoes", "100", "g"]];
   const replacement = choices.find(([name]) =>
@@ -1191,12 +1206,12 @@ function isMeat(name: string): boolean {
 }
 
 function isDairy(name: string): boolean {
-  if (/\b(soy yogurt|soy drink|oat drink)\b/i.test(name)) return false;
-  return /\b(yogurt|milk|cheese|cheddar|parmesan|cottage cheese|skyr|butter|cream)\b/i.test(name);
+  if (/\b(soy yogurt|soy drink|oat drink|peanut butter)\b/i.test(name)) return false;
+  return /\b(yogurt|milk|cheese|cheddar|parmesan|mozzarella|cottage cheese|skyr|butter|cream)\b/i.test(name);
 }
 
 function isFruit(name: string): boolean {
-  return /\b(apple|banana|berries|berry|strawberr(?:y|ies)|blueberr(?:y|ies)|fruit)\b/i.test(name);
+  return /\b(apple|banana|berries|berry|strawberr(?:y|ies)|blueberr(?:y|ies)|fruit|oranges?|pears?|raisins)\b/i.test(name);
 }
 
 function replaceIngredient(ingredient: MealIngredient, replacementName: string): MealIngredient {
@@ -1271,7 +1286,7 @@ function ensureDinnerMeat(meals: Meal[], weekday: number): void {
 }
 
 function describeMealIngredients(meal: Meal): string {
-  const seasoningPattern = /oil|herb|garlic|pepper|spice|cinnamon|soy sauce|mustard|salsa|chive|lemon juice|stock/i;
+  const seasoningPattern = /oil|herb|garlic|black pepper|spice|cinnamon|soy sauce|mustard|salsa|chive|lemon juice|stock|vinegar|\bsalt\b|paprika|curry powder/i;
   return meal.ingredients
     .filter((ingredient) => !seasoningPattern.test(ingredient.name))
     .slice(0, 3)
@@ -1378,7 +1393,7 @@ function ensureBreakfastDairy(meals: Meal[]): void {
 }
 
 function addSeasoningIfNeeded(meal: Meal): void {
-  if (!meal.ingredients.some((ingredient) => /\b(oil|butter)\b/i.test(ingredient.name))) {
+  if (!meal.ingredients.some((ingredient) => /\boil\b|^butter$/i.test(ingredient.name))) {
     meal.ingredients.push({
       name: "Olive oil",
       quantity: "1",
@@ -1391,7 +1406,7 @@ function addSeasoningIfNeeded(meal: Meal): void {
     meal.description = appendDescription(meal.description, "olive oil");
   }
   if (!meal.ingredients.some((ingredient) =>
-    /herb|garlic|pepper|spice|cinnamon|soy sauce|mustard|salsa|chive|lemon juice/i.test(ingredient.name)
+    /herb|garlic|black pepper|spice|cinnamon|soy sauce|mustard|salsa|chive|lemon juice|vinegar|\bsalt\b|paprika|curry powder/i.test(ingredient.name)
   )) {
     meal.ingredients.push({
       name: "Dried herbs",

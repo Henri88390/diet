@@ -104,21 +104,22 @@ function canonicalIngredientName(name: string): string {
 }
 
 export function getShoppingCategory(name: string): ShoppingCategory {
-  if (/\b(apple|banana|berries|berry|fruit)\b/i.test(name)) return "Fruit";
-  if (/\b(oil|herb|garlic|pepper|spice|cinnamon|soy sauce|mustard|salsa|chive|lemon juice|stock|honey|jam|baking powder|chia seeds)\b/i.test(name)) {
+  if (/\b(apple|banana|berries|berry|fruit|oranges?|pears?|raisins)\b/i.test(name)) return "Fruit";
+  if (/\bbell peppers?\b/i.test(name)) return "Vegetables";
+  if (/\b(oil|herb|garlic|pepper|spice|cinnamon|soy sauce|mustard|salsa|chive|lemon juice|stock|honey|jam|baking powder|seeds|peanuts?|vinegar|salt|paprika|curry powder|sugar|flour)\b/i.test(name)) {
     return "Pantry & seasonings";
   }
-  if (/\b(vegetables?|spinach|tomato(?:es)?|cucumbers?|lettuce|carrots?|potato(?:es)?|onions?|green beans|sweetcorn)\b/i.test(name)) {
+  if (/\b(vegetables?|spinach|tomato(?:es)?|cucumbers?|lettuce|carrots?|potato(?:es)?|onions?|green beans|sweetcorn|broccoli|cabbage|peas|mushrooms?|zucchini|courgettes?)\b/i.test(name)) {
     return "Vegetables";
   }
   if (/\b(chicken|beef|pork|turkey|lamb|ham|bacon|sausage|fish|tuna|salmon|sardines?)\b/i.test(name)) {
     return "Meat & fish";
   }
-  if (/\b(yogurt|milk|cheese|cheddar|parmesan|skyr|butter|cream|egg|eggs)\b/i.test(name)) {
+  if (/\b(yogurt|milk|cheese|cheddar|parmesan|mozzarella|skyr|butter|cream|egg|eggs)\b/i.test(name)) {
     return "Dairy & eggs";
   }
-  if (/\b(lentils|beans|chickpeas|hummus)\b/i.test(name)) return "Legumes";
-  if (/\b(oats|rice|pasta|bread|wrap|roll|potato)\b/i.test(name)) {
+  if (/\b(lentils|beans|chickpeas|hummus|tofu)\b/i.test(name)) return "Legumes";
+  if (/\b(oats|rice|pasta|bread|wrap|roll|potato|couscous)\b/i.test(name)) {
     return "Grains & bakery";
   }
   return "Other";

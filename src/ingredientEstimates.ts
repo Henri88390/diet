@@ -21,11 +21,14 @@ type PriceAndNutritionRate = {
  */
 const rates: PriceAndNutritionRate[] = [
   { pattern: /frozen berries/i, basis: "g", centsPerBasisUnit: 0.7, caloriesPerBasisUnit: 0.5, proteinGramsPerBasisUnit: 0.01 },
+  { pattern: /frozen peas/i, basis: "g", centsPerBasisUnit: 0.25, caloriesPerBasisUnit: 0.81, proteinGramsPerBasisUnit: 0.054 },
+  { pattern: /frozen white fish/i, basis: "g", centsPerBasisUnit: 0.9, caloriesPerBasisUnit: 0.82, proteinGramsPerBasisUnit: 0.18 },
   { pattern: /frozen mixed vegetables/i, basis: "g", centsPerBasisUnit: 0.22, caloriesPerBasisUnit: 0.45, proteinGramsPerBasisUnit: 0.03 },
   { pattern: /rolled oats/i, basis: "g", centsPerBasisUnit: 0.18, caloriesPerBasisUnit: 3.89, proteinGramsPerBasisUnit: 0.169 },
   { pattern: /plain yogurt/i, basis: "g", centsPerBasisUnit: 35 / 150, caloriesPerBasisUnit: 0.6, proteinGramsPerBasisUnit: 0.035, gramsPerTeaspoon: 5 },
   { pattern: /cottage cheese/i, basis: "g", centsPerBasisUnit: 0.7, caloriesPerBasisUnit: 0.98, proteinGramsPerBasisUnit: 0.11 },
   { pattern: /\bskyr\b/i, basis: "g", centsPerBasisUnit: 0.8, caloriesPerBasisUnit: 0.63, proteinGramsPerBasisUnit: 0.11 },
+  { pattern: /coconut oil/i, basis: "ml", centsPerBasisUnit: 1.3, caloriesPerBasisUnit: 8.0, proteinGramsPerBasisUnit: 0 },
   { pattern: /\bmilk\b/i, basis: "ml", centsPerBasisUnit: 0.13, caloriesPerBasisUnit: 0.61, proteinGramsPerBasisUnit: 0.034 },
   { pattern: /chickpeas, drained/i, basis: "g", centsPerBasisUnit: 0.28, caloriesPerBasisUnit: 1.64, proteinGramsPerBasisUnit: 0.089 },
   { pattern: /red beans, drained/i, basis: "g", centsPerBasisUnit: 0.28, caloriesPerBasisUnit: 1.27, proteinGramsPerBasisUnit: 0.087 },
@@ -39,11 +42,14 @@ const rates: PriceAndNutritionRate[] = [
   { pattern: /chicken thigh/i, basis: "g", centsPerBasisUnit: 0.9, caloriesPerBasisUnit: 2.09, proteinGramsPerBasisUnit: 0.26 },
   { pattern: /canned tuna/i, basis: "g", centsPerBasisUnit: 0.65, caloriesPerBasisUnit: 1.25, proteinGramsPerBasisUnit: 0.26 },
   { pattern: /canned sardines/i, basis: "g", centsPerBasisUnit: 0.58, caloriesPerBasisUnit: 2.08, proteinGramsPerBasisUnit: 0.25 },
+  { pattern: /\btofu\b/i, basis: "g", centsPerBasisUnit: 0.6, caloriesPerBasisUnit: 1.44, proteinGramsPerBasisUnit: 0.155 },
   { pattern: /eggs?\b/i, basis: "each", centsPerBasisUnit: 35, caloriesPerBasisUnit: 72, proteinGramsPerBasisUnit: 6.3 },
   { pattern: /bread roll/i, basis: "each", centsPerBasisUnit: 30, caloriesPerBasisUnit: 150, proteinGramsPerBasisUnit: 5 },
   { pattern: /\bbread\b/i, basis: "each", centsPerBasisUnit: 12, caloriesPerBasisUnit: 95, proteinGramsPerBasisUnit: 3.5 },
   { pattern: /\bwrap\b/i, basis: "each", centsPerBasisUnit: 38, caloriesPerBasisUnit: 175, proteinGramsPerBasisUnit: 5 },
   { pattern: /basmati rice, dry/i, basis: "g", centsPerBasisUnit: 0.16, caloriesPerBasisUnit: 3.65, proteinGramsPerBasisUnit: 0.071 },
+  { pattern: /brown rice/i, basis: "g", centsPerBasisUnit: 0.25, caloriesPerBasisUnit: 3.62, proteinGramsPerBasisUnit: 0.075 },
+  { pattern: /couscous/i, basis: "g", centsPerBasisUnit: 0.3, caloriesPerBasisUnit: 3.76, proteinGramsPerBasisUnit: 0.128 },
   { pattern: /pasta, dry/i, basis: "g", centsPerBasisUnit: 0.18, caloriesPerBasisUnit: 3.5, proteinGramsPerBasisUnit: 0.13 },
   { pattern: /sweet potato/i, basis: "g", centsPerBasisUnit: 0.3, caloriesPerBasisUnit: 0.86, proteinGramsPerBasisUnit: 0.016 },
   { pattern: /\bpotato(?:es)?\b/i, basis: "g", centsPerBasisUnit: 0.17, caloriesPerBasisUnit: 0.77, proteinGramsPerBasisUnit: 0.02, gramsPerEach: 250 },
@@ -55,13 +61,35 @@ const rates: PriceAndNutritionRate[] = [
   { pattern: /green beans/i, basis: "g", centsPerBasisUnit: 0.32, caloriesPerBasisUnit: 0.31, proteinGramsPerBasisUnit: 0.018 },
   { pattern: /sweetcorn/i, basis: "g", centsPerBasisUnit: 0.22, caloriesPerBasisUnit: 0.86, proteinGramsPerBasisUnit: 0.033 },
   { pattern: /onion/i, basis: "g", centsPerBasisUnit: 0.12, caloriesPerBasisUnit: 0.4, proteinGramsPerBasisUnit: 0.011, gramsPerEach: 110 },
+  { pattern: /bell peppers?/i, basis: "g", centsPerBasisUnit: 0.4, caloriesPerBasisUnit: 0.26, proteinGramsPerBasisUnit: 0.01, gramsPerEach: 150 },
+  { pattern: /broccoli/i, basis: "g", centsPerBasisUnit: 0.35, caloriesPerBasisUnit: 0.34, proteinGramsPerBasisUnit: 0.028 },
+  { pattern: /cabbage/i, basis: "g", centsPerBasisUnit: 0.12, caloriesPerBasisUnit: 0.25, proteinGramsPerBasisUnit: 0.013 },
+  { pattern: /mushrooms?/i, basis: "g", centsPerBasisUnit: 0.5, caloriesPerBasisUnit: 0.22, proteinGramsPerBasisUnit: 0.031 },
+  { pattern: /zucchini|courgettes?/i, basis: "g", centsPerBasisUnit: 0.3, caloriesPerBasisUnit: 0.17, proteinGramsPerBasisUnit: 0.012, gramsPerEach: 200 },
   { pattern: /apple/i, basis: "each", centsPerBasisUnit: 35, caloriesPerBasisUnit: 95, proteinGramsPerBasisUnit: 0.5 },
   { pattern: /banana/i, basis: "each", centsPerBasisUnit: 22, caloriesPerBasisUnit: 105, proteinGramsPerBasisUnit: 1.3 },
+  { pattern: /\boranges?\b/i, basis: "each", centsPerBasisUnit: 30, caloriesPerBasisUnit: 62, proteinGramsPerBasisUnit: 1.2 },
+  { pattern: /\bpears?\b/i, basis: "each", centsPerBasisUnit: 40, caloriesPerBasisUnit: 100, proteinGramsPerBasisUnit: 0.6 },
+  { pattern: /raisins/i, basis: "g", centsPerBasisUnit: 0.8, caloriesPerBasisUnit: 2.99, proteinGramsPerBasisUnit: 0.031, gramsPerTeaspoon: 4 },
   { pattern: /lemon juice/i, basis: "ml", centsPerBasisUnit: 0.25, caloriesPerBasisUnit: 0.22, proteinGramsPerBasisUnit: 0.003 },
   { pattern: /^water$/i, basis: "ml", centsPerBasisUnit: 0, caloriesPerBasisUnit: 0, proteinGramsPerBasisUnit: 0 },
   { pattern: /olive oil/i, basis: "ml", centsPerBasisUnit: 0.8, caloriesPerBasisUnit: 8.2, proteinGramsPerBasisUnit: 0 },
   { pattern: /sesame oil/i, basis: "ml", centsPerBasisUnit: 1.1, caloriesPerBasisUnit: 8.2, proteinGramsPerBasisUnit: 0 },
   { pattern: /vegetable oil/i, basis: "ml", centsPerBasisUnit: 0.45, caloriesPerBasisUnit: 8.2, proteinGramsPerBasisUnit: 0 },
+  { pattern: /sunflower oil/i, basis: "ml", centsPerBasisUnit: 0.3, caloriesPerBasisUnit: 8.2, proteinGramsPerBasisUnit: 0 },
+  { pattern: /rapeseed oil|canola oil/i, basis: "ml", centsPerBasisUnit: 0.3, caloriesPerBasisUnit: 8.2, proteinGramsPerBasisUnit: 0 },
+  { pattern: /peanut oil/i, basis: "ml", centsPerBasisUnit: 0.7, caloriesPerBasisUnit: 8.2, proteinGramsPerBasisUnit: 0 },
+  { pattern: /peanut butter/i, basis: "g", centsPerBasisUnit: 0.6, caloriesPerBasisUnit: 5.88, proteinGramsPerBasisUnit: 0.25, gramsPerTeaspoon: 5 },
+  { pattern: /peanuts/i, basis: "g", centsPerBasisUnit: 0.6, caloriesPerBasisUnit: 5.67, proteinGramsPerBasisUnit: 0.26, gramsPerTeaspoon: 3 },
+  { pattern: /sunflower seeds/i, basis: "g", centsPerBasisUnit: 0.7, caloriesPerBasisUnit: 5.84, proteinGramsPerBasisUnit: 0.21, gramsPerTeaspoon: 3 },
+  { pattern: /\bbutter\b/i, basis: "g", centsPerBasisUnit: 1.0, caloriesPerBasisUnit: 7.17, proteinGramsPerBasisUnit: 0.009, gramsPerTeaspoon: 5 },
+  { pattern: /vinegar/i, basis: "ml", centsPerBasisUnit: 0.15, caloriesPerBasisUnit: 0.2, proteinGramsPerBasisUnit: 0 },
+  { pattern: /\bsalt\b/i, basis: "g", centsPerBasisUnit: 0.05, caloriesPerBasisUnit: 0, proteinGramsPerBasisUnit: 0, gramsPerTeaspoon: 6 },
+  { pattern: /black pepper/i, basis: "g", centsPerBasisUnit: 2.5, caloriesPerBasisUnit: 2.5, proteinGramsPerBasisUnit: 0.1, gramsPerTeaspoon: 2.3 },
+  { pattern: /paprika/i, basis: "g", centsPerBasisUnit: 2, caloriesPerBasisUnit: 2.8, proteinGramsPerBasisUnit: 0.14, gramsPerTeaspoon: 2.3 },
+  { pattern: /curry powder/i, basis: "g", centsPerBasisUnit: 1.5, caloriesPerBasisUnit: 3.25, proteinGramsPerBasisUnit: 0.14, gramsPerTeaspoon: 2 },
+  { pattern: /\bsugar\b/i, basis: "g", centsPerBasisUnit: 0.12, caloriesPerBasisUnit: 4, proteinGramsPerBasisUnit: 0, gramsPerTeaspoon: 4 },
+  { pattern: /\bflour\b/i, basis: "g", centsPerBasisUnit: 0.1, caloriesPerBasisUnit: 3.64, proteinGramsPerBasisUnit: 0.1, gramsPerTeaspoon: 3 },
   { pattern: /vegetable stock/i, basis: "ml", centsPerBasisUnit: 0.06, caloriesPerBasisUnit: 0.05, proteinGramsPerBasisUnit: 0.002 },
   { pattern: /soy sauce/i, basis: "ml", centsPerBasisUnit: 0.25, caloriesPerBasisUnit: 0.53, proteinGramsPerBasisUnit: 0.08 },
   { pattern: /plain mustard/i, basis: "g", centsPerBasisUnit: 0.5, caloriesPerBasisUnit: 0.66, proteinGramsPerBasisUnit: 0.04, gramsPerTeaspoon: 5 },
@@ -73,6 +101,7 @@ const rates: PriceAndNutritionRate[] = [
   { pattern: /baking powder/i, basis: "g", centsPerBasisUnit: 0.4, caloriesPerBasisUnit: 0.53, proteinGramsPerBasisUnit: 0, gramsPerTeaspoon: 4 },
   { pattern: /salsa/i, basis: "g", centsPerBasisUnit: 0.4, caloriesPerBasisUnit: 0.36, proteinGramsPerBasisUnit: 0.015, gramsPerTeaspoon: 5 },
   { pattern: /cheddar/i, basis: "g", centsPerBasisUnit: 0.85, caloriesPerBasisUnit: 4.03, proteinGramsPerBasisUnit: 0.25 },
+  { pattern: /mozzarella/i, basis: "g", centsPerBasisUnit: 0.9, caloriesPerBasisUnit: 2.8, proteinGramsPerBasisUnit: 0.22 },
   { pattern: /parmesan/i, basis: "g", centsPerBasisUnit: 1.8, caloriesPerBasisUnit: 4.31, proteinGramsPerBasisUnit: 0.38 },
   { pattern: /hummus/i, basis: "g", centsPerBasisUnit: 0.55, caloriesPerBasisUnit: 2.4, proteinGramsPerBasisUnit: 0.08, gramsPerTeaspoon: 5 },
   { pattern: /chia seeds/i, basis: "g", centsPerBasisUnit: 0.9, caloriesPerBasisUnit: 4.86, proteinGramsPerBasisUnit: 0.17, gramsPerTeaspoon: 4 },
@@ -81,11 +110,11 @@ const rates: PriceAndNutritionRate[] = [
 ];
 
 const seasoningPattern =
-  /\b(oil|butter|herbs?|garlic|pepper|spice|cinnamon|soy sauce|mustard|salsa|chives?|lemon juice|stock|baking powder)\b/i;
+  /\b(oil|butter|herbs?|garlic|black pepper|spice|cinnamon|soy sauce|mustard|salsa|chives?|lemon juice|stock|baking powder|vinegar|salt|paprika|curry powder)\b/i;
 const countedUnits = new Set(["each", "large", "medium", "slice", "slices", "roll", "clove"]);
 
 export function getIngredientCategory(name: string): IngredientCategory {
-  return seasoningPattern.test(name) ? "seasoning" : "main";
+  return seasoningPattern.test(name) && !/peanut butter/i.test(name) ? "seasoning" : "main";
 }
 
 function parseQuantity(quantity: string): number {

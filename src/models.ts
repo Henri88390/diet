@@ -12,6 +12,8 @@ export type IngredientOption = {
   name: string;
   category: IngredientCategoryGroup;
   matches: string[];
+  /** Names containing one of these are a different food (e.g. "peanut butter" is not butter). */
+  excludes?: string[];
 };
 
 export type IngredientBans = string[];

@@ -60,6 +60,7 @@ const {
 } = require("../src/ingredientCatalog.ts");
 const {
   estimateIngredient,
+  getIngredientCategory,
   getIngredientAggregationAmount,
   isValidPositiveIngredientQuantity,
   PRICE_ESTIMATE_REFERENCE
@@ -500,13 +501,20 @@ const plans = getSevenCalendarDayPlans(today, preferences, appliedGoals, "DE");
 // 57 catalog bans x 4 styles x 4 meal counts x 7 days = 6,384 automatic cases.
 {
   const { createHash } = require("node:crypto");
+  // Ingredients added after the digest was frozen are not used by default recipes: banning them changes nothing.
+  const addedIds = ["orange", "pear", "raisins", "bell-pepper", "broccoli", "cabbage", "frozen-peas", "mushrooms", "zucchini",
+    "frozen-white-fish", "tofu", "mozzarella", "butter", "brown-rice", "couscous", "sunflower-oil", "rapeseed-oil",
+    "peanut-oil", "coconut-oil", "vinegar", "salt", "black-pepper", "paprika", "curry-powder", "flour", "sugar",
+    "peanut-butter", "sunflower-seeds", "peanuts"];
+  const legacyIds = ingredientCatalog.map((item) => item.id).filter((id) => !addedIds.includes(id));
+  assert.equal(legacyIds.length, 57, "the frozen digest covers the original 57 catalog ingredients");
   for (const [withBans, expected] of [
     [false, "e25e833be5eb4b11302297629510a7deaa36722a866f08fac4b04570d34fe43e"],
     [true, "86b4b2a0a65ae696add5e505beba472e53c49d79fdf94073955e826ef035e49f"]
   ]) {
     const hash = createHash("sha256");
     let count = 0;
-    for (const id of withBans ? ingredientCatalog.map((item) => item.id) : [null]) {
+    for (const id of withBans ? legacyIds : [null]) {
       for (const planStyle of ["balanced", "highProtein", "lowCost", "batchCooking"]) {
         for (const mealsPerDay of [2, 3, 4, 5]) for (let day = 2; day <= 8; day++) {
           const p = { ...preferences, planStyle, mealsPerDay, bannedIngredients: id ? [id] : [] };
@@ -520,7 +528,63 @@ const plans = getSevenCalendarDayPlans(today, preferences, appliedGoals, "DE");
     assert.equal(hash.digest("hex"), expected, "legacy plans remain stable apart from generated snack occurrence keys");
     assert.equal(count, withBans ? 6384 : 112);
   }
+  const planJson = (bannedIngredients) => JSON.stringify(["balanced", "batchCooking"].flatMap((planStyle) => [3, 5].flatMap((mealsPerDay) =>
+    [2, 5, 8].map((day) => getPersonalizedDayPlan(new Date(2026, 10, day), { ...preferences, planStyle, mealsPerDay, bannedIngredients })))));
+  const unbannedJson = planJson([]);
+  for (const id of addedIds) {
+    assert.ok(ingredientCatalog.some((item) => item.id === id), id + " is in the catalog");
+    assert.equal(planJson([id]), unbannedJson, id + ": banning a newly added ingredient leaves default plans unchanged");
+  }
   console.log("Legacy regression matrix passed: 6,384 automatic bans and 112 no-ban cases with snack occurrence keys.");
+}
+
+// Added ingredients: common foods with modeled prices, the right grocery aisle, and same-kind replacements.
+{
+  const perUnit = (name, quantity, unit) => estimateIngredient(name, quantity, unit, "DE");
+  for (const [name, quantity, unit] of [
+    ["Orange", "1", "medium"], ["Pear", "1", "medium"], ["Raisins", "30", "g"], ["Bell pepper", "100", "g"],
+    ["Broccoli", "100", "g"], ["Cabbage", "100", "g"], ["Frozen peas", "100", "g"], ["Mushrooms", "100", "g"],
+    ["Zucchini", "100", "g"], ["Frozen white fish", "100", "g"], ["Tofu", "100", "g"], ["Mozzarella", "100", "g"],
+    ["Butter", "5", "g"], ["Brown rice, dry", "100", "g"], ["Couscous, dry", "100", "g"], ["Sunflower oil", "1", "tsp"],
+    ["rapeseed oil", "1", "tsp"], ["Peanut oil", "1", "tsp"], ["Coconut oil", "1", "tsp"], ["Vinegar", "1", "tbsp"],
+    ["Salt", "1", "g"], ["Black pepper", "1", "g"], ["Ground paprika", "1", "g"], ["Curry powder", "2", "g"],
+    ["Flour", "15", "g"], ["Sugar", "1", "tsp"], ["Peanut butter", "15", "g"], ["Sunflower seeds", "1", "tbsp"], ["Peanuts", "30", "g"]
+  ]) {
+    const estimate = perUnit(name, quantity, unit);
+    assert.ok(estimate.estimatedCostCents >= 0 && estimate.estimatedCostCents < 150, name + " has a modeled, cheap portion price");
+    assert.ok(require("../src/foodNames.ts").hasFoodTranslation(name), name + " is translated");
+  }
+  assert.ok(perUnit("Sunflower oil", "100", "ml").estimatedCostCents < perUnit("Olive oil", "100", "ml").estimatedCostCents,
+    "sunflower oil is modeled cheaper than olive oil");
+  assert.ok(perUnit("Rapeseed oil", "100", "ml").calories > 800, "oils keep realistic energy density");
+  assert.equal(getIngredientCategory("Peanut butter"), "main", "peanut butter is a food, not a seasoning");
+  assert.equal(getIngredientCategory("Butter"), "seasoning", "butter is a cooking fat like oil");
+  assert.equal(getIngredientCategory("Bell pepper"), "main", "bell pepper is a vegetable, not the pepper seasoning");
+  assert.equal(getIngredientCategory("Black pepper"), "seasoning");
+  assert.deepEqual(["Bell pepper", "Broccoli", "Frozen peas", "Zucchini"].map(getShoppingCategory), Array(4).fill("Vegetables"));
+  assert.deepEqual(["Orange", "Pear", "Raisins"].map(getShoppingCategory), Array(3).fill("Fruit"));
+  assert.equal(getShoppingCategory("Peanut butter"), "Pantry & seasonings");
+  assert.equal(getShoppingCategory("Butter"), "Dairy & eggs");
+  assert.equal(getShoppingCategory("Mozzarella"), "Dairy & eggs");
+  assert.equal(getShoppingCategory("Frozen white fish"), "Meat & fish");
+  assert.equal(getShoppingCategory("Tofu"), "Legumes");
+  assert.equal(getShoppingCategory("Couscous, dry"), "Grains & bakery");
+  assert.equal(isIngredientBanned("Peanut butter", ["butter"]), false, "banning butter does not ban peanut butter");
+  assert.equal(isIngredientBanned("Butter", ["butter"]), true);
+  assert.equal(getIngredientCatalogId("Peanut butter"), "peanut-butter");
+  assert.equal(getIngredientCatalogId("canola oil"), "rapeseed-oil");
+
+  const monday = new Date(2026, 10, 2);
+  const open = { ...preferences, meatPerWeek: 7, dairyPerWeek: 7, weeklyBudget: "" };
+  const meals = getPersonalizedDayPlan(monday, open).meals;
+  const optionIds = (type, id) => getIngredientReplacementOptions(meals.find((meal) => meal.type === type), id, open, monday).map((option) => option.id);
+  const oilOptions = optionIds("Lunch", "olive-oil");
+  for (const id of ["sunflower-oil", "rapeseed-oil", "peanut-oil", "coconut-oil", "vegetable-oil", "sesame-oil"]) {
+    assert.ok(oilOptions.includes(id), id + " is offered to replace olive oil");
+  }
+  assert.ok(oilOptions.every((id) => !["vinegar", "salt", "sugar", "peanut-butter"].includes(id)), "only cooking fats replace an oil");
+  const riceOptions = optionIds("Dinner", "basmati-rice");
+  assert.ok(riceOptions.includes("brown-rice") && riceOptions.includes("couscous"), "brown rice and couscous replace rice");
 }
 
 // "Revert this meal" restores the original recipe for every kind of replacement it can undo.

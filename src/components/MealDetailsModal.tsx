@@ -1,6 +1,7 @@
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { Meal } from "../models";
+import { getIngredientCatalogId } from "../ingredientCatalog";
 import { mealBadge, mealTypeIcon, palette } from "../theme";
 import { formatMoney } from "../countryPricing";
 import { useTranslation } from "react-i18next";
@@ -25,6 +26,7 @@ type Props = {
   onClose: () => void;
   onReplace?: (meal: Meal) => void;
   onBan?: (meal: Meal) => void;
+  onBanIngredient?: (meal: Meal, ingredientId: string) => void;
   canRevert?: boolean;
   onRevert?: (meal: Meal) => void;
   restrictionReason?: string | null;
@@ -32,7 +34,7 @@ type Props = {
   onUnban?: (meal: Meal) => void;
 };
 
-export function MealDetailsModal({ meal, onClose, onReplace, onBan, canRevert = false, onRevert, restrictionReason, onUnban }: Props): React.JSX.Element {
+export function MealDetailsModal({ meal, onClose, onReplace, onBan, onBanIngredient, canRevert = false, onRevert, restrictionReason, onUnban }: Props): React.JSX.Element {
   const { t } = useTranslation();
   const { food } = useFoodNames();
   const currencyCode = meal?.currencyCode ?? "EUR";
@@ -61,7 +63,12 @@ export function MealDetailsModal({ meal, onClose, onReplace, onBan, canRevert = 
             <View style={styles.categoryDividerLine} />
           </View>
         )}
-        <IngredientRow ingredient={ingredient} formatCost={formatCost} />
+        <IngredientRow
+          ingredient={ingredient}
+          meal={meal!}
+          formatCost={formatCost}
+          onBanIngredient={onBanIngredient}
+        />
       </React.Fragment>
     ));
   const mainIngredients = byCategory(meal?.ingredients.filter((item) => item.category === "main") ?? []);
@@ -156,13 +163,18 @@ export function MealDetailsModal({ meal, onClose, onReplace, onBan, canRevert = 
 
 function IngredientRow({
   ingredient,
-  formatCost
+  meal,
+  formatCost,
+  onBanIngredient
 }: {
   ingredient: Meal["ingredients"][number];
+  meal: Meal;
   formatCost: (value: number) => string;
+  onBanIngredient?: (meal: Meal, ingredientId: string) => void;
 }): React.JSX.Element {
   const { t } = useTranslation();
   const { food, unit } = useFoodNames();
+  const catalogId = getIngredientCatalogId(ingredient.name);
   return (
     <View style={styles.ingredient}>
       <View style={styles.ingredientTop}>
@@ -179,6 +191,17 @@ function IngredientRow({
             ~{formatCost(ingredient.estimatedCost?.amountMinorUnits ?? ingredient.estimatedCostCents)}
           </Text>
         </View>
+        {catalogId && onBanIngredient && (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`${t("ingredientBan.banAction")}: ${food(ingredient.name)}`}
+            hitSlop={6}
+            onPress={() => onBanIngredient(meal, catalogId)}
+            style={({ pressed }) => [styles.banIngredientButton, pressed && styles.actionPressed]}
+          >
+            <Text style={styles.banIngredientText}>{t("ingredientBan.banAction")}</Text>
+          </Pressable>
+        )}
       </View>
     </View>
   );
@@ -235,7 +258,9 @@ const styles = StyleSheet.create({
   categoryDividerLabel: { color: palette.muted, fontSize: 11, fontWeight: "600" },
   categoryDividerLine: { flex: 1, height: 1, backgroundColor: "#D6D9D0" },
   quantity: { color: palette.muted, fontSize: 11, fontWeight: "600", marginLeft: 12 },
-  chips: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 8 },
+  banIngredientButton: { marginLeft: "auto", borderRadius: 8, borderWidth: 1, borderColor: "#E6C3BB", backgroundColor: "#F8E9E5", paddingHorizontal: 10, paddingVertical: 3 },
+  banIngredientText: { color: "#A23A2B", fontSize: 10, fontWeight: "800" },
+  chips: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 6, marginTop: 8 },
   chip: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, backgroundColor: "#F1EEE4" },
   chipProtein: { backgroundColor: palette.softGreen },
   chipCost: { backgroundColor: "#F6E9D8" },

@@ -39,6 +39,7 @@ export function CalendarScreen(props: Props): React.JSX.Element {
     currencyCode: props.currencyCode
   });
   const monthLabel = props.selectedDate.toLocaleDateString(dateLocale, { month: "long", year: "numeric" });
+  const isTodaySelected = formatDateKey(props.selectedDate) === formatDateKey(props.today);
 
   return (
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -49,10 +50,12 @@ export function CalendarScreen(props: Props): React.JSX.Element {
             accessibilityRole="button"
             accessibilityLabel={t("calendar.goToToday")}
             accessibilityHint={t("calendar.todayHint")}
+            accessibilityState={{ disabled: isTodaySelected }}
+            disabled={isTodaySelected}
             onPress={props.onTodayPress}
-            style={({ pressed }) => [styles.todayButton, pressed && styles.pressed]}
+            style={({ pressed }) => [styles.todayButton, isTodaySelected && styles.todayButtonDisabled, pressed && styles.pressed]}
           >
-            <Text style={styles.todayButtonText}>{t("calendar.today")}</Text>
+            <Text style={[styles.todayButtonText, isTodaySelected && styles.todayButtonTextDisabled]}>{t("calendar.today")}</Text>
           </Pressable>
         </View>
       </View>
@@ -107,6 +110,8 @@ const styles = StyleSheet.create({
   monthLabel: { color: palette.ink, fontSize: 16, fontWeight: "700" },
   todayButton: { minHeight: 34, justifyContent: "center", paddingHorizontal: 13, borderRadius: 10, borderWidth: 1, borderColor: "#C9D9C9", backgroundColor: palette.softGreen },
   todayButtonText: { color: palette.green, fontSize: 12, fontWeight: "700" },
+  todayButtonDisabled: { backgroundColor: "transparent", borderColor: palette.line },
+  todayButtonTextDisabled: { color: palette.muted, opacity: 0.6 },
   dailyTotals: { color: palette.muted, fontSize: 12, fontWeight: "600", textAlign: "right", marginTop: 4 },
   budgetNotice: { backgroundColor: "#FFF4DC", borderRadius: 14, padding: 12, marginTop: 12, gap: 4 },
   budgetNoticeText: { color: palette.ink, fontSize: 12, lineHeight: 17 },

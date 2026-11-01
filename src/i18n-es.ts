@@ -41,6 +41,7 @@ export const es: Translation = {
     "5": "3 comidas + 2 meriendas"
   },
   prefs: {
+    tabGeneral: "General",
     planStyle: "Estilo del plan de comidas",
     planStyleA11y: "Estilo del plan de comidas: {{label}}",
     budget: "Presupuesto semanal de comida",
@@ -76,7 +77,6 @@ export const es: Translation = {
     fruitA11y: "Preferencia de fruta: {{label}}",
     country: "País y moneda",
     countryA11y: "País: {{country}}, moneda {{currency}}",
-    banIngredients: "Excluir ingredientes",
     ban: "Excluir {{name}}",
     unban: "Volver a permitir {{name}}"
   },
@@ -106,8 +106,20 @@ export const es: Translation = {
   },
   menu: {
     title: "Men\u00fa", empty: "No hay comidas previstas para este periodo.", occurrences: "\u00d7{{count}}", showAll: "Mostrar todas", showLess: "Mostrar menos",
-    ban: "Excluir", replaceAll: "Reemplazar todas", batchUnavailable: "Las comidas preparadas por lotes no se pueden cambiar aqui.", typicalUnavailable: "Tu desayuno habitual se configura en Preferencias.", bannedTitle: "Comidas excluidas",
-    substitute: "\u2192 {{name}}", unban: "Restaurar", unbanConfirmTitle: "¿Restaurar esta comida?", unbanConfirmMessage: "{{name}} volverá a estar disponible en tu plan.", noBanned: "No hay comidas excluidas."
+    ban: "Excluir", replaceAll: "Reemplazar todas", batchUnavailable: "Las comidas preparadas por lotes no se pueden cambiar aqui.", typicalUnavailable: "Tu desayuno habitual se configura en Preferencias.",
+    substitute: "\u2192 {{name}}", unban: "Restaurar", unbanConfirmTitle: "¿Restaurar esta comida?", unbanConfirmMessage: "{{name}} volverá a estar disponible en tu plan.", noBanned: "No hay comidas excluidas.", noBannedHint: "Toca «Excluir» en una comida de la pestaña Menú o en sus detalles para quitarla de tu plan.",
+    tabBannedMeals: "Comidas excluidas", tabBannedIngredients: "Ingredientes excluidos",
+    banCategory: "Excluir {{name}}", unbanCategory: "Permitir {{name}}", banCategoryConfirmTitle: "¿Excluir esta categoría?", banCategoryConfirmMessage: "Se excluirán todos los ingredientes de {{name}}. Las comidas afectadas se ajustan automáticamente y al permitirlos de nuevo vuelven a su estado original."
+  },
+  ingredientBan: {
+    banAction: "Excluir ingrediente", confirmTitle: "Excluir este ingrediente", confirmMessage: "Excluir {{ingredient}} de {{meal}} y revisar otras comidas afectadas.", continue: "Continuar",
+    chooseTitle: "Elige qué hacer", mealChoice: "Para {{name}}", skipAction: "Omitir ingrediente", skipHint: "Conservar esta comida sin este ingrediente.",
+    optionalReplacement: "Ingrediente de sustitución opcional", noReplacement: "Sin sustitución", replaceMealAction: "Sustituir esta comida", automaticHint: "Usar la comida con calorías más parecidas o elegir otra abajo.",
+    reviewTitle: "Revisar otras comidas", reviewHint: "Las demás recetas afectadas se sustituyen automáticamente por defecto.", affectedCount: "{{count}} raciones previstas", chooseMeal: "Elegir una comida",
+    restricted: "No se puede sustituir la comida; se usa el sustituto automático habitual del ingrediente.", noAffected: "Ninguna otra comida del plan actual contiene este ingrediente.", reviewContinue: "Revisar comidas afectadas", applyAction: "Aplicar exclusión",
+    applyEverywhere: "Usar {{replacement}} en todas las comidas", applyEverywhereHint: "Sustituir {{ingredient}} por {{replacement}} en las demás comidas que lo usan, cuando sea posible.",
+    reviewHintEverywhere: "Las comidas que pueden usar {{replacement}} en lugar de {{ingredient}} mantienen su receta. Aún puedes elegir una comida de reemplazo.",
+    useReplacement: "Usar {{replacement}}", useReplacementHint: "Mantener esta comida y sustituir {{ingredient}} por {{replacement}}."
   },
   meal: {
     a11y: "{{label}}: {{title}}, {{calories}} kilocalorías, {{protein}} gramos de proteína",

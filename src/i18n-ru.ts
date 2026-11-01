@@ -45,6 +45,7 @@ export const ru: Translation = {
     "5": "3 приёма + 2 перекуса"
   },
   prefs: {
+    tabGeneral: "Общие",
     planStyle: "Стиль плана питания",
     planStyleA11y: "Стиль плана питания: {{label}}",
     budget: "Недельный бюджет на еду",
@@ -80,7 +81,6 @@ export const ru: Translation = {
     fruitA11y: "Предпочтение по фруктам: {{label}}",
     country: "Страна и валюта",
     countryA11y: "Страна: {{country}}, валюта {{currency}}",
-    banIngredients: "Исключить ингредиенты",
     ban: "Исключить «{{name}}»",
     unban: "Снова разрешить «{{name}}»"
   },
@@ -110,8 +110,20 @@ export const ru: Translation = {
   },
   menu: {
     title: "\u041c\u0435\u043d\u044e", empty: "\u041d\u0430 \u044d\u0442\u043e\u0442 \u043f\u0435\u0440\u0438\u043e\u0434 \u0431\u043b\u044e\u0434\u0430 \u043d\u0435 \u0437\u0430\u043f\u043b\u0430\u043d\u0438\u0440\u043e\u0432\u0430\u043d\u044b.", occurrences: "\u00d7{{count}}", showAll: "\u041f\u043e\u043a\u0430\u0437\u0430\u0442\u044c \u0432\u0441\u0435", showLess: "\u0421\u0432\u0435\u0440\u043d\u0443\u0442\u044c",
-    ban: "\u0418\u0441\u043a\u043b\u044e\u0447\u0438\u0442\u044c", replaceAll: "\u0417\u0430\u043c\u0435\u043d\u0438\u0442\u044c \u0432\u0435\u0437\u0434\u0435", batchUnavailable: "\u0411\u043b\u044e\u0434\u0430 \u0434\u043b\u044f \u0437\u0430\u0433\u043e\u0442\u043e\u0432\u043a\u0438 \u043d\u0435\u043b\u044c\u0437\u044f \u0438\u0437\u043c\u0435\u043d\u0438\u0442\u044c \u0437\u0434\u0435\u0441\u044c.", typicalUnavailable: "\u041f\u0440\u0438\u0432\u044b\u0447\u043d\u044b\u0439 \u0437\u0430\u0432\u0442\u0440\u0430\u043a \u043d\u0430\u0441\u0442\u0440\u0430\u0438\u0432\u0430\u0435\u0442\u0441\u044f \u0432 \u043d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0430\u0445.", bannedTitle: "\u0418\u0441\u043a\u043b\u044e\u0447\u0451\u043d\u043d\u044b\u0435 \u0431\u043b\u044e\u0434\u0430",
-    substitute: "\u2192 {{name}}", unban: "\u0412\u0435\u0440\u043d\u0443\u0442\u044c", unbanConfirmTitle: "Вернуть блюдо?", unbanConfirmMessage: "{{name}} снова будет доступно в вашем плане.", noBanned: "\u041d\u0435\u0442 \u0438\u0441\u043a\u043b\u044e\u0447\u0451\u043d\u043d\u044b\u0445 \u0431\u043b\u044e\u0434."
+    ban: "\u0418\u0441\u043a\u043b\u044e\u0447\u0438\u0442\u044c", replaceAll: "\u0417\u0430\u043c\u0435\u043d\u0438\u0442\u044c \u0432\u0435\u0437\u0434\u0435", batchUnavailable: "\u0411\u043b\u044e\u0434\u0430 \u0434\u043b\u044f \u0437\u0430\u0433\u043e\u0442\u043e\u0432\u043a\u0438 \u043d\u0435\u043b\u044c\u0437\u044f \u0438\u0437\u043c\u0435\u043d\u0438\u0442\u044c \u0437\u0434\u0435\u0441\u044c.", typicalUnavailable: "\u041f\u0440\u0438\u0432\u044b\u0447\u043d\u044b\u0439 \u0437\u0430\u0432\u0442\u0440\u0430\u043a \u043d\u0430\u0441\u0442\u0440\u0430\u0438\u0432\u0430\u0435\u0442\u0441\u044f \u0432 \u043d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0430\u0445.",
+    substitute: "\u2192 {{name}}", unban: "\u0412\u0435\u0440\u043d\u0443\u0442\u044c", unbanConfirmTitle: "Вернуть блюдо?", unbanConfirmMessage: "{{name}} снова будет доступно в вашем плане.", noBanned: "\u041d\u0435\u0442 \u0438\u0441\u043a\u043b\u044e\u0447\u0451\u043d\u043d\u044b\u0445 \u0431\u043b\u044e\u0434.", noBannedHint: "Нажмите «Исключить» у блюда на вкладке «Меню» или в его деталях, чтобы убрать его из плана.",
+    tabBannedMeals: "Исключенные блюда", tabBannedIngredients: "Исключенные ингредиенты",
+    banCategory: "Исключить: {{name}}", unbanCategory: "Разрешить: {{name}}", banCategoryConfirmTitle: "Исключить эту категорию?", banCategoryConfirmMessage: "Все ингредиенты из категории «{{name}}» будут исключены. Блюда будут скорректированы автоматически, а при возврате категории восстановятся."
+  },
+  ingredientBan: {
+    banAction: "Исключить ингредиент", confirmTitle: "Исключить этот ингредиент", confirmMessage: "Исключить {{ingredient}} из {{meal}} и проверить другие блюда.", continue: "Далее",
+    chooseTitle: "Выберите действие", mealChoice: "Для {{name}}", skipAction: "Пропустить ингредиент", skipHint: "Оставить блюдо без этого ингредиента.",
+    optionalReplacement: "Необязательная замена", noReplacement: "Без замены", replaceMealAction: "Заменить блюдо", automaticHint: "Выбрать блюдо с близкой калорийностью или указать ниже.",
+    reviewTitle: "Проверить другие блюда", reviewHint: "Другие затронутые рецепты по умолчанию заменяются автоматически.", affectedCount: "{{count}} запланированных порций", chooseMeal: "Выбрать блюдо",
+    restricted: "Замена блюда недоступна; используется обычная автозамена ингредиента.", noAffected: "В текущем плане нет других блюд с этим ингредиентом.", reviewContinue: "Проверить затронутые блюда", applyAction: "Применить исключение",
+    applyEverywhere: "Использовать {{replacement}} во всех блюдах", applyEverywhereHint: "По возможности заменить {{ingredient}} на {{replacement}} во всех других блюдах с этим ингредиентом.",
+    reviewHintEverywhere: "Блюда, в которых можно использовать {{replacement}} вместо {{ingredient}}, сохранят рецепт. Вы всё ещё можете выбрать другое блюдо.",
+    useReplacement: "Использовать {{replacement}}", useReplacementHint: "Оставить это блюдо и заменить {{ingredient}} на {{replacement}}."
   },
   meal: {
     a11y: "{{label}}: {{title}}, {{calories}} килокалорий, {{protein}} г белка",

@@ -1,15 +1,17 @@
-import React from "react";
+import React, { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import type {
   FruitPreference,
   IngredientBans,
+  IngredientCategoryGroup,
+  Meal,
   MealsPerDay,
   MealPreferences,
   PlanStyle,
   TypicalBreakfastIngredient,
   WeeklyFrequency
 } from "../models";
-import { ingredientCatalog, ingredientCategoryOrder } from "../ingredientCatalog";
+import { BannedIngredientsSection, BannedMealsSection } from "../components/BanSections";
 import { palette } from "../theme";
 import { getBudgetStep, stepBudget } from "../budgetPlan";
 import { AmountStepper } from "../components/AmountStepper";
@@ -26,8 +28,14 @@ import { useFoodNames } from "../i18n";
 import { useTranslation } from "react-i18next";
 
 type Props = {
+  recipes: Meal[];
+  bannedMeals: string[];
+  mealSubstitutes: Record<string, string>;
+  onUnban: (recipeKey: string) => void;
+  onMealPress: (meal: Meal) => void;
   bannedIngredients: IngredientBans;
   onToggleIngredientBan: (ingredientId: string) => void;
+  onToggleIngredientCategory: (category: IngredientCategoryGroup) => void;
   mealPreferences: MealPreferences;
   onMealPreferencesChange: (preferences: MealPreferences) => void;
   countryCode: CountryCode;
@@ -55,10 +63,18 @@ const fruitOptions: { value: FruitPreference; labelKey: string }[] = [
 
 const mealsPerDayOptions: MealsPerDay[] = [2, 3, 4, 5];
 const planStyleOptions: PlanStyle[] = ["balanced", "highProtein", "lowCost", "batchCooking"];
+type PreferenceSection = "settings" | "bannedMeals" | "bannedIngredients";
+const sections: PreferenceSection[] = ["settings", "bannedMeals", "bannedIngredients"];
 
 export function OnboardingScreen({
+  recipes,
+  bannedMeals,
+  mealSubstitutes,
+  onUnban,
+  onMealPress,
   bannedIngredients,
   onToggleIngredientBan,
+  onToggleIngredientCategory,
   mealPreferences,
   onMealPreferencesChange,
   countryCode,
@@ -75,8 +91,19 @@ export function OnboardingScreen({
   const parsedBudget = Number(mealPreferences.weeklyBudget.replace(",", "."));
   const budgetIsValid = mealPreferences.weeklyBudget.trim() === "" ||
     (Number.isFinite(parsedBudget) && parsedBudget >= 0);
+  const [activeSection, setActiveSection] = useState<PreferenceSection>("settings");
   return (
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <View style={styles.subTabs}>
+        {sections.map((section) => {
+          const selected = activeSection === section;
+          const label = section === "settings" ? t("prefs.tabGeneral") : section === "bannedMeals" ? t("menu.tabBannedMeals") : t("menu.tabBannedIngredients");
+          return <Pressable key={section} accessibilityRole="button" accessibilityState={{ selected }} onPress={() => setActiveSection(section)} style={[styles.subTab, selected && styles.subTabSelected]}>
+            <Text numberOfLines={1} style={[styles.subTabText, selected && styles.subTabTextSelected]}>{label}</Text>
+          </Pressable>;
+        })}
+      </View>
+      {activeSection === "settings" && <>
       <View style={styles.profileSection}>
         <View style={[styles.choiceGroup, styles.firstGroup]}>
           <View style={styles.cardHeader}>
@@ -259,33 +286,19 @@ export function OnboardingScreen({
           </View>
         </View>
       </View>
-      <View style={styles.banSection}>
-        <Text style={styles.sectionTitle}>{t("prefs.banIngredients")}</Text>
-        {ingredientCategoryOrder.map((category) => (
-          <View key={category} style={styles.banCategory}>
-            <Text style={styles.banCategoryTitle}>{t(`grocery.category.${category}`, { defaultValue: category })}</Text>
-            <View style={styles.banChoices}>
-              {ingredientCatalog.filter((ingredient) => ingredient.category === category).map((ingredient) => {
-                const isBanned = bannedIngredients.includes(ingredient.id);
-                return (
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={t(isBanned ? "prefs.unban" : "prefs.ban",                     { name: food(ingredient.name) })}
-                    accessibilityState={{ selected: isBanned }}
-                    key={ingredient.id}
-                    onPress={() => onToggleIngredientBan(ingredient.id)}
-                    style={[styles.banButton, isBanned && styles.banButtonSelected]}
-                  >
-                    <Text style={[styles.banText, isBanned && styles.banTextSelected]}>
-                                          {food(ingredient.name)}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          </View>
-        ))}
-      </View>
+      </>}
+      {activeSection === "bannedMeals" && <BannedMealsSection
+        recipes={recipes}
+        bannedMeals={bannedMeals}
+        mealSubstitutes={mealSubstitutes}
+        onUnban={onUnban}
+        onMealPress={onMealPress}
+      />}
+      {activeSection === "bannedIngredients" && <BannedIngredientsSection
+        bannedIngredients={bannedIngredients}
+        onToggleIngredientBan={onToggleIngredientBan}
+        onToggleIngredientCategory={onToggleIngredientCategory}
+      />}
     </ScrollView>
   );
 }
@@ -466,12 +479,9 @@ const styles = StyleSheet.create({
   budgetWarnText: { color: "#B36A0B" },
   budgetLine: { flexDirection: "row", alignItems: "center" },
   budgetError: { color: "#8B3027", fontSize: 10, marginTop: 6 },
-  banSection: { marginBottom: 16 },
-  banCategory: { backgroundColor: palette.white, borderRadius: 13, padding: 12, marginTop: 10, borderWidth: 1, borderColor: "#E3E7DE" },
-  banCategoryTitle: { color: palette.green, fontSize: 13, fontWeight: "800", marginBottom: 8 },
-  banChoices: { flexDirection: "row", flexWrap: "wrap", gap: 7 },
-  banButton: { backgroundColor: "#F7F7F3", borderWidth: 1, borderColor: "#E7E9E2", borderRadius: 9, paddingHorizontal: 10, paddingVertical: 8 },
-  banButtonSelected: { backgroundColor: "#F8E7E4", borderColor: "#DDAFA7" },
-  banText: { color: palette.ink, fontSize: 11, fontWeight: "500" },
-  banTextSelected: { color: "#8B3027", fontWeight: "700" },
+  subTabs: { flexDirection: "row", gap: 5, padding: 4, marginBottom: 16, backgroundColor: "#ECEAE1", borderRadius: 13 },
+  subTab: { flex: 1, alignItems: "center", justifyContent: "center", minHeight: 34, paddingHorizontal: 4, borderRadius: 10 },
+  subTabSelected: { backgroundColor: palette.white, borderWidth: 1, borderColor: palette.line },
+  subTabText: { color: palette.muted, fontSize: 10, fontWeight: "700" },
+  subTabTextSelected: { color: palette.green }
 });

@@ -17,6 +17,8 @@ import "./src/i18n";
 import { MealDetailsModal } from "./src/components/MealDetailsModal";
 import { MealAlternativePicker } from "./src/components/MealAlternativePicker";
 import { UnbanConfirmSheet } from "./src/components/UnbanConfirmSheet";
+import { CategoryBanConfirmSheet } from "./src/components/CategoryBanConfirmSheet";
+import { IngredientBanFlowSheet } from "./src/components/IngredientBanFlowSheet";
 import { TopTabBar } from "./src/components/TopTabBar";
 import { CalendarScreen } from "./src/screens/CalendarScreen";
 import { GroceryScreen } from "./src/screens/GroceryScreen";
@@ -24,7 +26,9 @@ import { MenuScreen } from "./src/screens/MenuScreen";
 import { OnboardingScreen } from "./src/screens/OnboardingScreen";
 import type {
   Meal,
-  MealPreferences
+  MealPreferences,
+  IngredientBanChoice,
+  IngredientCategoryGroup
 } from "./src/models";
 import {
   formatDateKey,
@@ -39,7 +43,11 @@ import {
   getRecipeCatalog,
   getDisplayedRecipeSourceKeys,
   applyGlobalMealReplacement,
-  removeMealBan
+  removeMealBan,
+  setIngredientBanChoices,
+  getIngredientReplacementOptions,
+  toggleIngredientBanPreference,
+  toggleIngredientCategoryBanPreference
 } from "./src/sampleData";
 import { DEFAULT_COUNTRY, getCountry, type CountryCode } from "./src/countryPricing";
 import { repriceMeals } from "./src/ingredientEstimates";
@@ -47,6 +55,7 @@ import { getBatchPrep, getCalendarDayPlans } from "./src/groceryEstimate";
 import { getBudgetPlan } from "./src/budgetPlan";
 import { setBatchCalendar } from "./src/batchCooking";
 import { palette } from "./src/theme";
+import { ingredientCatalog, isIngredientBanned } from "./src/ingredientCatalog";
 
 const tabOrder = ["preferences", "meals", "menu", "groceries"] as const;
 // Memoized so tab changes and modal state only re-render what actually changed.
@@ -72,12 +81,18 @@ function createsSubstitutionCycle(sourceKeys: string[], substituteKey: string, s
   }
   return false;
 }
+type IngredientBanRequest = {
+  meal: Meal;
+  ingredientId: string;
+  affectedMeals: { meal: Meal; count: number; restricted: boolean }[];
+};
 type PickerRequest = {
   mode: "scope" | "ban" | "replace";
   meal: Meal;
   targetRecipeKeys: string[];
   targetOccurrenceKeys?: string[];
   occurrenceKey?: string;
+  occurrenceKeys?: string[];
 };
 
 export default function App(): React.JSX.Element {
@@ -103,6 +118,8 @@ export default function App(): React.JSX.Element {
   const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null);
   const [pickerRequest, setPickerRequest] = useState<PickerRequest | null>(null);
   const [unbanRequest, setUnbanRequest] = useState<Meal | null>(null);
+  const [ingredientBanRequest, setIngredientBanRequest] = useState<IngredientBanRequest | null>(null);
+  const [categoryBanRequest, setCategoryBanRequest] = useState<IngredientCategoryGroup | null>(null);
   const [countryCode, setCountryCode] = useState<CountryCode>(DEFAULT_COUNTRY);
   const [activeTab, setActiveTab] = useState(0);
   const activeTabRef = useRef(0);
@@ -146,6 +163,21 @@ export default function App(): React.JSX.Element {
         pickerRequest.targetRecipeKeys, meal.recipeKey, mealPreferences.mealSubstitutes
       )), countryCode)
     : [], [pickerRequest, mealPreferences.bannedMeals, mealPreferences.mealSubstitutes, countryCode]);
+  const ingredientBanOptions = useMemo(() => {
+    if (!ingredientBanRequest) return {} as Record<string, Meal[]>;
+    const meals = [ingredientBanRequest.meal, ...ingredientBanRequest.affectedMeals.map((entry) => entry.meal)];
+    return Object.fromEntries(meals.map((meal) => [meal.recipeKey,
+      repriceMeals(getRecipeAlternatives(meal.type, meal.recipeKey, mealPreferences.bannedMeals), countryCode)
+    ]));
+  }, [ingredientBanRequest, mealPreferences.bannedMeals, countryCode]);
+  const replacementIngredientOptions = useMemo(() => ingredientBanRequest
+    ? getIngredientReplacementOptions(ingredientBanRequest.meal, ingredientBanRequest.ingredientId, planPreferences)
+    : [], [ingredientBanRequest, planPreferences]);
+  const affectedReplacementIds = useMemo(() => ingredientBanRequest
+    ? Object.fromEntries(ingredientBanRequest.affectedMeals.map(({ meal }) => [meal.recipeKey,
+      getIngredientReplacementOptions(meal, ingredientBanRequest.ingredientId, planPreferences).map((option) => option.id)
+    ]))
+    : {} as Record<string, string[]>, [ingredientBanRequest, planPreferences]);
   const parsedGoal = Number(goalInput);
   const hasValidGoal =
     goalInput.length > 0 &&
@@ -160,17 +192,65 @@ export default function App(): React.JSX.Element {
     const targetOccurrenceKeys = menuDays.flatMap((day) => day.meals
       .filter((displayedMeal) => displayedMeal.recipeKey === meal.recipeKey && displayedMeal.occurrenceKey)
       .map((displayedMeal) => displayedMeal.occurrenceKey!));
+    const scopedOccurrenceKeys = meal.occurrenceKeys?.length
+      ? meal.occurrenceKeys
+      : meal.occurrenceKey ? [meal.occurrenceKey] : undefined;
     setPickerRequest({
-      mode: meal.occurrenceKey ? "scope" : "replace",
+      mode: scopedOccurrenceKeys ? "scope" : "replace",
       meal,
       targetRecipeKeys: targetRecipeKeys.length > 0 ? targetRecipeKeys : [meal.sourceRecipeKey ?? meal.recipeKey],
-      targetOccurrenceKeys
+      targetOccurrenceKeys,
+      occurrenceKey: scopedOccurrenceKeys?.[0],
+      occurrenceKeys: meal.occurrenceKeys
     });
   });
 
   const requestBan = useStableCallback((meal: Meal): void => {
     setPickerRequest({ mode: "ban", meal, targetRecipeKeys: [meal.recipeKey] });
   });
+
+  const requestIngredientBan = useStableCallback((meal: Meal, ingredientId: string): void => {
+    const affectedByRecipe = new Map<string, { meal: Meal; count: number; restricted: boolean }>();
+    const isVariantScope = Boolean(meal.occurrenceKeys?.length);
+    menuDays.forEach(({ meals: dayMeals }) => dayMeals.forEach((candidate) => {
+      const isSelectedOccurrence = meal.occurrenceKeys?.length
+        ? meal.occurrenceKeys.includes(candidate.occurrenceKey ?? "")
+        : meal.occurrenceKey
+          ? candidate.occurrenceKey === meal.occurrenceKey
+          : candidate.recipeKey === meal.recipeKey;
+      if (isSelectedOccurrence || (isVariantScope && candidate.recipeKey === meal.recipeKey) ||
+        !candidate.ingredients.some((item) => isIngredientBanned(item.name, [ingredientId]))) return;
+      const existing = affectedByRecipe.get(candidate.recipeKey);
+      if (existing) {
+        existing.count += 1;
+        existing.restricted ||= Boolean(candidate.isTypicalBreakfast || candidate.batch || candidate.type === "Snack");
+      } else {
+        affectedByRecipe.set(candidate.recipeKey, {
+          meal: candidate,
+          count: 1,
+          restricted: Boolean(candidate.isTypicalBreakfast || candidate.batch || candidate.type === "Snack")
+        });
+      }
+    }));
+    setSelectedMeal(null);
+    setIngredientBanRequest({
+      meal,
+      ingredientId,
+      affectedMeals: [...affectedByRecipe.values()]
+    });
+  });
+
+  function confirmIngredientBan(choices: IngredientBanChoice[]): void {
+    if (!ingredientBanRequest) return;
+    setMealPreferences((current) => {
+      const withBan = current.bannedIngredients.includes(ingredientBanRequest.ingredientId)
+        ? current
+        : toggleIngredientBanPreference(current, ingredientBanRequest.ingredientId);
+      return setIngredientBanChoices(withBan, ingredientBanRequest.ingredientId, choices,
+        [ingredientBanRequest.meal, ...ingredientBanRequest.affectedMeals.map((entry) => entry.meal)]);
+    });
+    setIngredientBanRequest(null);
+  }
 
   const requestMenuReplacement = useStableCallback((meal: Meal, sourceRecipeKeys: string[]): void => {
     const targetOccurrenceKeys = menuDays.flatMap((day) => day.meals
@@ -196,7 +276,15 @@ export default function App(): React.JSX.Element {
           : Object.fromEntries(Object.entries(current.mealSubstitutes).filter(([key]) => key !== target))
       }));
     } else if (pickerRequest.mode === "replace") {
-      if (pickerRequest.occurrenceKey) {
+      if (pickerRequest.occurrenceKeys?.length) {
+        setMealPreferences((current) => ({
+          ...current,
+          mealOccurrenceOverrides: {
+            ...current.mealOccurrenceOverrides,
+            ...Object.fromEntries(pickerRequest.occurrenceKeys!.map((key) => [key, recipeKey ?? pickerRequest.meal.recipeKey]))
+          }
+        }));
+      } else if (pickerRequest.occurrenceKey) {
         setMealPreferences((current) => ({
           ...current,
           mealOccurrenceOverrides: { ...current.mealOccurrenceOverrides, [pickerRequest.occurrenceKey!]: recipeKey ?? pickerRequest.meal.recipeKey }
@@ -229,11 +317,15 @@ export default function App(): React.JSX.Element {
   }
 
   function revertOccurrence(meal: Meal): void {
-    if (!meal.occurrenceKey) return;
+    const occurrenceKeys = meal.occurrenceKeys?.length
+      ? meal.occurrenceKeys
+      : meal.occurrenceKey ? [meal.occurrenceKey] : [];
+    if (occurrenceKeys.length === 0) return;
+    const revertedKeys = new Set(occurrenceKeys);
     setMealPreferences((current) => ({
       ...current,
       mealOccurrenceOverrides: Object.fromEntries(Object.entries(current.mealOccurrenceOverrides)
-        .filter(([key]) => key !== meal.occurrenceKey))
+        .filter(([key]) => !revertedKeys.has(key)))
     }));
     setSelectedMeal(null);
   }
@@ -280,13 +372,26 @@ export default function App(): React.JSX.Element {
   });
 
   const toggleIngredientBan = useStableCallback((ingredientId: string): void => {
-    setMealPreferences((current) => ({
-      ...current,
-      bannedIngredients: current.bannedIngredients.includes(ingredientId)
-        ? current.bannedIngredients.filter((id) => id !== ingredientId)
-        : [...current.bannedIngredients, ingredientId]
-    }));
+    setMealPreferences((current) => toggleIngredientBanPreference(current, ingredientId));
   });
+
+  const toggleIngredientCategory = useStableCallback((category: IngredientCategoryGroup): void => {
+    const ids = ingredientCatalog.filter((ingredient) => ingredient.category === category).map((ingredient) => ingredient.id);
+    if (ids.every((id) => mealPreferences.bannedIngredients.includes(id))) {
+      setMealPreferences((current) => toggleIngredientCategoryBanPreference(current, category));
+    } else {
+      setCategoryBanRequest(category);
+    }
+  });
+
+  function confirmCategoryBan(category: IngredientCategoryGroup): void {
+    setMealPreferences((current) => {
+      const ids = ingredientCatalog.filter((ingredient) => ingredient.category === category).map((ingredient) => ingredient.id);
+      // Only ban: if the category became fully banned meanwhile, toggling would unban it.
+      return ids.every((id) => current.bannedIngredients.includes(id)) ? current : toggleIngredientCategoryBanPreference(current, category);
+    });
+    setCategoryBanRequest(null);
+  }
 
   const changeDailyGoalInput = useStableCallback((value: string): void => {
     setGoalInput(value);
@@ -380,8 +485,14 @@ export default function App(): React.JSX.Element {
         >
           <View style={pageStyle}>
             <MemoOnboardingScreen
+              recipes={recipeCatalog}
+              bannedMeals={mealPreferences.bannedMeals}
+              mealSubstitutes={mealPreferences.mealSubstitutes}
+              onUnban={unbanMeal}
+              onMealPress={setSelectedMeal}
               bannedIngredients={mealPreferences.bannedIngredients}
               onToggleIngredientBan={toggleIngredientBan}
+              onToggleIngredientCategory={toggleIngredientCategory}
               mealPreferences={mealPreferences}
               onMealPreferencesChange={setMealPreferences}
               countryCode={countryCode}
@@ -413,13 +524,9 @@ export default function App(): React.JSX.Element {
           <View style={pageStyle}>
             <MemoMenuScreen
               days={menuDays}
-              recipes={recipeCatalog}
-              bannedMeals={mealPreferences.bannedMeals}
-              mealSubstitutes={mealPreferences.mealSubstitutes}
               planStyle={mealPreferences.planStyle}
               onBan={requestBan}
               onReplaceAll={requestMenuReplacement}
-              onUnban={unbanMeal}
               onMealPress={setSelectedMeal}
             />
           </View>
@@ -434,11 +541,13 @@ export default function App(): React.JSX.Element {
         </Animated.ScrollView>
       </SafeAreaView>
       <MealDetailsModal
-        meal={pickerRequest || unbanRequest ? null : selectedMeal}
+        meal={pickerRequest || unbanRequest || ingredientBanRequest ? null : selectedMeal}
         onClose={() => setSelectedMeal(null)}
         onReplace={requestReplacement}
         onBan={requestBan}
-        canRevert={Boolean(selectedMeal?.occurrenceKey && mealPreferences.mealOccurrenceOverrides[selectedMeal.occurrenceKey])}
+        onBanIngredient={requestIngredientBan}
+        canRevert={Boolean(selectedMeal && (selectedMeal.occurrenceKeys?.some((key) => mealPreferences.mealOccurrenceOverrides[key]) ||
+          (selectedMeal.occurrenceKey && mealPreferences.mealOccurrenceOverrides[selectedMeal.occurrenceKey])))}
         onRevert={revertOccurrence}
         restrictionReason={selectedMeal?.isTypicalBreakfast
           ? t("mealActions.typicalUnavailable")
@@ -457,11 +566,31 @@ export default function App(): React.JSX.Element {
         onScope={(scope) => setPickerRequest((current) => current ? {
           ...current,
           mode: "replace",
-          occurrenceKey: scope === "day" ? current.meal.occurrenceKey : undefined
+          occurrenceKey: scope === "day" ? current.occurrenceKeys?.[0] ?? current.meal.occurrenceKey : undefined,
+          occurrenceKeys: scope === "day" ? current.occurrenceKeys : undefined
         } : null)}
         onSelect={applyPickerChoice}
       />
       <UnbanConfirmSheet meal={unbanRequest} onCancel={() => setUnbanRequest(null)} onConfirm={confirmUnban} />
+      <CategoryBanConfirmSheet
+        category={categoryBanRequest}
+        onCancel={() => setCategoryBanRequest(null)}
+        onConfirm={confirmCategoryBan}
+      />
+      <IngredientBanFlowSheet
+        visible={ingredientBanRequest !== null}
+        meal={ingredientBanRequest?.meal ?? null}
+        ingredient={ingredientCatalog.find((option) => option.id === ingredientBanRequest?.ingredientId) ?? null}
+        affectedMeals={ingredientBanRequest?.affectedMeals.map((entry) => ({
+          ...entry,
+          options: ingredientBanOptions[entry.meal.recipeKey] ?? [],
+          replacementIngredientIds: affectedReplacementIds[entry.meal.recipeKey] ?? []
+        })) ?? []}
+        mainOptions={ingredientBanOptions[ingredientBanRequest?.meal.recipeKey ?? ""] ?? []}
+        replacementIngredients={replacementIngredientOptions}
+        onClose={() => setIngredientBanRequest(null)}
+        onConfirm={confirmIngredientBan}
+      />
     </SafeAreaProvider>
   );
 }

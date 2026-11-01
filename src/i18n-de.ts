@@ -41,6 +41,7 @@ export const de: Translation = {
     "5": "3 Mahlzeiten + 2 Snacks"
   },
   prefs: {
+    tabGeneral: "Allgemein",
     planStyle: "Stil des Ernährungsplans",
     planStyleA11y: "Stil des Ernährungsplans: {{label}}",
     budget: "Wöchentliches Lebensmittelbudget",
@@ -76,7 +77,6 @@ export const de: Translation = {
     fruitA11y: "Obstpräferenz: {{label}}",
     country: "Land und Währung",
     countryA11y: "Land: {{country}}, Währung {{currency}}",
-    banIngredients: "Zutaten ausschließen",
     ban: "{{name}} ausschließen",
     unban: "{{name}} wieder zulassen"
   },
@@ -106,8 +106,20 @@ export const de: Translation = {
   },
   menu: {
     title: "Men\u00fc", empty: "Fuer diesen Zeitraum sind keine Mahlzeiten geplant.", occurrences: "\u00d7{{count}}", showAll: "Alle anzeigen", showLess: "Weniger anzeigen",
-    ban: "Meiden", replaceAll: "Alle ersetzen", batchUnavailable: "Mahlzeiten aus dem Batch-Kochen koennen hier nicht geaendert werden.", typicalUnavailable: "Dein typisches Fruehstueck wird unter Einstellungen verwaltet.", bannedTitle: "Gemiedene Mahlzeiten",
-    substitute: "\u2192 {{name}}", unban: "Wieder aufnehmen", unbanConfirmTitle: "Mahlzeit wieder aufnehmen?", unbanConfirmMessage: "{{name}} ist wieder in deinem Plan verfügbar.", noBanned: "Keine gemiedenen Mahlzeiten."
+    ban: "Meiden", replaceAll: "Alle ersetzen", batchUnavailable: "Mahlzeiten aus dem Batch-Kochen koennen hier nicht geaendert werden.", typicalUnavailable: "Dein typisches Fruehstueck wird unter Einstellungen verwaltet.",
+    substitute: "\u2192 {{name}}", unban: "Wieder aufnehmen", unbanConfirmTitle: "Mahlzeit wieder aufnehmen?", unbanConfirmMessage: "{{name}} ist wieder in deinem Plan verfügbar.", noBanned: "Keine gemiedenen Mahlzeiten.", noBannedHint: "Tippe im Menü-Tab oder in den Details einer Mahlzeit auf „Meiden“, um sie aus deinem Plan zu entfernen.",
+    tabBannedMeals: "Gemiedene Mahlzeiten", tabBannedIngredients: "Gemiedene Zutaten",
+    banCategory: "{{name}} meiden", unbanCategory: "{{name}} wieder erlauben", banCategoryConfirmTitle: "Diese Kategorie meiden?", banCategoryConfirmMessage: "Alle Zutaten aus {{name}} werden gemieden. Betroffene Mahlzeiten werden automatisch angepasst; wieder erlauben stellt sie wieder her."
+  },
+  ingredientBan: {
+    banAction: "Zutat meiden", confirmTitle: "Diese Zutat meiden", confirmMessage: "{{ingredient}} in {{meal}} meiden und weitere betroffene Mahlzeiten prüfen.", continue: "Weiter",
+    chooseTitle: "Aktion auswählen", mealChoice: "Für {{name}}", skipAction: "Zutat weglassen", skipHint: "Diese Mahlzeit ohne die Zutat beibehalten.",
+    optionalReplacement: "Optionale Ersatzzutat", noReplacement: "Kein Ersatz", replaceMealAction: "Diese Mahlzeit ersetzen", automaticHint: "Die kalorienähnlichste Mahlzeit verwenden oder unten eine auswählen.",
+    reviewTitle: "Weitere Mahlzeiten prüfen", reviewHint: "Andere betroffene Rezepte werden standardmäßig automatisch ersetzt.", affectedCount: "{{count}} geplante Portionen", chooseMeal: "Mahlzeit auswählen",
+    restricted: "Ein Mahlzeitenersatz ist nicht möglich; die Zutat wird wie üblich automatisch ersetzt.", noAffected: "Keine weiteren geplanten Mahlzeiten enthalten diese Zutat.", reviewContinue: "Betroffene Mahlzeiten prüfen", applyAction: "Zutat meiden",
+    applyEverywhere: "{{replacement}} in allen Mahlzeiten verwenden", applyEverywhereHint: "{{ingredient}} in allen anderen Mahlzeiten, die es enthalten, nach Möglichkeit durch {{replacement}} ersetzen.",
+    reviewHintEverywhere: "Mahlzeiten, die {{replacement}} statt {{ingredient}} verwenden können, behalten ihr Rezept. Du kannst trotzdem eine Ersatzmahlzeit wählen.",
+    useReplacement: "{{replacement}} verwenden", useReplacementHint: "Diese Mahlzeit behalten und {{ingredient}} durch {{replacement}} ersetzen."
   },
   meal: {
     a11y: "{{label}}: {{title}}, {{calories}} Kilokalorien, {{protein}} Gramm Eiweiß",

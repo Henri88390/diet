@@ -15,6 +15,11 @@ import { palette } from "../theme";
 
 const DISMISS_DISTANCE = 110;
 const DISMISS_VELOCITY = 0.9;
+// "firm" sheets resist the pull and need a longer, deliberate drag to close.
+const FIRM_RESISTANCE = 0.55;
+const FIRM_DISMISS_DISTANCE = 240;
+const FIRM_DISMISS_VELOCITY = 1.8;
+const FIRM_MIN_FLICK_DISTANCE = 120;
 // How far a flick keeps scrolling, in px per (px/ms) of release velocity.
 const MOMENTUM_FACTOR = 320;
 
@@ -31,6 +36,8 @@ type Props = {
   onClose: () => void;
   closeLabel: string;
   sheetStyle?: StyleProp<ViewStyle>;
+  /** Makes swipe-to-close harder, for steps where an accidental close would lose work. */
+  swipeToClose?: "normal" | "firm";
   children: React.ReactNode;
 };
 
@@ -39,8 +46,11 @@ type Props = {
  * scrolled by the same gesture, so dragging down from anywhere scrolls back to the top and
  * then keeps pulling the sheet down until it closes.
  */
-export function BottomSheet({ visible, onClose, closeLabel, sheetStyle, children }: Props): React.JSX.Element {
+export function BottomSheet({ visible, onClose, closeLabel, sheetStyle, swipeToClose = "normal", children }: Props): React.JSX.Element {
   const { height: windowHeight } = useWindowDimensions();
+  const firmRef = useRef(swipeToClose === "firm");
+  firmRef.current = swipeToClose === "firm";
+  const canPullSheet = useRef(true);
   const translateY = useRef(new Animated.Value(windowHeight)).current;
   const scrollY = useRef(new Animated.Value(0)).current;
   const [mounted, setMounted] = useState(visible);
@@ -140,6 +150,8 @@ export function BottomSheet({ visible, onClose, closeLabel, sheetStyle, children
       const startY = event.absoluteY - event.translationY;
       startedOnBackdrop.current = startY < sheetTopRef.current;
       dragStartScroll.current = startedOnBackdrop.current ? 0 : scrollPos.current;
+      // In firm mode, scrolling the content back to the top never carries on into closing the sheet.
+      canPullSheet.current = !firmRef.current || startedOnBackdrop.current || scrollPos.current <= 0;
     },
     onUpdate: (event) => {
       if (!dragging.current || closingRef.current) return;
@@ -150,7 +162,7 @@ export function BottomSheet({ visible, onClose, closeLabel, sheetStyle, children
       } else {
         // Content is at the top: the rest of the drag pulls the sheet down.
         if (!startedOnBackdrop.current) scrollY.setValue(0);
-        translateY.setValue(-desired);
+        translateY.setValue(canPullSheet.current ? -desired * (firmRef.current ? FIRM_RESISTANCE : 1) : 0);
       }
     },
     onDeactivate: (event) => {
@@ -159,7 +171,11 @@ export function BottomSheet({ visible, onClose, closeLabel, sheetStyle, children
       const velocity = event.velocityY / 1000;
       const pulled = event.translationY - dragStartScroll.current;
       if (pulled > 0) {
-        if (!event.canceled && (pulled > DISMISS_DISTANCE || (velocity > DISMISS_VELOCITY && pulled > 20))) dismiss();
+        const firm = firmRef.current;
+        const shouldDismiss = canPullSheet.current && (firm
+          ? pulled > FIRM_DISMISS_DISTANCE || (velocity > FIRM_DISMISS_VELOCITY && pulled > FIRM_MIN_FLICK_DISTANCE)
+          : pulled > DISMISS_DISTANCE || (velocity > DISMISS_VELOCITY && pulled > 20));
+        if (!event.canceled && shouldDismiss) dismiss();
         else settle();
         return;
       }

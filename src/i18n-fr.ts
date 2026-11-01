@@ -41,6 +41,7 @@ export const fr: Translation = {
     "5": "3 repas + 2 collations"
   },
   prefs: {
+    tabGeneral: "Général",
     planStyle: "Style du plan de repas",
     planStyleA11y: "Style du plan de repas : {{label}}",
     budget: "Budget alimentaire hebdomadaire",
@@ -76,7 +77,6 @@ export const fr: Translation = {
     fruitA11y: "Préférence pour les fruits : {{label}}",
     country: "Pays et devise",
     countryA11y: "Pays : {{country}}, devise {{currency}}",
-    banIngredients: "Ingrédients exclus",
     ban: "Exclure {{name}}",
     unban: "Ne plus exclure {{name}}"
   },
@@ -106,8 +106,20 @@ export const fr: Translation = {
   },
   menu: {
     title: "Menu", empty: "Aucun repas n'est prevu pour cette periode.", occurrences: "\u00d7{{count}}", showAll: "Tout afficher", showLess: "Afficher moins",
-    ban: "Bannir", replaceAll: "Tout remplacer", batchUnavailable: "Les repas prepares en lot ne peuvent pas etre modifies ici.", typicalUnavailable: "Votre petit-dejeuner habituel se gere dans Preferences.", bannedTitle: "Repas bannis",
-    substitute: "\u2192 {{name}}", unban: "Retablir", unbanConfirmTitle: "Rétablir ce repas ?", unbanConfirmMessage: "{{name}} sera de nouveau disponible dans votre plan.", noBanned: "Aucun repas banni."
+    ban: "Bannir", replaceAll: "Tout remplacer", batchUnavailable: "Les repas prepares en lot ne peuvent pas etre modifies ici.", typicalUnavailable: "Votre petit-dejeuner habituel se gere dans Preferences.",
+    substitute: "\u2192 {{name}}", unban: "Retablir", unbanConfirmTitle: "Rétablir ce repas ?", unbanConfirmMessage: "{{name}} sera de nouveau disponible dans votre plan.", noBanned: "Aucun repas banni.", noBannedHint: "Touchez « Bannir » sur un repas dans l'onglet Menu ou dans ses détails pour le retirer de votre plan.",
+    tabBannedMeals: "Repas exclus", tabBannedIngredients: "Ingrédients exclus",
+    banCategory: "Exclure {{name}}", unbanCategory: "Réinclure {{name}}", banCategoryConfirmTitle: "Exclure cette catégorie ?", banCategoryConfirmMessage: "Tous les ingrédients de {{name}} seront exclus. Les repas concernés sont ajustés automatiquement, et les réinclure les remet en place."
+  },
+  ingredientBan: {
+    banAction: "Exclure l'ingrédient", confirmTitle: "Exclure cet ingrédient", confirmMessage: "Exclure {{ingredient}} de {{meal}} et examiner les autres repas concernés.", continue: "Continuer",
+    chooseTitle: "Choisir la suite", mealChoice: "Pour {{name}}", skipAction: "Retirer l'ingrédient", skipHint: "Conserver ce repas sans cet ingrédient.",
+    optionalReplacement: "Ingrédient de remplacement facultatif", noReplacement: "Aucun remplacement", replaceMealAction: "Remplacer ce repas", automaticHint: "Utiliser le repas le plus proche en calories ou en choisir un ci-dessous.",
+    reviewTitle: "Examiner les autres repas", reviewHint: "Les autres recettes concernées sont remplacées automatiquement par défaut.", affectedCount: "{{count}} portions prévues", chooseMeal: "Choisir un repas",
+    restricted: "Le remplacement du repas est indisponible ; l'ingrédient utilise le substitut automatique habituel.", noAffected: "Aucun autre repas prévu n'utilise cet ingrédient.", reviewContinue: "Examiner les repas concernés", applyAction: "Appliquer l'exclusion",
+    applyEverywhere: "Utiliser {{replacement}} dans tous les repas", applyEverywhereHint: "Remplacer {{ingredient}} par {{replacement}} dans tous les autres repas qui l'utilisent, si possible.",
+    reviewHintEverywhere: "Les repas qui peuvent utiliser {{replacement}} à la place de {{ingredient}} gardent leur recette. Vous pouvez toujours choisir un repas de remplacement.",
+    useReplacement: "Utiliser {{replacement}}", useReplacementHint: "Garder ce repas et remplacer {{ingredient}} par {{replacement}}."
   },
   meal: {
     a11y: "{{label}} : {{title}}, {{calories}} kilocalories, {{protein}} grammes de protéines",

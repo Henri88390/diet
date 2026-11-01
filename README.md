@@ -78,7 +78,7 @@ scale with portions; they are not verified nutrition data or dietary guidance.
 Standard typical-breakfast presets use larger sample portions. Selecting a
 repeating breakfast disables the automatic fruit addition to that meal and
 takes precedence over fruit and dairy frequency preferences. Ingredient bans
-still apply.
+still apply. The Preferences tab has General, Banned meals, and Banned ingredients subtabs; the Menu tab only lists the planned meals. Meal details can skip an ingredient or replace that meal, then review automatic or specific replacements for other affected recipes. Batch-cooked meals only confirm the ban and retain automatic component substitution; skip and replacement-ingredient actions are not offered for them. Per-recipe choices are cleared when an ingredient is unbanned; all choices remain in memory only.
 The protein catalog includes poultry, canned fish, beef and pork mince, and a
 modeled frozen minced beef option for lower-cost substitutions. Its costs and
 availability are illustrative assumptions, not verified supermarket data.

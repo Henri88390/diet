@@ -80,3 +80,13 @@ export function isIngredientBanned(name: string, bannedIds: string[]): boolean {
     option.matches.some((match) => normalized.includes(match.toLowerCase()))
   );
 }
+
+/** Prefer the most specific match (e.g. sweet potato over potato). */
+export function getIngredientCatalogId(name: string, allowedIds?: string[]): string | undefined {
+  const normalized = name.toLowerCase();
+  return ingredientCatalog.flatMap((option) =>
+    allowedIds && !allowedIds.includes(option.id) ? [] : option.matches
+      .filter((match) => normalized.includes(match.toLowerCase()))
+      .map((match) => ({ id: option.id, length: match.length }))
+  ).sort((a, b) => b.length - a.length || a.id.localeCompare(b.id))[0]?.id;
+}

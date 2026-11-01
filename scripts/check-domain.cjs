@@ -24,6 +24,11 @@ const {
   getDisplayedRecipeSourceKeys,
   applyGlobalMealReplacement,
   removeMealBan,
+  setIngredientBanChoices,
+  getIngredientBanChoiceKey,
+  getIngredientReplacementOptions,
+  toggleIngredientBanPreference,
+  toggleIngredientCategoryBanPreference,
   scaleMealPlan
 } =
   require("../src/sampleData.ts");
@@ -45,6 +50,7 @@ const { typicalBreakfastPresets } = require("../src/typicalBreakfast.ts");
 const { getMenuMealGroupKey } = require("../src/menuGrouping.ts");
 const {
   ingredientCatalog,
+  getIngredientCatalogId,
   ingredientCategoryOrder,
   isIngredientBanned,
   isWholePieceIngredient
@@ -100,6 +106,392 @@ const dateKeys = Array.from({ length: 7 }, (_, index) => {
 });
 const appliedGoals = { [dateKeys[0]]: 2500, [dateKeys[3]]: 1800 };
 const plans = getSevenCalendarDayPlans(today, preferences, appliedGoals, "DE");
+
+// Per-recipe ingredient decisions are scoped to active bans and disappear on unban.
+{
+  const monday = new Date(2026, 10, 2);
+  const recipeKey = "monday-d";
+  const ingredientId = "basmati-rice";
+  const baseline = getPersonalizedDayPlan(monday, preferences);
+  const baselineMeal = baseline.meals.find((meal) => meal.recipeKey === recipeKey);
+  assert.ok(baselineMeal && baselineMeal.ingredients.some((item) => /basmati rice/i.test(item.name)),
+    "regression setup has the target ingredient in the selected recipe");
+
+  const skippedPreferences = setIngredientBanChoices(
+    { ...preferences, bannedIngredients: [ingredientId] }, ingredientId,
+    [{ ingredientId, recipeKey, action: "skip", replacementIngredient: null }]
+  );
+  const skippedPlan = getPersonalizedDayPlan(monday, skippedPreferences);
+  const skippedMeal = skippedPlan.meals.find((meal) => meal.recipeKey === recipeKey);
+  assert.ok(skippedMeal && skippedMeal.ingredients.every((item) => !/basmati rice/i.test(item.name)),
+    "a per-recipe skip removes the banned ingredient from that meal");
+  assert.equal(skippedPlan.meals.length, baseline.meals.length,
+    "ingredient choices preserve the selected meal-count preference");
+  assert.equal(skippedPreferences.meatPerWeek, preferences.meatPerWeek);
+  assert.equal(skippedPreferences.dairyPerWeek, preferences.dairyPerWeek);
+  assert.equal(skippedPreferences.planStyle, preferences.planStyle);
+  assert.equal(skippedPreferences.weeklyBudget, preferences.weeklyBudget);
+
+  const selectedOccurrence = formatDateKey(monday) + "|Dinner";
+  const nextMonday = new Date(2026, 10, 9);
+  const occurrenceScoped = setIngredientBanChoices(
+    { ...preferences, bannedIngredients: [ingredientId] }, ingredientId,
+    [{ ingredientId, recipeKey, occurrenceKey: selectedOccurrence, action: "skip", replacementIngredient: null }]
+  );
+  const selectedOccurrenceMeal = getPersonalizedDayPlan(monday, occurrenceScoped).meals.find((meal) => meal.occurrenceKey === selectedOccurrence);
+  const nextOccurrenceMeal = getPersonalizedDayPlan(nextMonday, occurrenceScoped).meals.find((meal) => meal.type === "Dinner");
+  assert.ok(selectedOccurrenceMeal.ingredients.every((item) => !/basmati rice|pasta, dry/i.test(item.name)),
+    "an ingredient skip from meal details applies to the selected occurrence");
+  assert.ok(nextOccurrenceMeal.ingredients.some((item) => /pasta, dry/i.test(item.name)),
+    "the same recipe's other occurrences retain the global automatic ingredient substitute");
+
+  const snackDate = new Date(2026, 10, 2);
+  const snackPreferences = { ...preferences, mealsPerDay: 5, fruitPreference: "include", meatPerWeek: 0, dairyPerWeek: 0, weeklyBudget: "1000" };
+  const snacks = getPersonalizedDayPlan(snackDate, snackPreferences).meals.filter((meal) => meal.type === "Snack");
+  assert.equal(snacks.length, 2, "the five-meal plan generates both snack slots");
+  assert.deepEqual(snacks.map((meal) => meal.occurrenceKey), [
+    formatDateKey(snackDate) + "|Snack|Morning", formatDateKey(snackDate) + "|Snack|Afternoon"
+  ], "snack occurrences are uniquely keyed by date and slot");
+  const selectedSnack = snacks[0];
+  const snackBan = setIngredientBanChoices(
+    { ...snackPreferences, bannedIngredients: ["banana"] }, "banana",
+    [{ ingredientId: "banana", recipeKey: selectedSnack.recipeKey, occurrenceKey: selectedSnack.occurrenceKey,
+      action: "skip", replacementIngredient: "apple" }], [selectedSnack]
+  );
+  const selectedSnackAfterChoice = getPersonalizedDayPlan(snackDate, snackBan).meals
+    .find((meal) => meal.occurrenceKey === selectedSnack.occurrenceKey);
+  const otherSnackAfterChoice = getPersonalizedDayPlan(snackDate, snackBan).meals
+    .find((meal) => meal.occurrenceKey === snacks[1].occurrenceKey);
+  const automaticallySubstitutedSnacks = getPersonalizedDayPlan(snackDate,
+    { ...snackPreferences, bannedIngredients: ["banana"] }).meals.filter((meal) => meal.type === "Snack");
+  assert.ok(selectedSnackAfterChoice.ingredients.some((item) => /apple/i.test(item.name)),
+    "the selected snack uses its explicit replacement ingredient");
+  assert.deepEqual(otherSnackAfterChoice.ingredients.map((item) => item.name),
+    automaticallySubstitutedSnacks.find((meal) => meal.occurrenceKey === snacks[1].occurrenceKey).ingredients.map((item) => item.name),
+    "the other snack slot keeps automatic substitution rather than inheriting the selected choice");
+
+  const variantDates = [new Date(2026, 10, 2), new Date(2026, 10, 9), new Date(2026, 10, 16)];
+  const variantOccurrences = variantDates.map((date) => formatDateKey(date) + "|Dinner");
+  const variantPreferences = setIngredientBanChoices(
+    { ...preferences, bannedIngredients: [ingredientId], meatPerWeek: 7, dairyPerWeek: 7, weeklyBudget: "1000" },
+    ingredientId,
+    [
+      { ingredientId, recipeKey, occurrenceKey: variantOccurrences[0], action: "skip", replacementIngredient: null },
+      { ingredientId, recipeKey, occurrenceKey: variantOccurrences[1], action: "skip", replacementIngredient: "pasta" }
+    ]
+  );
+  const variantMeals = variantDates.map((date) => getPersonalizedDayPlan(date, variantPreferences).meals
+    .find((meal) => meal.occurrenceKey === formatDateKey(date) + "|Dinner"));
+  assert.ok(variantMeals.every(Boolean), "all three occurrence variants remain available");
+  assert.equal(new Set(variantMeals.map(getMenuMealGroupKey)).size, 3,
+    "skipped, explicitly substituted, and automatically substituted recipe occurrences form separate Menu groups");
+  const noBanVariantMeals = variantDates.map((date) => getPersonalizedDayPlan(date, preferences).meals
+    .find((meal) => meal.occurrenceKey === formatDateKey(date) + "|Dinner"));
+  assert.equal(new Set(noBanVariantMeals.map(getMenuMealGroupKey)).size, 1,
+    "the same no-ban recipe occurrences retain their legacy single Menu group");
+
+  const sharedReplacementPreferences = setIngredientBanChoices(
+    { ...preferences, bannedIngredients: [ingredientId] }, ingredientId,
+    ["monday-d", "wednesday-d"].map((key) => ({ ingredientId, recipeKey: key, action: "skip", replacementIngredient: "potato", fallbackToAutomatic: true })),
+    [new Date(2026, 10, 2), new Date(2026, 10, 4)].map((date) => getPersonalizedDayPlan(date, preferences).meals.find((meal) => meal.type === "Dinner"))
+  );
+  [new Date(2026, 10, 2), new Date(2026, 10, 4)].forEach((date) => {
+    const dinner = getPersonalizedDayPlan(date, sharedReplacementPreferences).meals.find((meal) => meal.type === "Dinner");
+    assert.ok(dinner.ingredients.some((item) => /^potato/i.test(item.name)) && dinner.ingredients.every((item) => !/basmati rice/i.test(item.name)),
+      "a replacement ingredient applied to all affected meals swaps the banned ingredient in each of them");
+  });
+  const meatFree = { ...preferences, meatPerWeek: 0, bannedIngredients: [ingredientId] };
+  const automaticDinner = getPersonalizedDayPlan(monday, meatFree).meals.find((meal) => meal.type === "Dinner");
+  const invalidShared = (fallbackToAutomatic) => getPersonalizedDayPlan(monday, setIngredientBanChoices(meatFree, ingredientId,
+    [{ ingredientId, recipeKey, action: "skip", replacementIngredient: "beef-mince", fallbackToAutomatic }])).meals.find((meal) => meal.type === "Dinner");
+  assert.deepEqual(invalidShared(true).ingredients.map((item) => item.name), automaticDinner.ingredients.map((item) => item.name),
+    "a shared replacement that a meal cannot use falls back to the automatic substitute");
+  assert.ok(invalidShared(false).ingredients.every((item) => !/basmati rice|pasta, dry|beef/i.test(item.name)),
+    "an explicit skip without fallback still omits the ingredient");
+
+  const replacementKey = getRecipeAlternatives("Dinner", recipeKey, [])[0].recipeKey;
+  const mealReplacementPreferences = setIngredientBanChoices(
+    { ...preferences, bannedIngredients: [ingredientId] }, ingredientId,
+    [{ ingredientId, recipeKey, action: "replaceMeal", replacementMealKey: replacementKey }]
+  );
+  const replacedMeal = getPersonalizedDayPlan(monday, mealReplacementPreferences).meals.find((meal) => meal.type === "Dinner");
+  assert.equal(replacedMeal.recipeKey, replacementKey,
+    "a selected per-meal alternative is used for the affected recipe");
+  assert.ok(replacedMeal.ingredients.every((item) => !/basmati rice/i.test(item.name)),
+    "the banned ingredient stays out of the selected replacement");
+
+  const wednesday = new Date(2026, 10, 4);
+  const wednesdayRecipeKey = "wednesday-d";
+  const wednesdayReplacementKey = getRecipeAlternatives("Dinner", wednesdayRecipeKey, [])[0].recipeKey;
+  const affectedRecipeChoices = setIngredientBanChoices(
+    { ...preferences, bannedIngredients: [ingredientId] }, ingredientId,
+    [
+      { ingredientId, recipeKey, action: "replaceMeal", replacementMealKey: null },
+      { ingredientId, recipeKey: wednesdayRecipeKey, action: "replaceMeal", replacementMealKey: wednesdayReplacementKey }
+    ]
+  );
+  assert.notEqual(getPersonalizedDayPlan(monday, affectedRecipeChoices).meals.find((meal) => meal.type === "Dinner").recipeKey, recipeKey,
+    "the affected selected recipe uses its automatic replacement");
+  assert.equal(getPersonalizedDayPlan(wednesday, affectedRecipeChoices).meals.find((meal) => meal.type === "Dinner").recipeKey, wednesdayReplacementKey,
+    "a second affected recipe independently uses its selected replacement");
+
+  const automaticallyReplaced = getPersonalizedDayPlan(monday, setIngredientBanChoices(
+    { ...preferences, bannedIngredients: [ingredientId] }, ingredientId,
+    [{ ingredientId, recipeKey, action: "replaceMeal", replacementMealKey: null }]
+  )).meals.find((meal) => meal.type === "Dinner");
+  assert.notEqual(automaticallyReplaced.recipeKey, recipeKey,
+    "automatic meal choice uses the closest-calorie same-type recipe");
+
+  const restored = toggleIngredientBanPreference(skippedPreferences, ingredientId);
+  assert.deepEqual(restored.bannedIngredients, []);
+  assert.equal(Object.keys(restored.ingredientBanChoices ?? {}).length, 0,
+    "unbanning removes all per-meal overrides for that ingredient");
+  assert.deepEqual(getPersonalizedDayPlan(monday, restored).meals.find((meal) => meal.recipeKey === recipeKey), baselineMeal,
+    "unbanning restores the original recipe and ingredients");
+
+  const category = "Fruit";
+  const categoryBanned = toggleIngredientCategoryBanPreference(preferences, category);
+  const categoryIds = ingredientCatalog.filter((option) => option.category === category).map((option) => option.id);
+  assert.ok(categoryIds.every((id) => categoryBanned.bannedIngredients.includes(id)),
+    "category ban toggles every catalog ingredient in that category");
+  const categoryRestored = toggleIngredientCategoryBanPreference(categoryBanned, category);
+  assert.ok(categoryIds.every((id) => !categoryRestored.bannedIngredients.includes(id)),
+    "category unban removes every ingredient in that category");
+
+  // Unbanning puts the ingredient back in every meal it was replaced in, whatever choices were made.
+  {
+    const weekDates = Array.from({ length: 7 }, (_, index) => new Date(2026, 10, 2 + index));
+    for (const mealsPerDay of [3, 5]) {
+      const base = { ...preferences, mealsPerDay };
+      const signature = (p) => JSON.stringify(weekDates.map((date) => getPersonalizedDayPlan(date, p).meals
+        .map((meal) => meal.recipeKey + ":" + meal.ingredients.map((item) => item.name + item.quantity).join(","))));
+      const baselineWeek = signature(base);
+      const weekMeals = weekDates.flatMap((date) => getPersonalizedDayPlan(date, base).meals);
+      ingredientCatalog.forEach(({ id }) => {
+        const choices = weekMeals.slice(0, 6).map((meal, index) => ({
+          ingredientId: id, recipeKey: meal.recipeKey, occurrenceKey: index % 2 ? meal.occurrenceKey : undefined,
+          action: index % 3 === 0 ? "replaceMeal" : "skip", replacementIngredient: "potato", fallbackToAutomatic: index % 2 === 0
+        }));
+        const banned = setIngredientBanChoices(toggleIngredientBanPreference(base, id), id, choices, weekMeals);
+        assert.equal(signature(toggleIngredientBanPreference(banned, id)), baselineWeek,
+          id + ": unbanning restores every meal of the week");
+      });
+      [...new Set(ingredientCatalog.map((option) => option.category))].forEach((group) => {
+        assert.equal(signature(toggleIngredientCategoryBanPreference(toggleIngredientCategoryBanPreference(base, group), group)), baselineWeek,
+          group + ": unbanning a category restores every meal of the week");
+      });
+    }
+  }
+
+  const defaultBanPlan = getPersonalizedDayPlan(monday, { ...preferences, bannedIngredients: [ingredientId] });
+  assert.ok(defaultBanPlan.meals.every((meal) =>
+    meal.ingredients.every((item) => !/basmati rice/i.test(item.name)) || meal.banConflicts?.some((name) => /basmati rice/i.test(name))
+  ), "global ingredient bans use the automatic substitute unless a conflict is reported");
+}
+
+// Ingredient-ban QA regressions: validate choices both at selection and on regeneration.
+{
+  const monday = new Date(2026, 10, 2);
+  const tuesday = new Date(2026, 10, 3);
+  const openPreferences = { ...preferences, meatPerWeek: 7, dairyPerWeek: 7, weeklyBudget: "" };
+  const dinner = (p) => getPersonalizedDayPlan(monday, p).meals.find((meal) => meal.type === "Dinner");
+  const choice = (ingredientId, recipeKey, action, extra = {}) => ({ ingredientId, recipeKey, action, ...extra });
+  const rawChoices = (p, choices) => ({ ...p, ingredientBanChoices: Object.fromEntries(choices.map((entry) => [
+    getIngredientBanChoiceKey(entry.ingredientId, entry.recipeKey, entry.occurrenceKey), entry
+  ])) });
+  const assertEstimates = (meal) => {
+    const estimates = meal.ingredients.map((item) => estimateIngredient(item.name, item.quantity, item.unit));
+    assert.equal(meal.calories, estimates.reduce((sum, item) => sum + item.calories, 0), "final calories use final ingredients");
+    assert.equal(meal.estimatedCostCents, estimates.reduce((sum, item) => sum + item.estimatedCostCents, 0), "final cost uses final ingredients");
+    meal.ingredients.forEach((item) => {
+      assert.ok(isValidPositiveIngredientQuantity(item.quantity), "selected portions are positive");
+      if (isWholePieceIngredient(item.name)) assert.ok(Number.isInteger(Number(item.quantity)), "eggs and fruit remain whole pieces");
+    });
+  };
+
+  // 1: Every offered option is canonical, modeled, and safe across gram/count portions.
+  const representativeMeals = [
+    { date: monday, p: openPreferences, type: "Dinner", ingredientId: "basmati-rice" },
+    { date: tuesday, p: openPreferences, type: "Breakfast", ingredientId: "egg" },
+    { date: monday, p: { ...openPreferences, mealsPerDay: 4, fruitPreference: "include" }, type: "Snack", ingredientId: "banana" },
+    { date: monday, p: { ...openPreferences, typicalBreakfast: { mode: "custom", ingredients: [{ name: "Rolled oats", quantity: "80", unit: "g" }] } }, type: "Breakfast", ingredientId: "oats" }
+  ];
+  const offeredIds = new Set();
+  let offeredCaseCount = 0;
+  for (const setup of representativeMeals) {
+    const meal = getPersonalizedDayPlan(setup.date, setup.p).meals.find((entry) => entry.type === setup.type);
+    const options = getIngredientReplacementOptions(meal, setup.ingredientId, setup.p, setup.date);
+    assert.ok(options.length > 20, "replacement picker still offers meaningful modeled options");
+    for (const option of options) {
+      offeredIds.add(option.id);
+      const p = setIngredientBanChoices({ ...setup.p, bannedIngredients: [setup.ingredientId] }, setup.ingredientId, [
+        choice(setup.ingredientId, meal.recipeKey, "skip", { occurrenceKey: meal.occurrenceKey, replacementIngredient: option.id })
+      ], [meal]);
+      assert.equal(Object.values(p.ingredientBanChoices)[0].replacementIngredient, option.id, "offered options pass storage validation");
+      let plan;
+      assert.doesNotThrow(() => { plan = getPersonalizedDayPlan(setup.date, p); }, option.id + " generates without throwing");
+      plan.meals.forEach(assertEstimates);
+      assert.doesNotThrow(() => scaleMealPlan(plan.meals, 2000), option.id + " scales without throwing");
+      assert.doesNotThrow(() => buildShoppingEstimate(setup.date, setup.date, p, {}, "DE"), option.id + " aggregates without throwing");
+      assert.ok(plan.meals.every((entry) => entry.ingredients.every((item) => !isIngredientBanned(item.name, p.bannedIngredients))), "offered replacements never leak bans");
+      offeredCaseCount++;
+    }
+  }
+  for (const id of ["pasta", "black-beans", "basmati-rice", "lentils-dry", "apple", "egg", "bread", "wrap", "tomato", "chickpeas", "red-beans", "white-beans"]) {
+    assert.ok(offeredIds.has(id), id + " remains available with a canonical compatible portion");
+  }
+  const unknown = choice("basmati-rice", "monday-d", "skip", { replacementIngredient: "unmodeled-id" });
+  const bannedRice = { ...openPreferences, bannedIngredients: ["basmati-rice"] };
+  assert.equal(Object.values(setIngredientBanChoices(bannedRice, "basmati-rice", [unknown]).ingredientBanChoices)[0].replacementIngredient, null, "unmodeled choices are rejected before storing");
+  assert.doesNotThrow(() => dinner(rawChoices(bannedRice, [unknown])), "legacy unmodeled choices defensively fall back to skip");
+
+  // 2: Catalog lookup uses longest matching substring; eligibility uses modeled names.
+  assert.equal(getIngredientCatalogId("Sweet potato"), "sweet-potato");
+  assert.equal(getIngredientCatalogId("Frozen minced beef"), "frozen-beef-mince");
+  assert.match(mealDetailsSource, /getIngredientCatalogId\(ingredient\.name\)/, "ingredient taps share the most-specific catalog lookup");
+  const potatoBanned = { ...bannedRice, bannedIngredients: ["basmati-rice", "potato"] };
+  assert.ok(!getIngredientReplacementOptions(dinner(openPreferences), "basmati-rice", potatoBanned).some((item) => item.id === "sweet-potato"), "potato substring ban excludes sweet potato from the picker");
+  const sweetPotatoChoice = choice("basmati-rice", "monday-d", "skip", { replacementIngredient: "sweet-potato" });
+  assert.equal(Object.values(setIngredientBanChoices(potatoBanned, "basmati-rice", [sweetPotatoChoice]).ingredientBanChoices)[0].replacementIngredient, null, "overlapping bans are validated before storing");
+  assert.ok(dinner(rawChoices(potatoBanned, [sweetPotatoChoice])).ingredients.every((item) => !isIngredientBanned(item.name, potatoBanned.bannedIngredients)), "a newly added substring ban invalidates stored replacements");
+
+  // 3: Effective dietary constraints apply to offering and to stale stored choices.
+  const strict = { ...openPreferences, meatPerWeek: 0, dairyPerWeek: 0, fruitPreference: "avoid" };
+  const strictOptions = getIngredientReplacementOptions(dinner(openPreferences), "basmati-rice", strict);
+  for (const id of ["chicken-thigh", "beef-mince", "milk", "skyr", "apple", "banana", "frozen-berries"]) {
+    assert.ok(!strictOptions.some((item) => item.id === id), id + " is not offered against dietary constraints");
+  }
+  for (const [id, recipeKey, bannedId, type, forbidden] of [
+    ["chicken-thigh", "monday-d", "basmati-rice", "Dinner", /chicken|beef|pork|tuna|sardine/i],
+    ["milk", "monday-b", "oats", "Breakfast", /milk|yogurt|cheese|skyr/i],
+    ["apple", "monday-d", "basmati-rice", "Dinner", /apple|banana|berries/i]
+  ]) {
+    const entry = choice(bannedId, recipeKey, "skip", { replacementIngredient: id });
+    const strictBan = { ...strict, bannedIngredients: [bannedId] };
+    assert.equal(Object.values(setIngredientBanChoices(strictBan, bannedId, [entry]).ingredientBanChoices)[0].replacementIngredient, null, id + " is rejected before storing against dietary constraints");
+    const p = rawChoices(strictBan, [entry]);
+    const meal = getPersonalizedDayPlan(monday, p).meals.find((entry) => entry.type === type);
+    assert.ok(meal.ingredients.every((item) => !forbidden.test(item.name)), id + " is dropped after preference changes");
+  }
+  assert.ok(!getIngredientReplacementOptions(dinner(openPreferences), "basmati-rice", { ...openPreferences, meatPerWeek: 2 }).some((item) => item.id === "chicken-thigh"), "Monday is not an assigned meat day at twice weekly");
+  assert.ok(!getIngredientReplacementOptions(dinner(openPreferences), "basmati-rice", openPreferences).some((item) => item.id === "milk"), "dairy remains breakfast-only");
+  const breakfast = getPersonalizedDayPlan(monday, openPreferences).meals.find((item) => item.type === "Breakfast");
+  assert.ok(!getIngredientReplacementOptions(breakfast, "oats", { ...openPreferences, dairyPerWeek: 2 }).some((item) => item.id === "milk"), "dairy replacements respect assigned weekdays");
+  const expensive = rawChoices(bannedRice, [choice("basmati-rice", "monday-d", "skip", { replacementIngredient: "beef-mince" })]);
+  assert.ok(dinner(expensive).ingredients.some((item) => /^beef mince$/i.test(item.name)), "setup includes the selected costly ingredient");
+  const fitted = dinner({ ...expensive, weeklyBudget: "1" });
+  assert.ok(fitted.ingredients.some((item) => /frozen minced beef/i.test(item.name)), "budget fitting sees and swaps the final selected ingredient");
+  assert.ok(fitted.ingredients.every((item) => !/^beef mince$/i.test(item.name)), "selected ingredients do not bypass budget fitting");
+  assertEstimates(fitted);
+  const { getBudgetPlan } = require("../src/budgetPlan.ts");
+  const budget = getBudgetPlan(monday, { ...expensive, weeklyBudget: "20" }, {}, "DE");
+  assert.equal(budget.weeklyCost, buildSevenDayShoppingEstimate(monday, budget.preferences, {}, "DE").estimatedTotal.amountMinorUnits, "budget planner and groceries price the final plan");
+
+  // 4: Ingredient-selected targets use ordinary ban/substitute/type/cycle rules.
+  const selectedTarget = rawChoices(bannedRice, [choice("basmati-rice", "monday-d", "replaceMeal", { replacementMealKey: "thursday-d" })]);
+  assert.equal(dinner(selectedTarget).recipeKey, "thursday-d");
+  assert.notEqual(dinner({ ...selectedTarget, bannedMeals: ["thursday-d"] }).recipeKey, "thursday-d", "banning a previously chosen target invalidates it on regeneration");
+  assert.equal(dinner({ ...selectedTarget, mealSubstitutes: { "thursday-d": "friday-d" } }).recipeKey, "friday-d", "selected target follows its substitution mapping");
+  assert.equal(dinner({ ...selectedTarget, bannedMeals: ["thursday-d"], mealSubstitutes: { "thursday-d": "friday-d" } }).recipeKey, "friday-d", "a banned selected target uses its valid same-type substitute");
+  assert.equal(dinner(rawChoices(bannedRice, [choice("basmati-rice", "monday-d", "replaceMeal", { replacementMealKey: "monday-b" })])).recipeKey, "monday-d", "cross-type ingredient replacement targets are ignored");
+  const cycleMeal = dinner({ ...selectedTarget, mealSubstitutes: { "thursday-d": "friday-d", "friday-d": "thursday-d" }, bannedMeals: ["friday-d"] });
+  assert.equal(cycleMeal.type, "Dinner");
+  assert.notEqual(cycleMeal.recipeKey, "friday-d", "substitute cycles terminate at an allowed same-type recipe");
+
+  // 5: Replacement wins over other skips, scope precedes recipe, chains are bounded.
+  const bothBans = { ...openPreferences, bannedIngredients: ["olive-oil", "basmati-rice"] };
+  const riceReplacement = choice("basmati-rice", "monday-d", "replaceMeal", { replacementMealKey: "thursday-d" });
+  const oilSkip = choice("olive-oil", "monday-d", "skip");
+  for (const entries of [[oilSkip, riceReplacement], [riceReplacement, oilSkip]]) {
+    assert.equal(dinner(rawChoices(bothBans, entries)).recipeKey, "thursday-d", "a skip cannot hide a later replacement in either insertion order");
+    const chained = [...entries, choice("olive-oil", "thursday-d", "replaceMeal", { replacementMealKey: "friday-d" })];
+    assert.equal(dinner(rawChoices(bothBans, chained)).recipeKey, "friday-d", "choices on the resulting displayed recipe are resolved too");
+    assert.equal(dinner(rawChoices(bothBans, [...chained].reverse())).recipeKey, "friday-d", "chain resolution is insertion-order independent");
+    const independent = dinner(rawChoices(bothBans, entries.map((entry) => ({ ...entry, action: "skip", replacementMealKey: null }))));
+    assert.ok(independent.ingredients.every((item) => !/olive oil|rice|pasta, dry/i.test(item.name)), "each banned ingredient's skip is applied independently");
+  }
+  const competing = [riceReplacement, choice("olive-oil", "monday-d", "replaceMeal", { replacementMealKey: "friday-d" })];
+  assert.equal(dinner(rawChoices(bothBans, competing)).recipeKey, "thursday-d", "same-scope replacements use ingredient ID as a stable tie-breaker");
+  assert.equal(dinner(rawChoices(bothBans, competing.reverse())).recipeKey, "thursday-d", "same-scope precedence does not depend on insertion order");
+  const resultingSkip = dinner(rawChoices(bothBans, [riceReplacement, choice("olive-oil", "thursday-d", "skip")]));
+  assert.ok(resultingSkip.ingredients.every((item) => !/olive oil/i.test(item.name)), "skip actions on the resulting displayed recipe are applied");
+  const occurrenceKey = formatDateKey(monday) + "|Dinner";
+  const scopeChoices = [
+    choice("olive-oil", "monday-d", "replaceMeal", { replacementMealKey: "friday-d" }),
+    choice("basmati-rice", "monday-d", "replaceMeal", { occurrenceKey, replacementMealKey: "thursday-d" })
+  ];
+  assert.equal(dinner(rawChoices(bothBans, scopeChoices)).recipeKey, "thursday-d", "occurrence replacement takes precedence over recipe replacement");
+  assert.equal(dinner(rawChoices(bothBans, scopeChoices.reverse())).recipeKey, "thursday-d");
+  const sameScope = [riceReplacement, choice("basmati-rice", "monday-d", "skip", { occurrenceKey })];
+  assert.equal(dinner(rawChoices(bannedRice, sameScope)).recipeKey, "monday-d", "occurrence skip overrides the same ingredient's recipe-level replacement");
+  const chainCycle = [riceReplacement, choice("olive-oil", "thursday-d", "replaceMeal", { replacementMealKey: "monday-d" })];
+  assert.equal(dinner(rawChoices(bothBans, chainCycle)).recipeKey, dinner(rawChoices(bothBans, chainCycle.reverse())).recipeKey, "ingredient replacement cycles terminate deterministically");
+
+  // 6: Batch assembly retains automatic bans; the sheet cannot offer ignored actions.
+  const sheetSource = fs.readFileSync(require.resolve("../src/components/IngredientBanFlowSheet.tsx"), "utf8");
+  assert.match(sheetSource, /!meal\.batch && <>\s*<Pressable[^\n]+mainAction === "skip"/, "batch meals do not render the skip/replacement-ingredient controls");
+  assert.match(sheetSource, /const choices: IngredientBanChoice\[\] = meal\.batch \? \[\] :/, "confirming a batch ban stores no ignored ingredient action");
+  const batch = getPersonalizedDayPlan(monday, { ...openPreferences, planStyle: "batchCooking" }).meals.find((meal) => meal.batch);
+  assert.ok(batch, "setup has a batch-cooked meal");
+  assert.deepEqual(getIngredientReplacementOptions(batch, "basmati-rice", openPreferences), [], "batch meals have no ingredient picker options");
+  const batchBan = getPersonalizedDayPlan(monday, { ...openPreferences, planStyle: "batchCooking", bannedIngredients: ["basmati-rice"] });
+  assert.ok(batchBan.meals.every((meal) => meal.ingredients.every((item) => !isIngredientBanned(item.name, ["basmati-rice"]))), "batch ban confirmation retains automatic no-leak behavior");
+
+  // 7: Skips refresh meal copy, not just ingredient totals.
+  const skipped = dinner(rawChoices(bannedRice, [choice("basmati-rice", "monday-d", "skip")]));
+  assert.doesNotMatch(skipped.title + " " + skipped.description, /basmati rice/i, "skipping rice removes stale rice copy");
+
+  // 8: Removing the only main food (or replacing it with zero-kcal water) warns.
+  for (const replacementIngredient of [null, "water"]) {
+    const solo = representativeMeals[3].p;
+    const meal = getPersonalizedDayPlan(monday, solo).meals.find((item) => item.type === "Breakfast");
+    const p = rawChoices({ ...solo, bannedIngredients: ["oats"] }, [choice("oats", meal.recipeKey, "skip", { replacementIngredient })]);
+    const result = getPersonalizedDayPlan(monday, p).meals.find((item) => item.type === "Breakfast");
+    assert.ok(result.calories > 0 || result.banConflicts?.length > 0, "a zero-calorie meal from a skip is never silent");
+    assert.ok(result.banConflicts?.some((name) => /rolled oats/i.test(name)), "the conflict warning names the omitted only main ingredient");
+  }
+  const waterFallback = {
+    ...openPreferences, bannedIngredients: ["oats", "milk", "hummus"],
+    typicalBreakfast: { mode: "custom", ingredients: [
+      { name: "Rolled oats", quantity: "80", unit: "g" }, { name: "Milk", quantity: "100", unit: "ml" }
+    ] }
+  };
+  const emptyWithAutomaticWater = getPersonalizedDayPlan(monday, rawChoices(waterFallback, [
+    choice("oats", "typical-breakfast-custom", "skip")
+  ])).meals.find((item) => item.type === "Breakfast");
+  assert.equal(emptyWithAutomaticWater.calories, 0);
+  assert.ok(emptyWithAutomaticWater.banConflicts?.length > 0, "a remaining automatic water substitute cannot hide an empty skip meal");
+  assert.match(mealDetailsSource, /t\("details\.banWarning"/, "empty skip conflicts use the existing localized warning");
+  for (const locale of [en, fr, de, es, ru, pl]) assert.ok(locale.details.banWarning, "all six locales include the ban conflict warning");
+  console.log(`Ingredient-ban regressions passed: ${offeredCaseCount} offered replacement cases and all eight QA bugs.`);
+}
+
+// Frozen plan digests guard legacy behavior; generated snacks intentionally add date/slot occurrence keys.
+// 57 catalog bans x 4 styles x 4 meal counts x 7 days = 6,384 automatic cases.
+{
+  const { createHash } = require("node:crypto");
+  for (const [withBans, expected] of [
+    [false, "a1e62e9934199adf991107855fd8aa669013bbea6dca6d433e1a441e4d30df66"],
+    [true, "3eace8df68a40ca186c2b9d2e7fdcd6453d448e43574b57ad5e910b58534455e"]
+  ]) {
+    const hash = createHash("sha256");
+    let count = 0;
+    for (const id of withBans ? ingredientCatalog.map((item) => item.id) : [null]) {
+      for (const planStyle of ["balanced", "highProtein", "lowCost", "batchCooking"]) {
+        for (const mealsPerDay of [2, 3, 4, 5]) for (let day = 2; day <= 8; day++) {
+          const p = { ...preferences, planStyle, mealsPerDay, bannedIngredients: id ? [id] : [] };
+          const plan = getPersonalizedDayPlan(new Date(2026, 10, day), p);
+          hash.update(JSON.stringify(plan));
+          assert.ok(plan.meals.every((meal) => meal.ingredients.every((item) => !isIngredientBanned(item.name, p.bannedIngredients))), "automatic bans remain leak-free");
+          count++;
+        }
+      }
+    }
+    assert.equal(hash.digest("hex"), expected, "legacy plans remain stable apart from generated snack occurrence keys");
+    assert.equal(count, withBans ? 6384 : 112);
+  }
+  console.log("Legacy regression matrix passed: 6,384 automatic bans and 112 no-ban cases with snack occurrence keys.");
+}
 
 // Recipe substitutions resolve before personalization and are shared by Calendar and Groceries.
 {
@@ -251,8 +643,8 @@ const plans = getSevenCalendarDayPlans(today, preferences, appliedGoals, "DE");
   assert.match(pickerSource, /onPress=\{\(\) => onSelect\(pending\.recipeKey\)\}/,
     "the confirmation step applies the pending replacement");
   const menuScreenSource = fs.readFileSync(require.resolve("../src/screens/MenuScreen.tsx"), "utf8");
-  assert.match(menuScreenSource, /onPress=\{\(\) => props\.onMealPress\(\{ \.\.\.meal, occurrenceKey: undefined \}\)\}/,
-    "menu list cards open meal details scoped to every occurrence");
+  assert.match(menuScreenSource, /occurrenceKey: entry\.occurrenceSpecific \? \[\.\.\.entry\.occurrenceKeys\]\[0\] : undefined/,
+    "Menu detail cards preserve scope for occurrence-specific ingredient variants");
   for (const path of ["../src/sampleData.ts", "../src/components/MealAlternativePicker.tsx"]) {
     assert.notDeepEqual(fs.readFileSync(require.resolve(path)).subarray(0, 3), Buffer.from([0xef, 0xbb, 0xbf]),
       `${path} is UTF-8 without a BOM`);
@@ -721,7 +1113,7 @@ assert.doesNotMatch(preferencesSource, /MADE FOR YOUR EVERYDAY|Good food,|your w
 assert.doesNotMatch(preferencesSource, /breakfastEstimate|estimatePresetBreakfast/,
   "standard breakfast choices do not display a cost, calorie, or protein preview");
 assert.match(mealDetailsSource, /formatMoney/);
-assert.match(appSource, /meal=\{pickerRequest \|\| unbanRequest \? null : selectedMeal\}/,
+assert.match(appSource, /meal=\{pickerRequest \|\| unbanRequest \|\| ingredientBanRequest \? null : selectedMeal\}/,
   "the details modal is hidden while the alternatives picker is open");
 assert.match(appSource, /onClose=\{\(\) => setPickerRequest\(null\)\}/,
   "canceling the picker preserves the selected meal so its details can return");
@@ -736,12 +1128,19 @@ assert.match(appSource, /scrollEnabled=\{!pagerSwipeBlocked\}/,
   "the date strip blocks tab swipes while it is touched");
 assert.match(appSource, /<MemoTopTabBar/, "screens are reachable from top tabs");
 assert.match(appSource, /<UnbanConfirmSheet meal=\{unbanRequest\}/, "unbanning a meal asks for confirmation in a sheet");
+assert.match(mealDetailsSource, /onBanIngredient={onBanIngredient}/, "catalog-matched meal ingredients expose the ban action");
+assert.match(appSource, /<IngredientBanFlowSheet/, "ingredient bans use their own confirmation and review sheet");
+assert.match(preferencesSource, /BannedIngredientsSection/, "Preferences exposes a banned-ingredients sub-tab");
+assert.match(preferencesSource, /BannedMealsSection/, "Preferences exposes a banned-meals sub-tab");
+assert.doesNotMatch(menuSource, /tabBanned|BannedMealsSection|BannedIngredientsSection/, "the Menu tab only shows the menu");
 assert.doesNotMatch(appSource, /bannedUnavailable/, "banned meal details offer Unban instead of a caption");
 {
   const sheetSource = fs.readFileSync(require.resolve("../src/components/BottomSheet.tsx"), "utf8");
   assert.doesNotMatch(sheetSource, /if \(finished\) setMounted\(false\)/, "bottom sheet must unmount even when the exit animation is interrupted");
   assert.match(sheetSource, /setTimeout\(unmount/, "bottom sheet has a fallback unmount so an invisible modal never blocks touches");
-  assert.match(sheetSource, /translateY\.setValue\(-desired\)/, "dragging down from any scroll position hands over to closing the sheet");
+  assert.match(sheetSource, /translateY\.setValue\(canPullSheet\.current \? -desired/, "dragging down from any scroll position hands over to closing the sheet");
+  assert.match(sheetSource, /canPullSheet\.current = !firmRef\.current \|\| startedOnBackdrop\.current \|\| scrollPos\.current <= 0/, "firm sheets never close from a scroll that started below the top");
+  assert.match(fs.readFileSync(require.resolve("../src/components/IngredientBanFlowSheet.tsx"), "utf8"), /swipeToClose=\{stage === "review" \? "firm" : "normal"\}/, "the review-other-meals step uses a firmer swipe-to-close");
   assert.match(sheetSource, /<GestureDetector gesture=\{pan\}>\s*<View[^>]*style=\{styles\.overlay\}/, "the swipe-to-close gesture covers the whole screen, not just the sheet");
 }
 assert.match(appSource, /const MemoMenuScreen = memo\(MenuScreen\)/, "tab screens are memoized to avoid re-rendering on every tap");
@@ -870,7 +1269,8 @@ assert.ok(ingredientCategoryOrder.every((category) =>
 ), "ban list groups options across all ingredient categories");
 assert.match(preferencesSource, /planStyle\.\$\{option\}/);
 assert.match(preferencesSource, /prefs\.budget/);
-assert.match(preferencesSource, /prefs\.banIngredients/);
+assert.match(fs.readFileSync(require.resolve("../src/components/BanSections.tsx"), "utf8"), /ingredientCategoryOrder\.map\(renderIngredientCategory\)/,
+  "the banned-ingredients list includes every ingredient category in catalog order");
 assert.match(preferencesSource, /CustomBreakfastBuilder/,
   "preferences include a custom typical-breakfast builder");
 assert.doesNotMatch(preferencesSource, /ingredient\.name\}\{isBanned \? " · Banned"/,
@@ -939,7 +1339,7 @@ assert.ok(allFoodsBanned.meals.every((meal) => meal.ingredients.length === 0 || 
 assert.equal(getDailyCalories(scaleMealPlan(allFoodsBanned.meals, DEFAULT_DAILY_CALORIE_GOAL)), 0,
   "an entirely banned plan remains safe to render without falsely allocating calories");
 
-assert.equal(en.prefs.banIngredients, "Ban ingredients");
+assert.equal(en.menu.tabBannedIngredients, "Banned ingredients");
 assert.equal(en.prefs.budget, "Weekly food budget");
 assert.equal(en.planStyle.lowCost, "Lower cost");
 assert.equal(en.prefs.country, "Country and currency");

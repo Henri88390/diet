@@ -3,6 +3,9 @@ import type {
   Meal,
   MealIngredient,
   MealPreferences,
+  IngredientBanChoice,
+  IngredientOption,
+  IngredientCategoryGroup,
   MealType,
   TypicalBreakfastIngredient,
   WeeklyFrequency
@@ -12,7 +15,7 @@ import {
   getIngredientCategory,
   isValidPositiveIngredientQuantity
 } from "./ingredientEstimates";
-import { isIngredientBanned, isWholePieceIngredient } from "./ingredientCatalog";
+import { ingredientCatalog, isIngredientBanned, isWholePieceIngredient } from "./ingredientCatalog";
 import { applyBatchCooking } from "./batchCooking";
 import type { CountryCode } from "./countryPricing";
 import { typicalBreakfastPresets } from "./typicalBreakfast";
@@ -212,7 +215,7 @@ export function scaleMealPlan(meals: Meal[], goal: number): Meal[] {
     .filter(({ meal }) => meal.ingredients.length > 0 && meal.calories > 0)
     .map(({ index }) => index);
   if (sourceTotal <= 0 || activeIndexes.length === 0) {
-    return meals.map((meal) => ({ ...meal, calories: 0, proteinGrams: 0 }));
+    return meals.map((meal) => copyMealBanMetadata(meal, { ...meal, calories: 0, proteinGrams: 0 }));
   }
   const snackCount = activeIndexes.filter((index) => meals[index].type === "Snack").length;
   const mainIndexes = activeIndexes.filter((index) => meals[index].type !== "Snack");
@@ -277,13 +280,23 @@ export function scaleMealPlan(meals: Meal[], goal: number): Meal[] {
       ingredient.proteinGrams = estimate.proteinGrams;
     });
 
-    return {
+    return copyMealBanMetadata(sourceMeal, {
       ...item.meal,
       estimatedCostCents: ingredients.reduce((sum, ingredient) => sum + ingredient.estimatedCostCents, 0),
       proteinGrams: ingredients.reduce((sum, ingredient) => sum + ingredient.proteinGrams, 0),
       ingredients
-    };
+    });
   });
+}
+
+function copyMealBanMetadata(source: Meal, target: Meal): Meal {
+  if (source.ingredientBanAdjusted) {
+    Object.defineProperty(target, "ingredientBanAdjusted", { value: true, configurable: true });
+  }
+  if (source.ingredientBanOccurrenceScoped) {
+    Object.defineProperty(target, "ingredientBanOccurrenceScoped", { value: true, configurable: true });
+  }
+  return target;
 }
 
 function distributeToTotal(
@@ -423,9 +436,11 @@ export function getDayPlan(date: Date, preferences?: MealPreferences): DayPlan {
     if (!preferences || template.type === "Snack") return [materializeMeal(template)];
     const occurrenceKey = `${dateKey}|${template.type}`;
     const override = preferences.mealOccurrenceOverrides[occurrenceKey];
-    const recipeKey = override
+    let recipeKey = override
       ? resolveOccurrenceOverride(override, template.type, preferences)
       : resolveRecipeKey(sourceRecipeKey, template.type, preferences);
+    if (!recipeKey || preferences.bannedMeals.includes(recipeKey)) return [];
+    recipeKey = resolveIngredientBanRecipeKey(recipeKey, template.type, occurrenceKey, preferences);
     if (!recipeKey || preferences.bannedMeals.includes(recipeKey)) return [];
     const selectedTemplate = getRecipeTemplate(recipeKey);
     if (!selectedTemplate) return [];
@@ -548,8 +563,13 @@ export function getPersonalizedDayPlan(
 
   applyPlanStyle(meals, preferences, countryCode, date, goal);
   applyTypicalBreakfast(meals, preferences.typicalBreakfast);
+  // Preserve the legacy order exactly when no active ingredient decisions exist.
+  // With decisions, the budget fitter must price the chosen final ingredients.
+  if (Object.values(preferences.ingredientBanChoices ?? {}).some((choice) =>
+    preferences.bannedIngredients.includes(choice.ingredientId)
+  )) applyIngredientBans(meals, preferences.bannedIngredients, preferences, date);
   fitMealsToBudget(meals, preferences, countryCode, goal);
-  applyIngredientBans(meals, preferences.bannedIngredients);
+  applyIngredientBans(meals, preferences.bannedIngredients, preferences, date);
   meals.forEach(mergeDuplicateIngredients);
   meals.forEach(refreshMealEstimates);
   return { date: basePlan.date, meals };
@@ -896,11 +916,13 @@ function reduceToStaples(meals: Meal[], withDairy: boolean): void {
   });
 }
 
-function applyIngredientBans(meals: Meal[], bannedIds: string[]): void {
+function applyIngredientBans(meals: Meal[], bannedIds: string[], preferences: MealPreferences, date: Date): void {
   if (bannedIds.length === 0) return;
   meals.forEach((meal) => {
     const conflicts: string[] = [];
     let replacedIngredient = false;
+    let occurrenceScopedChoiceApplied = false;
+    const skippedNames: string[] = [];
     const occupiedNames = new Set(
       meal.ingredients
         .filter((ingredient) => !isIngredientBanned(ingredient.name, bannedIds))
@@ -908,8 +930,30 @@ function applyIngredientBans(meals: Meal[], bannedIds: string[]): void {
     );
     meal.ingredients = meal.ingredients.flatMap((ingredient) => {
       if (!isIngredientBanned(ingredient.name, bannedIds)) return [ingredient];
+      // All matching bans matter, including overlapping catalog names.
+      const choice = bannedIds.map((id) => isIngredientBanned(ingredient.name, [id])
+        ? getIngredientBanChoice(preferences, id, meal.recipeKey, meal.occurrenceKey) : undefined
+      ).filter((candidate): candidate is IngredientBanChoice => candidate?.action === "skip")
+        .sort(compareIngredientBanChoices)[0];
+      if (choice && !meal.batch) {
+        const replacement = choice.replacementIngredient
+          ? getSelectedIngredientReplacement(choice.replacementIngredient, ingredient, meal, preferences, date)
+          : null;
+        const usable = replacement && !occupiedNames.has(replacement.name.toLowerCase()) ? replacement : null;
+        if (usable || !choice.fallbackToAutomatic) {
+          replacedIngredient = true; // Skips must refresh title and description too.
+          occurrenceScopedChoiceApplied ||= Boolean(choice.occurrenceKey);
+          skippedNames.push(ingredient.name);
+          if (usable) {
+            occupiedNames.add(usable.name.toLowerCase());
+            return [usable];
+          }
+          return [];
+        }
+      }
       const replacement = getBanReplacement(ingredient, bannedIds, occupiedNames);
       if (!replacement) {
+        replacedIngredient = true;
         conflicts.push(ingredient.name);
         return [];
       }
@@ -917,6 +961,18 @@ function applyIngredientBans(meals: Meal[], bannedIds: string[]): void {
       occupiedNames.add(replacement.name.toLowerCase());
       return [replacement];
     });
+    if (skippedNames.length > 0 && !meal.ingredients.some((item) => item.category === "main" &&
+      estimateIngredient(item.name, item.quantity, item.unit).calories > 0
+    )) {
+      // Reuse the localized ban-conflict warning, naming the omitted ingredients.
+      conflicts.push(...skippedNames);
+    }
+    if (replacedIngredient) {
+      Object.defineProperty(meal, "ingredientBanAdjusted", { value: true, configurable: true });
+      if (occurrenceScopedChoiceApplied) {
+        Object.defineProperty(meal, "ingredientBanOccurrenceScoped", { value: true, configurable: true });
+      }
+    }
     if (replacedIngredient || conflicts.length > 0) {
       const foods = meal.ingredients
         .filter((ingredient) => ingredient.category === "main")
@@ -928,6 +984,69 @@ function applyIngredientBans(meals: Meal[], bannedIds: string[]): void {
     if (conflicts.length > 0) meal.banConflicts = conflicts;
     refreshMealEstimates(meal);
   });
+}
+
+/** Canonical modeled names, not catalog display labels. Units are validated below. */
+const replacementPortions: Record<string, [string, string, string]> = {
+  "apple": ["Apple", "1", "medium"],
+  "banana": ["Banana", "1", "medium"],
+  "egg": ["Eggs", "1", "large"],
+  "bread": ["Bread", "1", "slices"],
+  "wrap": ["Wrap", "1", "large"],
+  "basmati-rice": ["Basmati rice, dry", "100", "g"],
+  "pasta": ["Pasta, dry", "100", "g"],
+  "tomato": ["Tomatoes", "100", "g"]
+};
+
+function isReplacementAllowed(name: string, meal: Meal, preferences: MealPreferences, date?: Date): boolean {
+  if (isIngredientBanned(name, preferences.bannedIngredients)) return false;
+  const occurrenceDate = meal.occurrenceKey?.split("|")[0];
+  const parts = occurrenceDate?.split("-").map(Number);
+  const day = date ?? (parts?.length === 3 ? new Date(parts[0], parts[1] - 1, parts[2]) : undefined);
+  const weekday = day ? (day.getDay() + 6) % 7 : undefined;
+  if (isMeat(name) && (meal.type !== "Dinner" || preferences.meatPerWeek === 0 ||
+    (weekday !== undefined && !getWeeklyAssignmentDays(preferences.meatPerWeek).includes(weekday)))) return false;
+  if (isDairy(name) && (meal.type !== "Breakfast" || preferences.dairyPerWeek === 0 ||
+    (!meal.isTypicalBreakfast && weekday !== undefined && !getWeeklyAssignmentDays(preferences.dairyPerWeek).includes(weekday)))) return false;
+  return !(isFruit(name) && preferences.fruitPreference === "avoid");
+}
+
+/** Invalid/stale stored selections are safe: callers fall back to skip. */
+function getSelectedIngredientReplacement(
+  id: string, original: MealIngredient, meal: Meal, preferences: MealPreferences, date?: Date
+): MealIngredient | null {
+  const option = ingredientCatalog.find((candidate) => candidate.id === id);
+  if (!option) return null;
+  const [name, baseQuantity, unit] = replacementPortions[id] ?? [
+    option.matches[0], option.category === "Pantry & seasonings" ? "5" : "100",
+    /milk|oil|stock|sauce|juice|water/i.test(option.name) ? "ml" : "g"
+  ];
+  if (!isReplacementAllowed(name, meal, preferences, date)) return null;
+  try {
+    const base = estimateIngredient(name, baseQuantity, unit);
+    // Similar energy for main foods, within a reasonable portion range. Keep
+    // seasonings small; counted foods use whole pieces and their native units.
+    const scale = base.category === "main" && base.calories > 0
+      ? Math.max(0.25, Math.min(3, original.calories / base.calories)) : 1;
+    const quantity = String(Math.max(1, Math.round(Number(baseQuantity) * scale)));
+    const estimate = estimateIngredient(name, quantity, unit);
+    return { name, quantity, unit, ...estimate };
+  } catch (error) {
+    if (!(error instanceof RangeError)) throw error;
+    return null;
+  }
+}
+
+/** The sheet and preference storage use the same validation as generation. */
+export function getIngredientReplacementOptions(
+  meal: Meal, ingredientId: string, preferences: MealPreferences, date?: Date
+): IngredientOption[] {
+  if (meal.batch) return [];
+  const originals = meal.ingredients.filter((item) => isIngredientBanned(item.name, [ingredientId]));
+  const bannedPreferences = { ...preferences, bannedIngredients: [...preferences.bannedIngredients, ingredientId] };
+  return ingredientCatalog.filter((option) => originals.length > 0 && originals.every((original) =>
+    getSelectedIngredientReplacement(option.id, original, meal, bannedPreferences, date) !== null
+  ));
 }
 
 function getBanReplacement(
@@ -985,7 +1104,7 @@ function createSnackMeal(
       { name: "Bread", quantity: "1", unit: "slices" },
       { name: "Hummus", quantity: "1", unit: "tbsp" }
     ];
-  return materializeMeal({
+  const meal = materializeMeal({
     id: `${formatDateKey(date)}-${slot.toLowerCase()}-snack`,
     recipeKey: includeFruit ? "snack-fruit-oats" : "snack-hummus-toast",
     type: "Snack",
@@ -998,6 +1117,8 @@ function createSnackMeal(
     durationMinutes: 3,
     emoji: includeFruit ? "🍌" : "🍞"
   });
+  meal.occurrenceKey = `${formatDateKey(date)}|Snack|${slot}`;
+  return meal;
 }
 
 function isMeat(name: string): boolean {
@@ -1274,6 +1395,122 @@ export function getRecipeBaseMeal(recipeKey: string): Meal | undefined {
 }
 
 /** Alternatives are base-portion recipes sorted by calorie distance from the current recipe. */
+
+/** Stable key for an ingredient choice scoped to a recipe or a single occurrence. */
+export function getIngredientBanChoiceKey(ingredientId: string, recipeKey: string, occurrenceKey?: string): string {
+  return ingredientId + "::" + (occurrenceKey ? "occurrence::" + occurrenceKey : "recipe::" + recipeKey);
+}
+
+function getIngredientBanChoice(
+  preferences: MealPreferences,
+  ingredientId: string,
+  recipeKey: string,
+  occurrenceKey?: string
+): IngredientBanChoice | undefined {
+  if (!preferences.bannedIngredients.includes(ingredientId)) return undefined;
+  const choices = preferences.ingredientBanChoices ?? {};
+  const occurrenceChoice = occurrenceKey ? choices[getIngredientBanChoiceKey(ingredientId, recipeKey, occurrenceKey)] : undefined;
+  return (occurrenceChoice?.recipeKey === recipeKey ? occurrenceChoice : undefined) ??
+    choices[getIngredientBanChoiceKey(ingredientId, recipeKey)];
+}
+
+/** Occurrence decisions win; ingredient ID breaks ties independently of insertion order. */
+function compareIngredientBanChoices(a: IngredientBanChoice, b: IngredientBanChoice): number {
+  return Number(Boolean(b.occurrenceKey)) - Number(Boolean(a.occurrenceKey)) || a.ingredientId.localeCompare(b.ingredientId);
+}
+
+function resolveIngredientBanRecipeKey(
+  startKey: string, type: MealType, occurrenceKey: string, preferences: MealPreferences
+): string | null {
+  if (!Object.values(preferences.ingredientBanChoices ?? {}).some((choice) =>
+    preferences.bannedIngredients.includes(choice.ingredientId)
+  )) return startKey;
+  let current = startKey;
+  const visited = new Set<string>();
+  const limit = mealTemplates.flat().length + alternativeTemplates.length;
+  for (let step = 0; step < limit; step += 1) {
+    visited.add(current);
+    const choices = preferences.bannedIngredients.map((id) =>
+      getIngredientBanChoice(preferences, id, current, occurrenceKey)
+    ).filter((choice): choice is IngredientBanChoice => choice?.action === "replaceMeal")
+      .sort(compareIngredientBanChoices);
+    // A skip for another ingredient cannot mask a replace-meal decision.
+    const choice = choices[0];
+    if (!choice) return current;
+    const target = choice.replacementMealKey;
+    // Stale or cross-type specific targets are ignored, rather than changing slots.
+    if (target && getRecipeTemplate(target)?.type !== type) return current;
+    const next = target ? resolveRecipeKey(target, type, preferences)
+      : chooseAutomaticRecipe(current, type, preferences, visited);
+    if (!next) return null;
+    const resolved = resolveRecipeKey(next, type, preferences);
+    if (!resolved) return null;
+    if (visited.has(resolved)) return current;
+    current = resolved;
+  }
+  return current;
+}
+
+/** Store per-recipe ingredient decisions while preserving choices for other bans. */
+export function setIngredientBanChoices(
+  preferences: MealPreferences,
+  ingredientId: string,
+  choices: IngredientBanChoice[],
+  displayedMeals: Meal[] = []
+): MealPreferences {
+  const ingredientBanChoices = Object.fromEntries(
+    Object.entries(preferences.ingredientBanChoices ?? {}).filter(([, choice]) => choice.ingredientId !== ingredientId)
+  );
+  choices.forEach((choice) => {
+    if (choice.ingredientId !== ingredientId) return;
+    let validated = choice;
+    if (choice.action === "skip" && choice.replacementIngredient) {
+      let meal = displayedMeals.find((candidate) => candidate.recipeKey === choice.recipeKey &&
+        (!choice.occurrenceKey || candidate.occurrenceKey === choice.occurrenceKey ||
+          candidate.occurrenceKeys?.includes(choice.occurrenceKey))) ?? getRecipeBaseMeal(choice.recipeKey);
+      if (!meal && choice.recipeKey.startsWith("typical-breakfast-")) {
+        const breakfasts = [getRecipeBaseMeal("monday-b")!];
+        applyTypicalBreakfast(breakfasts, preferences.typicalBreakfast);
+        meal = breakfasts.find((candidate) => candidate.recipeKey === choice.recipeKey);
+      }
+      if (!meal || !getIngredientReplacementOptions({ ...meal, occurrenceKey: choice.occurrenceKey }, ingredientId, preferences)
+        .some((option) => option.id === choice.replacementIngredient)) {
+        validated = { ...choice, replacementIngredient: null };
+      }
+    }
+    ingredientBanChoices[getIngredientBanChoiceKey(ingredientId, choice.recipeKey, choice.occurrenceKey)] = validated;
+  });
+  return { ...preferences, ingredientBanChoices };
+}
+
+/** Toggling a ban off also discards its overrides so the original plan can return. */
+export function toggleIngredientBanPreference(preferences: MealPreferences, ingredientId: string): MealPreferences {
+  const isBanned = preferences.bannedIngredients.includes(ingredientId);
+  return {
+    ...preferences,
+    bannedIngredients: isBanned
+      ? preferences.bannedIngredients.filter((id) => id !== ingredientId)
+      : [...preferences.bannedIngredients, ingredientId],
+    ingredientBanChoices: isBanned
+      ? Object.fromEntries(Object.entries(preferences.ingredientBanChoices ?? {})
+        .filter(([, choice]) => choice.ingredientId !== ingredientId))
+      : preferences.ingredientBanChoices
+  };
+}
+
+/** Toggle every catalog ingredient in a category as one preference update. */
+export function toggleIngredientCategoryBanPreference(
+  preferences: MealPreferences,
+  category: IngredientCategoryGroup
+): MealPreferences {
+  const categoryIds = ingredientCatalog.filter((ingredient) => ingredient.category === category).map((ingredient) => ingredient.id);
+  const allBanned = categoryIds.every((id) => preferences.bannedIngredients.includes(id));
+  return categoryIds.reduce((next, id) => {
+    if (allBanned && next.bannedIngredients.includes(id)) return toggleIngredientBanPreference(next, id);
+    if (!allBanned && !next.bannedIngredients.includes(id)) return toggleIngredientBanPreference(next, id);
+    return next;
+  }, preferences);
+}
 
 /** Source recipes currently shown as one displayed recipe in the supplied plan window. */
 export function getDisplayedRecipeSourceKeys(days: Meal[][], displayedRecipeKey: string): string[] {

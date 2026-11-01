@@ -27,6 +27,20 @@ export type WeeklyFrequency = 0 | 1 | 2 | 3 | 7;
 export type FruitPreference = "include" | "avoid" | "optional";
 export type MealsPerDay = 2 | 3 | 4 | 5;
 
+export type IngredientBanChoice = {
+  ingredientId: string;
+  recipeKey: string;
+  /** Optional date/meal slot when the choice applies to only one occurrence. */
+  occurrenceKey?: string;
+  action: "skip" | "replaceMeal";
+  /** Catalog ingredient ID, or null to leave the ingredient out. */
+  replacementIngredient?: string | null;
+  /** When the replacement is not allowed for an occurrence, use the automatic substitute instead of skipping. */
+  fallbackToAutomatic?: boolean;
+  /** Null or omitted selects the closest-calorie automatic recipe. */
+  replacementMealKey?: string | null;
+};
+
 export type MealPreferences = {
   meatPerWeek: WeeklyFrequency;
   dairyPerWeek: WeeklyFrequency;
@@ -37,6 +51,8 @@ export type MealPreferences = {
   /** Internal, set by the budget planner: 1 relaxes the protein floor, 2 also reduces food variety. */
   budgetRelaxation?: 0 | 1 | 2;
   bannedIngredients: IngredientBans;
+  /** Per-recipe choices, discarded when their ingredient ban is removed. */
+  ingredientBanChoices?: Record<string, IngredientBanChoice>;
   bannedMeals: string[];
   mealSubstitutes: Record<string, string>;
   mealOccurrenceOverrides: Record<string, string>;
@@ -94,6 +110,12 @@ export type Meal = {
   recipeKey: string;
   sourceRecipeKey?: string;
   occurrenceKey?: string;
+  /** Occurrences represented by a Menu variant card with occurrence-specific choices. */
+  occurrenceKeys?: string[];
+  /** Internal marker: bans changed this occurrence's effective ingredient list. */
+  ingredientBanAdjusted?: boolean;
+  /** Internal marker: at least one effective ingredient choice is occurrence-scoped. */
+  ingredientBanOccurrenceScoped?: boolean;
   isReplaced?: boolean;
   isTypicalBreakfast?: boolean;
   type: MealType;

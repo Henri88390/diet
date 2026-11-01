@@ -49,6 +49,7 @@ export const en: Translation = {
     "5": "3 meals + 2 snacks"
   },
   prefs: {
+    tabGeneral: "General",
     planStyle: "Meal plan style",
     planStyleA11y: "Meal plan style: {{label}}",
     budget: "Weekly food budget",
@@ -84,7 +85,6 @@ export const en: Translation = {
     fruitA11y: "Fruit preference: {{label}}",
     country: "Country and currency",
     countryA11y: "Country: {{country}}, currency {{currency}}",
-    banIngredients: "Ban ingredients",
     ban: "Ban {{name}}",
     unban: "Unban {{name}}"
   },
@@ -114,8 +114,20 @@ export const en: Translation = {
   },
   menu: {
     title: "Menu", empty: "No meals are planned in this date range.", occurrences: "\u00d7{{count}}", showAll: "Show all", showLess: "Show less",
-    ban: "Ban", replaceAll: "Replace all", batchUnavailable: "Batch-cooked meals cannot be changed here.", typicalUnavailable: "Your typical breakfast is managed in Preferences.", bannedTitle: "Banned meals",
-    substitute: "\u2192 {{name}}", unban: "Unban", unbanConfirmTitle: "Unban meal?", unbanConfirmMessage: "{{name}} will be available again in your plan.", noBanned: "No banned meals."
+    ban: "Ban", replaceAll: "Replace all", batchUnavailable: "Batch-cooked meals cannot be changed here.", typicalUnavailable: "Your typical breakfast is managed in Preferences.",
+    substitute: "\u2192 {{name}}", unban: "Unban", unbanConfirmTitle: "Unban meal?", unbanConfirmMessage: "{{name}} will be available again in your plan.", noBanned: "No banned meals.", noBannedHint: "Tap “Ban” on a meal in the Menu tab or in a meal's details to hide it from your plan.",
+    tabBannedMeals: "Banned meals", tabBannedIngredients: "Banned ingredients",
+    banCategory: "Ban {{name}}", unbanCategory: "Unban {{name}}", banCategoryConfirmTitle: "Ban this category?", banCategoryConfirmMessage: "All ingredients in {{name}} will be banned. Meals using them are adjusted automatically, and unbanning puts them back."
+  },
+  ingredientBan: {
+    banAction: "Ban ingredient", confirmTitle: "Ban this ingredient", confirmMessage: "Ban {{ingredient}} in {{meal}} and review other meals that use it.", continue: "Continue",
+    chooseTitle: "Choose what happens", mealChoice: "For {{name}}", skipAction: "Skip ingredient", skipHint: "Keep this meal, but omit this ingredient.",
+    optionalReplacement: "Optional replacement ingredient", noReplacement: "No replacement", replaceMealAction: "Replace this meal", automaticHint: "Use the closest-calorie meal, or choose one below.",
+    reviewTitle: "Review other meals", reviewHint: "Other affected recipes default to automatic replacements.", affectedCount: "{{count}} planned servings", chooseMeal: "Choose a meal",
+    restricted: "Meal replacement is unavailable; the ingredient uses the standard automatic substitute.", noAffected: "No other meals in the current plan use this ingredient.", reviewContinue: "Review affected meals", applyAction: "Apply ingredient ban",
+    applyEverywhere: "Use {{replacement}} in all meals", applyEverywhereHint: "Replace {{ingredient}} with {{replacement}} in every other meal that uses it, where possible.",
+    reviewHintEverywhere: "Meals that can use {{replacement}} instead of {{ingredient}} keep their recipe. You can still pick a meal replacement.",
+    useReplacement: "Use {{replacement}}", useReplacementHint: "Keep this meal and replace {{ingredient}} with {{replacement}}."
   },
   meal: {
     a11y: "{{label}}: {{title}}, {{calories}} kilocalories, {{protein}} grams protein",

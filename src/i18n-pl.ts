@@ -45,6 +45,7 @@ export const pl: Translation = {
     "5": "3 posiłki + 2 przekąski"
   },
   prefs: {
+    tabGeneral: "Ogólne",
     planStyle: "Styl planu posiłków",
     planStyleA11y: "Styl planu posiłków: {{label}}",
     budget: "Tygodniowy budżet na jedzenie",
@@ -80,7 +81,6 @@ export const pl: Translation = {
     fruitA11y: "Preferencja owoców: {{label}}",
     country: "Kraj i waluta",
     countryA11y: "Kraj: {{country}}, waluta {{currency}}",
-    banIngredients: "Wyklucz składniki",
     ban: "Wyklucz {{name}}",
     unban: "Zezwól ponownie na {{name}}"
   },
@@ -110,8 +110,20 @@ export const pl: Translation = {
   },
   menu: {
     title: "Menu", empty: "Brak zaplanowanych posilkow w tym zakresie dat.", occurrences: "\u00d7{{count}}", showAll: "Pokaz wszystkie", showLess: "Pokaz mniej",
-    ban: "Zablokuj", replaceAll: "Zamien wszystkie", batchUnavailable: "Posilkow przygotowanych z wyprzedzeniem nie mozna tu zmieniac.", typicalUnavailable: "Typowe sniadanie zmienisz w Preferencjach.", bannedTitle: "Zablokowane posilki",
-    substitute: "\u2192 {{name}}", unban: "Przywroc", unbanConfirmTitle: "Przywrócić posiłek?", unbanConfirmMessage: "{{name}} będzie znów dostępny w Twoim planie.", noBanned: "Brak zablokowanych posilkow."
+    ban: "Zablokuj", replaceAll: "Zamien wszystkie", batchUnavailable: "Posilkow przygotowanych z wyprzedzeniem nie mozna tu zmieniac.", typicalUnavailable: "Typowe sniadanie zmienisz w Preferencjach.",
+    substitute: "\u2192 {{name}}", unban: "Przywroc", unbanConfirmTitle: "Przywrócić posiłek?", unbanConfirmMessage: "{{name}} będzie znów dostępny w Twoim planie.", noBanned: "Brak zablokowanych posilkow.", noBannedHint: "Dotknij „Zablokuj” przy posiłku w karcie Menu lub w jego szczegółach, aby usunąć go z planu.",
+    tabBannedMeals: "Wykluczone posiłki", tabBannedIngredients: "Wykluczone składniki",
+    banCategory: "Wyklucz: {{name}}", unbanCategory: "Przywróć: {{name}}", banCategoryConfirmTitle: "Wykluczyć tę kategorię?", banCategoryConfirmMessage: "Wszystkie składniki z kategorii {{name}} zostaną wykluczone. Posiłki zostaną automatycznie dostosowane, a przywrócenie kategorii przywróci je."
+  },
+  ingredientBan: {
+    banAction: "Wyklucz składnik", confirmTitle: "Wyklucz ten składnik", confirmMessage: "Wyklucz {{ingredient}} z posiłku {{meal}} i sprawdź inne posiłki.", continue: "Dalej",
+    chooseTitle: "Wybierz działanie", mealChoice: "Dla: {{name}}", skipAction: "Pomiń składnik", skipHint: "Zachowaj posiłek bez tego składnika.",
+    optionalReplacement: "Opcjonalny składnik zastępczy", noReplacement: "Bez zamiennika", replaceMealAction: "Zastąp posiłek", automaticHint: "Wybierz posiłek o najbardziej zbliżonej kaloryczności lub wskaż go poniżej.",
+    reviewTitle: "Sprawdź inne posiłki", reviewHint: "Pozostałe dotknięte przepisy są domyślnie zastępowane automatycznie.", affectedCount: "{{count}} zaplanowane porcje", chooseMeal: "Wybierz posiłek",
+    restricted: "Nie można zastąpić posiłku; używany jest zwykły automatyczny zamiennik składnika.", noAffected: "W bieżącym planie nie ma innych posiłków z tym składnikiem.", reviewContinue: "Sprawdź dotknięte posiłki", applyAction: "Zastosuj wykluczenie",
+    applyEverywhere: "Użyj {{replacement}} we wszystkich posiłkach", applyEverywhereHint: "Zastąp {{ingredient}} składnikiem {{replacement}} we wszystkich innych posiłkach, w których występuje, jeśli to możliwe.",
+    reviewHintEverywhere: "Posiłki, w których można użyć {{replacement}} zamiast {{ingredient}}, zachowują przepis. Nadal możesz wybrać posiłek zastępczy.",
+    useReplacement: "Użyj {{replacement}}", useReplacementHint: "Zachowaj ten posiłek i zastąp {{ingredient}} składnikiem {{replacement}}."
   },
   meal: {
     a11y: "{{label}}: {{title}}, {{calories}} kilokalorii, {{protein}} gramów białka",

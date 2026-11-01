@@ -1,11 +1,12 @@
 import React from "react";
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { Meal } from "../models";
 import { mealBadge, mealTypeIcon, palette } from "../theme";
 import { formatMoney } from "../countryPricing";
 import { useTranslation } from "react-i18next";
 import { useFoodNames } from "../i18n";
 import { BatchNote } from "./BatchCooking";
+import { BottomSheet, SheetScrollView } from "./BottomSheet";
 import { getShoppingCategory, type ShoppingCategory } from "../groceryEstimate";
 
 const categoryOrder: ShoppingCategory[] = [
@@ -19,9 +20,17 @@ const categoryOrder: ShoppingCategory[] = [
   "Other"
 ];
 
-type Props = { meal: Meal | null; onClose: () => void };
+type Props = {
+  meal: Meal | null;
+  onClose: () => void;
+  onReplace?: (meal: Meal) => void;
+  onBan?: (meal: Meal) => void;
+  canRevert?: boolean;
+  onRevert?: (meal: Meal) => void;
+  restrictionReason?: string | null;
+};
 
-export function MealDetailsModal({ meal, onClose }: Props): React.JSX.Element {
+export function MealDetailsModal({ meal, onClose, onReplace, onBan, canRevert = false, onRevert, restrictionReason }: Props): React.JSX.Element {
   const { t } = useTranslation();
   const { food } = useFoodNames();
   const currencyCode = meal?.currencyCode ?? "EUR";
@@ -56,12 +65,9 @@ export function MealDetailsModal({ meal, onClose }: Props): React.JSX.Element {
   const mainIngredients = byCategory(meal?.ingredients.filter((item) => item.category === "main") ?? []);
   const seasonings = byCategory(meal?.ingredients.filter((item) => item.category === "seasoning") ?? []);
   return (
-    <Modal animationType="slide" onRequestClose={onClose} transparent visible={meal !== null}>
-      <View style={styles.overlay}>
-        <Pressable accessibilityRole="button" accessibilityLabel={t("details.close")} onPress={onClose} style={StyleSheet.absoluteFill} />
+    <BottomSheet visible={meal !== null} onClose={onClose} closeLabel={t("details.close")} sheetStyle={styles.sheet}>
         {meal && (
-          <View accessibilityViewIsModal style={styles.sheet}>
-            <View style={styles.handle} />
+          <>
             <View accessible={false} style={[styles.typeIcon, { backgroundColor: mealBadge[meal.type].background }]}>
               <Text style={styles.typeIconText}>{mealTypeIcon[meal.type]}</Text>
             </View>
@@ -97,7 +103,24 @@ export function MealDetailsModal({ meal, onClose }: Props): React.JSX.Element {
                 {t("details.banWarning", { list: meal.banConflicts.map(food).join(", ") })}
               </Text>
             )}
-            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+            {meal.type !== "Snack" && !meal.isTypicalBreakfast && (
+              <View style={styles.actions}>
+                {restrictionReason ? <Text style={styles.restriction}>{restrictionReason}</Text> : (
+                  <>
+                    <Pressable accessibilityRole="button" onPress={() => onReplace?.(meal)} style={styles.actionButton}>
+                      <Text style={styles.actionText}>{t("mealActions.replace")}</Text>
+                    </Pressable>
+                    <Pressable accessibilityRole="button" onPress={() => onBan?.(meal)} style={[styles.actionButton, styles.banButton]}>
+                      <Text style={styles.banActionText}>{t("mealActions.ban")}</Text>
+                    </Pressable>
+                    {canRevert && <Pressable accessibilityRole="button" onPress={() => onRevert?.(meal)} style={styles.revertButton}>
+                      <Text style={styles.revertText}>{t("mealActions.revert")}</Text>
+                    </Pressable>}
+                  </>
+                )}
+              </View>
+            )}
+            <SheetScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
               <Text style={styles.sectionTitle}>{t("details.mainIngredients")}</Text>
               {renderIngredients(mainIngredients)}
               {seasonings.length > 0 && (
@@ -118,11 +141,10 @@ export function MealDetailsModal({ meal, onClose }: Props): React.JSX.Element {
                   </View>
                 </View>
               </View>
-            </ScrollView>
-          </View>
+            </SheetScrollView>
+          </>
         )}
-      </View>
-    </Modal>
+    </BottomSheet>
   );
 }
 
@@ -157,9 +179,7 @@ function IngredientRow({
 }
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(25, 32, 26, 0.42)" },
-  sheet: { maxHeight: "88%", backgroundColor: palette.paper, borderTopLeftRadius: 25, borderTopRightRadius: 25, paddingHorizontal: 21, paddingTop: 10, paddingBottom: 24 },
-  handle: { width: 38, height: 4, borderRadius: 2, backgroundColor: "#D6D9D0", alignSelf: "center", marginBottom: 16 },
+  sheet: { maxHeight: "88%", paddingHorizontal: 21, paddingTop: 10, paddingBottom: 24 },
   header: { flexDirection: "row", alignItems: "center" },
   mealEmoji: { fontSize: 26, marginRight: 10 },
   heading: { flex: 1, paddingRight: 40 },
@@ -176,6 +196,14 @@ const styles = StyleSheet.create({
   statLabel: { color: palette.muted, fontSize: 10, fontWeight: "600", marginTop: 2 },
   banWarning: { color: "#8B3027", fontSize: 11, lineHeight: 16, marginTop: 10 },
   batchNote: { marginTop: 2 },
+  actions: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 14 },
+  actionButton: { backgroundColor: palette.softGreen, borderRadius: 10, paddingHorizontal: 13, paddingVertical: 9 },
+  actionText: { color: palette.green, fontSize: 12, fontWeight: "700" },
+  banButton: { backgroundColor: "#F5E7E2" },
+  banActionText: { color: "#8B3027", fontSize: 12, fontWeight: "700" },
+  revertButton: { justifyContent: "center", paddingHorizontal: 8 },
+  revertText: { color: palette.muted, fontSize: 11, fontWeight: "600" },
+  restriction: { color: palette.muted, fontSize: 11, lineHeight: 16 },
   scrollContent: { paddingBottom: 12 },
   sectionTitle: { color: palette.ink, fontSize: 16, fontWeight: "700", marginTop: 19, marginBottom: 8 },
   helper: { color: palette.muted, fontSize: 10, marginTop: 4, marginBottom: 8 },

@@ -18,7 +18,7 @@ import type { CountryCode } from "./countryPricing";
 import { typicalBreakfastPresets } from "./typicalBreakfast";
 
 type IngredientTemplate = Omit<MealIngredient, "category" | "calories" | "proteinGrams" | "estimatedCostCents">;
-type MealTemplate = Omit<Meal, "ingredients" | "proteinGrams"> & { ingredients: IngredientTemplate[] };
+type MealTemplate = Omit<Meal, "ingredients" | "proteinGrams" | "recipeKey" | "sourceRecipeKey" | "occurrenceKey" | "isReplaced" | "isTypicalBreakfast"> & { recipeKey?: string; ingredients: IngredientTemplate[] };
 
 // Legacy meal-level totals on these templates are replaced by ingredient-rate
 // calculations in materializeMeal; quantities and unit estimates are authoritative.
@@ -58,6 +58,67 @@ const mealTemplates: MealTemplate[][] = [
     { id: "sunday-l", type: "Lunch", title: "Roasted veg & hummus bowl", description: "Chickpeas · frozen mixed vegetables · basmati rice", ingredients: [{ name: "Chickpeas, drained", quantity: "100", unit: "g" }, { name: "Frozen mixed vegetables", quantity: "180", unit: "g" }, { name: "Basmati rice, dry", quantity: "65", unit: "g" }, { name: "Hummus", quantity: "2", unit: "tbsp" }, { name: "Olive oil", quantity: "1", unit: "tsp" }], calories: 495, estimatedCostCents: 140, durationMinutes: 30, emoji: "🥙" },
     { id: "sunday-d", type: "Dinner", title: "Lemony chicken & greens", description: "Chicken · greens · potatoes", ingredients: [{ name: "Chicken breast", quantity: "150", unit: "g" }, { name: "Potatoes", quantity: "200", unit: "g" }, { name: "Leafy greens", quantity: "100", unit: "g" }, { name: "Lemon juice", quantity: "1", unit: "tbsp" }, { name: "Olive oil", quantity: "1", unit: "tsp" }], calories: 625, estimatedCostCents: 185, durationMinutes: 35, emoji: "🍋" }
   ]
+];
+
+function alternativeTemplate(
+  id: string,
+  type: MealType,
+  title: string,
+  description: string,
+  emoji: string,
+  durationMinutes: number,
+  ingredients: IngredientTemplate[]
+): MealTemplate {
+  return { id, recipeKey: id, type, title, description, emoji, durationMinutes, ingredients, calories: 0, estimatedCostCents: 0 };
+}
+
+/** Extra same-type recipes; ingredient estimates reuse the existing modeled catalog. */
+const alternativeTemplates: MealTemplate[] = [
+  alternativeTemplate("alt-breakfast-bean-toast", "Breakfast", "Bean & tomato toast", "Beans · bread · tomatoes", "🍞", 10, [
+    { name: "Black beans, drained", quantity: "90", unit: "g" }, { name: "Bread", quantity: "2", unit: "slices" }, { name: "Tomatoes", quantity: "100", unit: "g" }, { name: "Olive oil", quantity: "1", unit: "tsp" }
+  ]),
+  alternativeTemplate("alt-breakfast-cottage-oats", "Breakfast", "Cottage cheese oats", "Cottage cheese · oats · banana", "🥣", 5, [
+    { name: "Cottage cheese", quantity: "100", unit: "g" }, { name: "Rolled oats", quantity: "35", unit: "g" }, { name: "Banana", quantity: "1", unit: "medium" }
+  ]),
+  alternativeTemplate("alt-breakfast-potato-egg", "Breakfast", "Potato & egg skillet", "Potatoes · eggs · spinach", "🥔", 20, [
+    { name: "Potatoes", quantity: "180", unit: "g" }, { name: "Eggs", quantity: "2", unit: "large" }, { name: "Baby spinach", quantity: "30", unit: "g" }, { name: "Olive oil", quantity: "1", unit: "tsp" }
+  ]),
+  alternativeTemplate("alt-breakfast-yogurt-apple", "Breakfast", "Apple yogurt oats", "Yogurt · apple · oats", "🍎", 5, [
+    { name: "Plain yogurt", quantity: "150", unit: "g" }, { name: "Apple", quantity: "1", unit: "medium" }, { name: "Rolled oats", quantity: "30", unit: "g" }
+  ]),
+  alternativeTemplate("alt-breakfast-hummus-toast", "Breakfast", "Hummus tomato toast", "Bread · hummus · tomatoes", "🥙", 8, [
+    { name: "Bread", quantity: "2", unit: "slices" }, { name: "Hummus", quantity: "2", unit: "tbsp" }, { name: "Cherry tomatoes", quantity: "100", unit: "g" }
+  ]),
+  alternativeTemplate("alt-lunch-lentil-rice", "Lunch", "Lentil rice bowl", "Lentils · rice · tomatoes", "🍚", 25, [
+    { name: "Lentils, dry", quantity: "55", unit: "g" }, { name: "Basmati rice, dry", quantity: "45", unit: "g" }, { name: "Chopped tomatoes", quantity: "120", unit: "g" }, { name: "Onion", quantity: "1/2", unit: "medium" }
+  ]),
+  alternativeTemplate("alt-lunch-tuna-bean", "Lunch", "Tuna & bean salad", "Tuna · beans · cucumber", "🥗", 10, [
+    { name: "Canned tuna, drained", quantity: "80", unit: "g" }, { name: "White beans, drained", quantity: "100", unit: "g" }, { name: "Cucumber", quantity: "100", unit: "g" }, { name: "Cherry tomatoes", quantity: "80", unit: "g" }
+  ]),
+  alternativeTemplate("alt-lunch-chickpea-potato", "Lunch", "Chickpea potato bowl", "Chickpeas · potatoes · spinach", "🥔", 20, [
+    { name: "Chickpeas, drained", quantity: "100", unit: "g" }, { name: "Potatoes", quantity: "180", unit: "g" }, { name: "Baby spinach", quantity: "30", unit: "g" }, { name: "Mustard", quantity: "1", unit: "tsp" }
+  ]),
+  alternativeTemplate("alt-lunch-egg-spinach-toast", "Lunch", "Egg & spinach toast", "Eggs · spinach · bread", "🍳", 12, [
+    { name: "Eggs", quantity: "2", unit: "large" }, { name: "Baby spinach", quantity: "40", unit: "g" }, { name: "Bread", quantity: "2", unit: "slices" }, { name: "Tomatoes", quantity: "80", unit: "g" }
+  ]),
+  alternativeTemplate("alt-lunch-tomato-lentil-pasta", "Lunch", "Tomato lentil pasta", "Pasta · lentils · tomatoes", "🍝", 25, [
+    { name: "Pasta, dry", quantity: "65", unit: "g" }, { name: "Lentils, dry", quantity: "35", unit: "g" }, { name: "Chopped tomatoes", quantity: "120", unit: "g" }, { name: "Olive oil", quantity: "1", unit: "tsp" }
+  ]),
+  alternativeTemplate("alt-dinner-chickpea-pasta", "Dinner", "Chickpea tomato pasta", "Chickpeas · pasta · tomatoes", "🍝", 25, [
+    { name: "Chickpeas, drained", quantity: "120", unit: "g" }, { name: "Pasta, dry", quantity: "65", unit: "g" }, { name: "Chopped tomatoes", quantity: "150", unit: "g" }, { name: "Olive oil", quantity: "1", unit: "tsp" }
+  ]),
+  alternativeTemplate("alt-dinner-chicken-rice", "Dinner", "Chicken vegetable rice", "Chicken · rice · vegetables", "🍗", 30, [
+    { name: "Chicken thigh", quantity: "120", unit: "g" }, { name: "Basmati rice, dry", quantity: "65", unit: "g" }, { name: "Frozen mixed vegetables", quantity: "150", unit: "g" }, { name: "Soy sauce", quantity: "1", unit: "tbsp" }
+  ]),
+  alternativeTemplate("alt-dinner-bean-potato", "Dinner", "Bean & potato stew", "Beans · potatoes · tomatoes", "🥘", 30, [
+    { name: "Red beans, drained", quantity: "140", unit: "g" }, { name: "Potatoes", quantity: "180", unit: "g" }, { name: "Chopped tomatoes", quantity: "150", unit: "g" }, { name: "Onion", quantity: "1/2", unit: "medium" }
+  ]),
+  alternativeTemplate("alt-dinner-sardine-rice", "Dinner", "Sardine tomato rice", "Sardines · rice · tomatoes", "🍚", 25, [
+    { name: "Canned sardines, drained", quantity: "90", unit: "g" }, { name: "Basmati rice, dry", quantity: "70", unit: "g" }, { name: "Chopped tomatoes", quantity: "150", unit: "g" }
+  ]),
+  alternativeTemplate("alt-dinner-lentil-sweet-potato", "Dinner", "Lentil sweet potato tray", "Lentils · sweet potato · carrots", "🥕", 35, [
+    { name: "Lentils, dry", quantity: "65", unit: "g" }, { name: "Sweet potato", quantity: "180", unit: "g" }, { name: "Carrots", quantity: "1", unit: "medium" }, { name: "Olive oil", quantity: "1", unit: "tsp" }
+  ])
 ];
 
 export const MIN_DAILY_CALORIE_GOAL = 500;
@@ -104,6 +165,9 @@ function applyTypicalBreakfast(
   const current = meals[breakfastIndex];
   const replacement: Meal = {
     ...current,
+    recipeKey: typicalBreakfast.mode === "custom" ? "typical-breakfast-custom" : `typical-breakfast-${preset?.id ?? typicalBreakfastPresets[0].id}`,
+    isTypicalBreakfast: true,
+    isReplaced: false,
     title: typicalBreakfast.mode === "custom" ? "Custom typical breakfast" : (preset?.title ?? typicalBreakfastPresets[0].title),
     description: ingredients.map(({ name }) => name).join(" · "),
     emoji: typicalBreakfast.mode === "custom" ? "🥣" : (preset?.emoji ?? "🥣"),
@@ -351,9 +415,27 @@ export function formatDateKey(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-export function getDayPlan(date: Date): DayPlan {
+export function getDayPlan(date: Date, preferences?: MealPreferences): DayPlan {
   const meals = mealTemplates[(date.getDay() + 6) % 7] ?? [];
-  const materializedMeals = meals.map(materializeMeal);
+  const dateKey = formatDateKey(date);
+  const materializedMeals = meals.flatMap((template) => {
+    const sourceRecipeKey = template.recipeKey ?? template.id;
+    if (!preferences || template.type === "Snack") return [materializeMeal(template)];
+    const occurrenceKey = `${dateKey}|${template.type}`;
+    const override = preferences.mealOccurrenceOverrides[occurrenceKey];
+    const recipeKey = override
+      ? resolveOccurrenceOverride(override, template.type, preferences)
+      : resolveRecipeKey(sourceRecipeKey, template.type, preferences);
+    if (!recipeKey || preferences.bannedMeals.includes(recipeKey)) return [];
+    const selectedTemplate = getRecipeTemplate(recipeKey);
+    if (!selectedTemplate) return [];
+    return [{
+      ...materializeMeal(selectedTemplate),
+      sourceRecipeKey,
+      occurrenceKey,
+      isReplaced: recipeKey !== sourceRecipeKey
+    }];
+  });
   materializedMeals.forEach((meal) => {
     if (meal.type !== "Breakfast") {
       addSeasoningIfNeeded(meal);
@@ -388,7 +470,7 @@ export function getPersonalizedDayPlan(
   countryCode: CountryCode = "DE",
   goal: number = DEFAULT_DAILY_CALORIE_GOAL
 ): DayPlan {
-  const basePlan = getDayPlan(date);
+  const basePlan = getDayPlan(date, preferences);
   const weekday = (date.getDay() + 6) % 7;
   const meatDay = getWeeklyAssignmentDays(preferences.meatPerWeek).includes(weekday);
   const dairyDay = getWeeklyAssignmentDays(preferences.dairyPerWeek).includes(weekday);
@@ -905,6 +987,7 @@ function createSnackMeal(
     ];
   return materializeMeal({
     id: `${formatDateKey(date)}-${slot.toLowerCase()}-snack`,
+    recipeKey: includeFruit ? "snack-fruit-oats" : "snack-hummus-toast",
     type: "Snack",
     slot,
     title: includeFruit ? "Banana & oat snack" : "Hummus toast snack",
@@ -1164,6 +1247,7 @@ function refreshMealEstimates(meal: Meal): void {
 function materializeMeal(template: MealTemplate): Meal {
   const meal: Meal = {
     ...template,
+    recipeKey: template.recipeKey ?? template.id,
     proteinGrams: 0,
     ingredients: template.ingredients.map((ingredient) => ({
       ...ingredient,
@@ -1175,6 +1259,119 @@ function materializeMeal(template: MealTemplate): Meal {
   };
   refreshMealEstimates(meal);
   return meal;
+}
+
+/** Full unpersonalized recipe catalog used by Menu and same-type replacement. */
+export function getRecipeCatalog(type?: MealType): Meal[] {
+  return [...mealTemplates.flat(), ...alternativeTemplates]
+    .filter((template) => type === undefined || template.type === type)
+    .map(materializeMeal);
+}
+
+export function getRecipeBaseMeal(recipeKey: string): Meal | undefined {
+  const template = getRecipeTemplate(recipeKey);
+  return template ? materializeMeal(template) : undefined;
+}
+
+/** Alternatives are base-portion recipes sorted by calorie distance from the current recipe. */
+
+/** Source recipes currently shown as one displayed recipe in the supplied plan window. */
+export function getDisplayedRecipeSourceKeys(days: Meal[][], displayedRecipeKey: string): string[] {
+  return [...new Set(days.flatMap((meals) => meals
+    .filter((meal) => meal.recipeKey === displayedRecipeKey)
+    .map((meal) => meal.sourceRecipeKey ?? meal.recipeKey)))];
+}
+
+/** Apply a global replacement to every matching source and preserve displayed day choices. */
+export function applyGlobalMealReplacement(
+  preferences: MealPreferences,
+  sourceRecipeKeys: string[],
+  displayedRecipeKey: string,
+  replacementRecipeKey: string,
+  displayedOccurrenceKeys: string[] = []
+): MealPreferences {
+  const mealSubstitutes = { ...preferences.mealSubstitutes };
+  sourceRecipeKeys.forEach((sourceRecipeKey) => {
+    mealSubstitutes[sourceRecipeKey] = replacementRecipeKey;
+  });
+  const displayedOccurrences = new Set(displayedOccurrenceKeys);
+  const mealOccurrenceOverrides = Object.fromEntries(
+    Object.entries(preferences.mealOccurrenceOverrides).map(([key, recipeKey]) => [
+      key, displayedOccurrences.has(key) || recipeKey === displayedRecipeKey ? replacementRecipeKey : recipeKey
+    ])
+  );
+  return { ...preferences, mealSubstitutes, mealOccurrenceOverrides };
+}
+
+/** Removing a ban also removes that recipe's outgoing choice, but keeps choices pointing to it. */
+export function removeMealBan(preferences: MealPreferences, recipeKey: string): MealPreferences {
+  return {
+    ...preferences,
+    bannedMeals: preferences.bannedMeals.filter((bannedKey) => bannedKey !== recipeKey),
+    mealSubstitutes: Object.fromEntries(
+      Object.entries(preferences.mealSubstitutes).filter(([sourceRecipeKey]) => sourceRecipeKey !== recipeKey)
+    )
+  };
+}
+
+export function getRecipeAlternatives(type: MealType, currentRecipeKey: string, bannedMeals: string[]): Meal[] {
+  const source = getRecipeBaseMeal(currentRecipeKey);
+  if (!source) return [];
+  return getRecipeCatalog(type)
+    .filter((meal) => meal.recipeKey !== currentRecipeKey && !bannedMeals.includes(meal.recipeKey))
+    .sort((first, second) => Math.abs(first.calories - source.calories) - Math.abs(second.calories - source.calories) || first.title.localeCompare(second.title));
+}
+
+function getRecipeTemplate(recipeKey: string): MealTemplate | undefined {
+  return [...mealTemplates.flat(), ...alternativeTemplates]
+    .find((template) => (template.recipeKey ?? template.id) === recipeKey || template.id === recipeKey);
+}
+
+function resolveOccurrenceOverride(recipeKey: string, type: MealType, preferences: MealPreferences): string | null {
+  const template = getRecipeTemplate(recipeKey);
+  if (!template || template.type !== type) return null;
+  // An explicit day choice wins over a global mapping unless the chosen recipe is itself banned.
+  return preferences.bannedMeals.includes(recipeKey)
+    ? resolveRecipeKey(recipeKey, type, preferences)
+    : recipeKey;
+}
+
+function resolveRecipeKey(startKey: string, type: MealType, preferences: MealPreferences): string | null {
+  let current = startKey;
+  const visited = new Set<string>();
+  while (true) {
+    if (visited.has(current)) return chooseAutomaticRecipe(startKey, type, preferences, visited);
+    visited.add(current);
+    const template = getRecipeTemplate(current);
+    if (!template || template.type !== type) return chooseAutomaticRecipe(startKey, type, preferences, visited);
+    const mapped = preferences.mealSubstitutes[current];
+    if (mapped) {
+      if (mapped === current) return chooseAutomaticRecipe(startKey, type, preferences, visited);
+      current = mapped;
+      continue;
+    }
+    if (preferences.bannedMeals.includes(current)) {
+      const automatic = chooseAutomaticRecipe(current, type, preferences, visited);
+      if (!automatic || automatic === current || preferences.bannedMeals.includes(automatic)) return chooseAutomaticRecipe(startKey, type, preferences, visited);
+      current = automatic;
+      continue;
+    }
+    return current;
+  }
+}
+
+function chooseAutomaticRecipe(
+  sourceKey: string,
+  type: MealType,
+  preferences: MealPreferences,
+  excluded: Set<string> = new Set()
+): string | null {
+  const source = getRecipeBaseMeal(sourceKey);
+  const sourceCalories = source?.calories ?? 0;
+  const candidates = getRecipeCatalog(type)
+    .filter((meal) => meal.recipeKey !== sourceKey && !preferences.bannedMeals.includes(meal.recipeKey) && !excluded.has(meal.recipeKey))
+    .sort((first, second) => Math.abs(first.calories - sourceCalories) - Math.abs(second.calories - sourceCalories) || first.recipeKey.localeCompare(second.recipeKey));
+  return candidates[0]?.recipeKey ?? null;
 }
 
 export function getDailyCalories(meals: Meal[]): number {

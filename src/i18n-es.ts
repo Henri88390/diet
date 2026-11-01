@@ -11,6 +11,7 @@ export const es: Translation = {
   tabs: {
     preferences: "Preferencias",
     meals: "Comidas",
+    menu: "Men\u00fa",
     groceries: "Compra"
   },
   mealType: { Breakfast: "Desayuno", Lunch: "Almuerzo", Dinner: "Cena", Snack: "Merienda" },
@@ -95,6 +96,19 @@ export const es: Translation = {
     planningDates: "Fechas de planificación",
     dateHint: "Selecciona esta fecha para ver su plan de comidas"
   },
+  mealActions: {
+    replace: "Reemplazar", ban: "Excluir comida", scopeTitle: "Elige el alcance del cambio", thisDay: "Solo este dia", allOccurrences: "Todas las apariciones",
+    replaced: "Reemplazado", revert: "Restaurar este dia", batchUnavailable: "Las comidas preparadas por lotes no se pueden cambiar aqui.", bannedUnavailable: "Esta comida está excluida. Vuelve a permitirla en la pestaña Menú para usarla de nuevo.", typicalUnavailable: "Tu desayuno habitual se configura en Preferencias."
+  },
+  picker: {
+    scopeTitle: "Elige el alcance del cambio", banTitle: "Elige un sustituto", replaceTitle: "Elige un reemplazo", thisDay: "Solo este dia", allOccurrences: "Todas las apariciones",
+    automatic: "Calorias similares (automatico)", automaticHint: "Se usara la receta disponible con las calorias mas similares.", noAlternatives: "No hay alternativas disponibles.", confirmTitle: "Confirmar sustitución", confirmBanTitle: "Confirmar exclusión", confirmDay: "¿Sustituir {{current}} por {{substitute}} solo este día?", confirmAll: "¿Sustituir todas las apariciones de {{current}} por {{substitute}}?", confirmBan: "¿Excluir {{current}} y sustituirlo en todas partes por {{substitute}}?", confirmBanAuto: "¿Excluir {{current}} y sustituirlo en todas partes por la receta con calorías más parecidas?", confirmAction: "Sustituir", confirmBanAction: "Excluir y sustituir", back: "Atrás"
+  },
+  menu: {
+    title: "Men\u00fa", empty: "No hay comidas previstas para este periodo.", occurrences: "\u00d7{{count}}", showAll: "Mostrar todas", showLess: "Mostrar menos",
+    ban: "Excluir", replaceAll: "Reemplazar todas", batchUnavailable: "Las comidas preparadas por lotes no se pueden cambiar aqui.", typicalUnavailable: "Tu desayuno habitual se configura en Preferencias.", bannedTitle: "Comidas excluidas",
+    substitute: "\u2192 {{name}}", unban: "Restaurar", noBanned: "No hay comidas excluidas."
+  },
   meal: {
     a11y: "{{label}}: {{title}}, {{calories}} kilocalorías, {{protein}} gramos de proteína",
     hint: "Abre los detalles de la comida y cantidades orientativas de ingredientes",
@@ -130,7 +144,7 @@ export const es: Translation = {
     estimatedTotal: "Total estimado",
     progress: "{{checked}} de {{total}} comprados",
     reset: "Restablecer",
-    resetA11y: "Desmarcar todos los art?culos de la lista",
+    resetA11y: "Desmarcar todos los artículos de la lista",
     empty: "Aún no hay ingredientes planificados para estas fechas.",
     previousMonth: "Mes anterior",
     nextMonth: "Mes siguiente",

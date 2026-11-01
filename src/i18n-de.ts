@@ -11,6 +11,7 @@ export const de: Translation = {
   tabs: {
     preferences: "Einstellungen",
     meals: "Mahlzeiten",
+    menu: "Men\u00fc",
     groceries: "Einkauf"
   },
   mealType: { Breakfast: "Frühstück", Lunch: "Mittagessen", Dinner: "Abendessen", Snack: "Snack" },
@@ -44,7 +45,7 @@ export const de: Translation = {
     planStyleA11y: "Stil des Ernährungsplans: {{label}}",
     budget: "Wöchentliches Lebensmittelbudget",
     budgetDecrease: "Wochenbudget verringern",
-    budgetIncrease: "Wochenbudget erh?hen",
+    budgetIncrease: "Wochenbudget erhöhen",
     budgetError: "Gib einen nicht negativen Betrag ein oder lass das Budget leer.",
     meatFish: "Fleisch / Fisch",
     dairy: "Milchprodukte",
@@ -95,6 +96,19 @@ export const de: Translation = {
     planningDates: "Planungsdaten",
     dateHint: "Wählt dieses Datum aus, um den Essensplan zu sehen"
   },
+  mealActions: {
+    replace: "Ersetzen", ban: "Mahlzeit meiden", scopeTitle: "Umfang des Ersatzes waehlen", thisDay: "Nur dieser Tag", allOccurrences: "Alle Vorkommen",
+    replaced: "Ersetzt", revert: "Diesen Tag zuruecksetzen", batchUnavailable: "Mahlzeiten aus dem Batch-Kochen koennen hier nicht geaendert werden.", bannedUnavailable: "Diese Mahlzeit ist gesperrt. Entsperre sie im Tab Menü, um sie wieder zu verwenden.", typicalUnavailable: "Dein typisches Fruehstueck wird unter Einstellungen verwaltet."
+  },
+  picker: {
+    scopeTitle: "Umfang des Ersatzes waehlen", banTitle: "Ersatz auswaehlen", replaceTitle: "Ersatz waehlen", thisDay: "Nur dieser Tag", allOccurrences: "Alle Vorkommen",
+    automatic: "Aehnliche Kalorien (automatisch)", automaticHint: "Das verfuegbare Rezept mit den aehnlichsten Kalorien wird verwendet.", noAlternatives: "Keine Alternativen verfuegbar.", confirmTitle: "Ersetzen bestätigen", confirmBanTitle: "Sperren bestätigen", confirmDay: "{{current}} nur an diesem Tag durch {{substitute}} ersetzen?", confirmAll: "Jedes Vorkommen von {{current}} durch {{substitute}} ersetzen?", confirmBan: "{{current}} sperren und überall durch {{substitute}} ersetzen?", confirmBanAuto: "{{current}} sperren und überall durch das Rezept mit den ähnlichsten Kalorien ersetzen?", confirmAction: "Ersetzen", confirmBanAction: "Sperren und ersetzen", back: "Zurück"
+  },
+  menu: {
+    title: "Men\u00fc", empty: "Fuer diesen Zeitraum sind keine Mahlzeiten geplant.", occurrences: "\u00d7{{count}}", showAll: "Alle anzeigen", showLess: "Weniger anzeigen",
+    ban: "Meiden", replaceAll: "Alle ersetzen", batchUnavailable: "Mahlzeiten aus dem Batch-Kochen koennen hier nicht geaendert werden.", typicalUnavailable: "Dein typisches Fruehstueck wird unter Einstellungen verwaltet.", bannedTitle: "Gemiedene Mahlzeiten",
+    substitute: "\u2192 {{name}}", unban: "Wieder aufnehmen", noBanned: "Keine gemiedenen Mahlzeiten."
+  },
   meal: {
     a11y: "{{label}}: {{title}}, {{calories}} Kilokalorien, {{protein}} Gramm Eiweiß",
     hint: "Öffnet Mahlzeitendetails und beispielhafte Zutatenmengen",
@@ -128,7 +142,7 @@ export const de: Translation = {
     selectedRange: "gewählter Zeitraum",
     estimatedTotal: "Geschätzte Summe",
     progress: "{{checked}} von {{total}} gekauft",
-    reset: "Zur?cksetzen",
+    reset: "Zurücksetzen",
     resetA11y: "Häkchen bei allen Artikeln der Einkaufsliste entfernen",
     empty: "Für diese Tage sind noch keine Zutaten geplant.",
     previousMonth: "Vorheriger Monat",

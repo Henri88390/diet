@@ -18,6 +18,12 @@ const {
   getDailyCalories,
   getDailyProtein,
   getMealsInDisplayOrder,
+  getRecipeAlternatives,
+  getRecipeBaseMeal,
+  getRecipeCatalog,
+  getDisplayedRecipeSourceKeys,
+  applyGlobalMealReplacement,
+  removeMealBan,
   scaleMealPlan
 } =
   require("../src/sampleData.ts");
@@ -36,6 +42,7 @@ const {
 } = require("../src/groceryEstimate.ts");
 const { countries, getCountry, formatMoney } = require("../src/countryPricing.ts");
 const { typicalBreakfastPresets } = require("../src/typicalBreakfast.ts");
+const { getMenuMealGroupKey } = require("../src/menuGrouping.ts");
 const {
   ingredientCatalog,
   ingredientCategoryOrder,
@@ -64,6 +71,8 @@ const preferencesSource = fs.readFileSync(
 const mealDetailsSource = fs.readFileSync(
   require.resolve("../src/components/MealDetailsModal.tsx"), "utf8"
 );
+const menuSource = fs.readFileSync(require.resolve("../src/screens/MenuScreen.tsx"), "utf8");
+const pickerSource = fs.readFileSync(require.resolve("../src/components/MealAlternativePicker.tsx"), "utf8");
 const dateStripSource = fs.readFileSync(
   require.resolve("../src/components/CalendarDateStrip.tsx"), "utf8"
 );
@@ -79,6 +88,9 @@ const preferences = {
   planStyle: "balanced",
   weeklyBudget: "45",
   bannedIngredients: [],
+  bannedMeals: [],
+  mealSubstitutes: {},
+  mealOccurrenceOverrides: {},
   typicalBreakfast: { mode: "none" }
 };
 const today = new Date(2026, 9, 30, 18, 30);
@@ -88,6 +100,165 @@ const dateKeys = Array.from({ length: 7 }, (_, index) => {
 });
 const appliedGoals = { [dateKeys[0]]: 2500, [dateKeys[3]]: 1800 };
 const plans = getSevenCalendarDayPlans(today, preferences, appliedGoals, "DE");
+
+// Recipe substitutions resolve before personalization and are shared by Calendar and Groceries.
+{
+  const monday = new Date(2026, 10, 2);
+  const followingMonday = new Date(2026, 10, 9);
+  const originalKey = "monday-b";
+  const automaticPreferences = { ...preferences, bannedMeals: [originalKey] };
+  const horizon = getCalendarDayPlans(monday, new Date(2026, 11, 2), automaticPreferences, {}, "DE");
+  const repeatedBreakfasts = horizon.flat().filter((meal) => meal.sourceRecipeKey === originalKey);
+  assert.ok(repeatedBreakfasts.length >= 4, "the recurring weekly source recipe appears across the planning horizon");
+  assert.ok(repeatedBreakfasts.every((meal) => !automaticPreferences.bannedMeals.includes(meal.recipeKey)),
+    "a banned recipe is replaced in every occurrence and never appears in the horizon");
+  const availableAlternatives = getRecipeAlternatives("Breakfast", originalKey, automaticPreferences.bannedMeals);
+  assert.ok(availableAlternatives.length > 0);
+  assert.equal(repeatedBreakfasts[0].recipeKey, availableAlternatives[0].recipeKey,
+    "automatic replacement uses the same-type recipe with closest base calories");
+  assert.equal(getRecipeBaseMeal(repeatedBreakfasts[0].recipeKey).type, "Breakfast",
+    "automatic replacement preserves meal type");
+
+  const chosenKey = "alt-breakfast-cottage-oats";
+  const chosenPreferences = { ...preferences, bannedMeals: [originalKey], mealSubstitutes: { [originalKey]: chosenKey } };
+  assert.equal(getPersonalizedDayPlan(monday, chosenPreferences).meals.find((meal) => meal.type === "Breakfast").recipeKey, chosenKey,
+    "a user-selected substitute is used for every matching recipe source");
+
+  const overrideKey = `${formatDateKey(monday)}|Breakfast`;
+  const dayOnlyPreferences = {
+    ...preferences,
+    mealSubstitutes: { [originalKey]: "alt-breakfast-bean-toast", [chosenKey]: "alt-breakfast-yogurt-apple" },
+    mealOccurrenceOverrides: { [overrideKey]: chosenKey }
+  };
+  assert.equal(getPersonalizedDayPlan(monday, dayOnlyPreferences).meals.find((meal) => meal.type === "Breakfast").recipeKey, chosenKey,
+    "an occurrence override affects the selected date");
+  assert.equal(getPersonalizedDayPlan(followingMonday, dayOnlyPreferences).meals.find((meal) => meal.type === "Breakfast").recipeKey, "alt-breakfast-bean-toast",
+    "a day override does not change another date with a global substitution");
+  assert.equal(getPersonalizedDayPlan(monday, dayOnlyPreferences).meals.find((meal) => meal.type === "Breakfast").recipeKey, chosenKey,
+    "a day override takes precedence over a global substitution on its date");
+
+  const replacementKey = "alt-breakfast-potato-egg";
+  const globalReplacementPreferences = applyGlobalMealReplacement(
+    { ...dayOnlyPreferences, mealSubstitutes: { [originalKey]: chosenKey } },
+    [originalKey],
+    chosenKey,
+    replacementKey
+  );
+  assert.equal(globalReplacementPreferences.mealOccurrenceOverrides[overrideKey], replacementKey,
+    "global replacement updates overrides displaying the replaced recipe");
+  assert.equal(getPersonalizedDayPlan(monday, globalReplacementPreferences).meals.find((meal) => meal.type === "Breakfast").recipeKey, replacementKey,
+    "global replacement supersedes a prior occurrence override");
+  assert.equal(getPersonalizedDayPlan(followingMonday, globalReplacementPreferences).meals.find((meal) => meal.type === "Breakfast").recipeKey, replacementKey,
+    "global replacement changes unoverridden occurrences too");
+  const chainedOverridePreferences = {
+    ...preferences,
+    bannedMeals: ["alt-breakfast-bean-toast"],
+    mealSubstitutes: { [originalKey]: "alt-breakfast-bean-toast", "alt-breakfast-bean-toast": chosenKey },
+    mealOccurrenceOverrides: { [overrideKey]: "alt-breakfast-bean-toast" }
+  };
+  assert.equal(getPersonalizedDayPlan(monday, chainedOverridePreferences).meals.find((meal) => meal.type === "Breakfast").recipeKey, chosenKey,
+    "a chained occurrence override resolves to the currently displayed recipe");
+  const chainedOverrideReplacement = applyGlobalMealReplacement(
+    chainedOverridePreferences, [originalKey], chosenKey, replacementKey, [overrideKey]
+  );
+  assert.equal(chainedOverrideReplacement.mealOccurrenceOverrides[overrideKey], replacementKey,
+    "global replacement updates any override currently displaying the target through a chain");
+  assert.equal(getPersonalizedDayPlan(monday, chainedOverrideReplacement).meals.find((meal) => meal.type === "Breakfast").recipeKey, replacementKey,
+    "a chained override cannot mask a global replacement");
+
+  const wednesday = new Date(2026, 10, 4);
+  const secondSourceKey = "wednesday-b";
+  const sharedDisplayedPreferences = {
+    ...preferences,
+    mealSubstitutes: { [originalKey]: chosenKey, [secondSourceKey]: chosenKey }
+  };
+  const displayedDays = [monday, wednesday].map((date) => getPersonalizedDayPlan(date, sharedDisplayedPreferences).meals);
+  const displayedSourceKeys = getDisplayedRecipeSourceKeys(displayedDays, chosenKey);
+  assert.deepEqual(displayedSourceKeys, [originalKey, secondSourceKey],
+    "all-occurrences discovers every source displaying the tapped recipe");
+  const allDisplayedReplacement = applyGlobalMealReplacement(
+    sharedDisplayedPreferences, displayedSourceKeys, chosenKey, replacementKey
+  );
+  assert.ok([monday, wednesday].every((date) =>
+    getPersonalizedDayPlan(date, allDisplayedReplacement).meals.find((meal) => meal.type === "Breakfast").recipeKey === replacementKey
+  ), "all-occurrences replaces independent sources that resolve to the same displayed recipe");
+
+  const bannedDisplayedPreferences = {
+    ...preferences,
+    bannedMeals: [chosenKey],
+    mealSubstitutes: { [originalKey]: chosenKey, [chosenKey]: replacementKey },
+    mealOccurrenceOverrides: { [overrideKey]: chosenKey }
+  };
+  const restoredPreferences = removeMealBan(bannedDisplayedPreferences, chosenKey);
+  assert.equal(restoredPreferences.mealSubstitutes[originalKey], chosenKey,
+    "unbanning keeps incoming substitutions that point to the restored recipe");
+  assert.equal(restoredPreferences.mealSubstitutes[chosenKey], undefined,
+    "unbanning removes only the recipe's outgoing substitution");
+  assert.equal(restoredPreferences.mealOccurrenceOverrides[overrideKey], chosenKey,
+    "unbanning preserves occurrence overrides that point to the restored recipe");
+  assert.equal(getPersonalizedDayPlan(monday, restoredPreferences).meals.find((meal) => meal.type === "Breakfast").recipeKey, chosenKey,
+    "unbanning restores the recipe in an explicitly overridden occurrence");
+  assert.equal(getPersonalizedDayPlan(followingMonday, restoredPreferences).meals.find((meal) => meal.type === "Breakfast").recipeKey, chosenKey,
+    "unbanning restores the recipe through an incoming mapping without following its former chain");
+  const unbannedPreferences = {
+    ...chosenPreferences,
+    bannedMeals: chosenPreferences.bannedMeals.filter((key) => key !== originalKey),
+    mealSubstitutes: Object.fromEntries(Object.entries(chosenPreferences.mealSubstitutes).filter(([key]) => key !== originalKey))
+  };
+  assert.equal(getPersonalizedDayPlan(monday, unbannedPreferences).meals.find((meal) => meal.type === "Breakfast").recipeKey, originalKey,
+    "removing the ban and substitute mapping restores the original recipe");
+
+  const baselineEstimate = buildShoppingEstimate(monday, monday, preferences, {}, "DE");
+  const substitutedEstimate = buildShoppingEstimate(monday, monday, chosenPreferences, {}, "DE");
+  assert.notDeepEqual(substitutedEstimate.items.map((item) => item.name), baselineEstimate.items.map((item) => item.name),
+    "the shopping estimate reflects recipe substitutions");
+  const ingredientBannedSubstitute = getPersonalizedDayPlan(monday, {
+    ...chosenPreferences,
+    bannedIngredients: ["cottage-cheese"]
+  }).meals.find((meal) => meal.type === "Breakfast");
+  assert.ok(ingredientBannedSubstitute.ingredients.every((ingredient) => !/cottage cheese/i.test(ingredient.name)),
+    "ingredient bans still apply after selecting an alternative recipe");
+
+  const cyclicPreferences = { ...preferences, mealSubstitutes: { [originalKey]: chosenKey, [chosenKey]: originalKey } };
+  const cycleResolved = getPersonalizedDayPlan(monday, cyclicPreferences).meals.find((meal) => meal.type === "Breakfast");
+  assert.notEqual(cycleResolved.recipeKey, originalKey, "substitution cycles fall back to a safe same-type alternative");
+  assert.notEqual(cycleResolved.recipeKey, chosenKey, "substitution cycles do not return a recipe inside the cycle");
+  const selfCycleResolved = getPersonalizedDayPlan(monday, {
+    ...preferences,
+    mealSubstitutes: { [originalKey]: originalKey }
+  }).meals.find((meal) => meal.type === "Breakfast");
+  assert.notEqual(selfCycleResolved.recipeKey, originalKey, "self-referential mappings are guarded as cycles");
+
+  const catalog = getRecipeCatalog();
+  for (const type of ["Breakfast", "Lunch", "Dinner"]) {
+    assert.equal(catalog.filter((meal) => meal.recipeKey.startsWith(`alt-${type.toLowerCase()}-`)).length, 5,
+      `the ${type.toLowerCase()} catalog has five extra alternatives`);
+  }
+  catalog.filter((meal) => meal.recipeKey.startsWith("alt-")).forEach((meal) => {
+    for (const field of ["title", "description", "emoji"]) {
+      assert.doesNotMatch(meal[field], /\?/, `alternative ${field} uses real catalog text and emoji`);
+    }
+  });
+  assert.doesNotMatch(pickerSource, /<Text style=\{styles\.arrow\}>\?<\/Text>|} \? {t\("meal\.proteinChip"/,
+    "picker arrows and metadata separators do not use question-mark placeholders");
+  for (const locale of ["en", "fr", "de", "es", "pl", "ru"]) {
+    const localeSource = fs.readFileSync(require.resolve(`../src/i18n-${locale}.ts`), "utf8");
+    assert.doesNotMatch(localeSource, /"[^"\n]*\?[^"\n]+"/,
+      `${locale} translations contain no '?' encoding-loss placeholders`);
+  }
+  assert.doesNotMatch(pickerSource, /onPress=\{\(\) => onSelect\(option\.recipeKey\)\}|onPress=\{\(\) => onSelect\(null\)\}/,
+    "choosing an alternative opens a confirmation step instead of applying immediately");
+  assert.match(pickerSource, /onPress=\{\(\) => onSelect\(pending\.recipeKey\)\}/,
+    "the confirmation step applies the pending replacement");
+  const menuScreenSource = fs.readFileSync(require.resolve("../src/screens/MenuScreen.tsx"), "utf8");
+  assert.match(menuScreenSource, /onPress=\{\(\) => props\.onMealPress\(\{ \.\.\.meal, occurrenceKey: undefined \}\)\}/,
+    "menu list cards open meal details scoped to every occurrence");
+  for (const path of ["../src/sampleData.ts", "../src/components/MealAlternativePicker.tsx"]) {
+    assert.notDeepEqual(fs.readFileSync(require.resolve(path)).subarray(0, 3), Buffer.from([0xef, 0xbb, 0xbf]),
+      `${path} is UTF-8 without a BOM`);
+  }
+}
+
 
 assert.equal(plans.length, 7, "shopping window contains exactly seven days");
 assert.equal(plans[0][0].currencyCode, "EUR", "selected country currency propagates to meal plans");
@@ -550,11 +721,24 @@ assert.doesNotMatch(preferencesSource, /MADE FOR YOUR EVERYDAY|Good food,|your w
 assert.doesNotMatch(preferencesSource, /breakfastEstimate|estimatePresetBreakfast/,
   "standard breakfast choices do not display a cost, calorie, or protein preview");
 assert.match(mealDetailsSource, /formatMoney/);
+assert.match(appSource, /meal=\{pickerRequest \? null : selectedMeal\}/,
+  "the details modal is hidden while the alternatives picker is open");
+assert.match(appSource, /onClose=\{\(\) => setPickerRequest\(null\)\}/,
+  "canceling the picker preserves the selected meal so its details can return");
+assert.match(appSource, /getDisplayedRecipeSourceKeys\(displayedMeals, meal\.recipeKey\)/,
+  "the Meals tab scopes all-occurrences to every displayed source for the tapped recipe");
+assert.match(appSource, /applyGlobalMealReplacement\(/,
+  "global replacement updates source mappings and prior overrides");
+assert.match(appSource, /removeMealBan\(/,
+  "unban behavior preserves incoming mappings and overrides");
 assert.match(appSource, /pagingEnabled/, "tabs are a native horizontal pager that follows the finger");
 assert.match(appSource, /scrollEnabled=\{!pagerSwipeBlocked\}/,
   "the date strip blocks tab swipes while it is touched");
-assert.match(appSource, /<TopTabBar/, "the three screens are reachable from top tabs");
-assert.deepEqual(Object.keys(en.tabs), ["preferences", "meals", "groceries"]);
+assert.match(appSource, /<MemoTopTabBar/, "screens are reachable from top tabs");
+assert.match(appSource, /const MemoMenuScreen = memo\(MenuScreen\)/, "tab screens are memoized to avoid re-rendering on every tap");
+assert.deepEqual(Object.keys(en.tabs), ["preferences", "meals", "menu", "groceries"]);
+assert.deepEqual([en.tabs.menu, fr.tabs.menu, de.tabs.menu, es.tabs.menu, pl.tabs.menu, ru.tabs.menu],
+  ["Menu", "Menu", "Men\u00fc", "Men\u00fa", "Menu", "\u041c\u0435\u043d\u044e"], "Menu tab labels are localized in every supported language");
 assert.match(dateStripSource, /onTouchStart/);
 assert.doesNotMatch(grocerySource, /optimizer|protein|calorie goal|weekly budget/i);
 
@@ -761,7 +945,9 @@ const untranslatedFoods = [
   ...typicalBreakfastPresets.map((preset) => preset.label),
   ...typicalBreakfastPresets.flatMap((preset) => preset.ingredients.map((ingredient) => ingredient.name)),
   ...plans.flat().map((meal) => meal.title).filter((title) => translateTitle(title, "fr") === title),
-  ...plans.flat().flatMap((meal) => meal.ingredients.map((ingredient) => ingredient.name))
+  ...getRecipeCatalog().filter((meal) => meal.recipeKey.startsWith("alt-")).map((meal) => meal.title),
+  ...plans.flat().flatMap((meal) => meal.ingredients.map((ingredient) => ingredient.name)),
+  ...getRecipeCatalog().filter((meal) => meal.recipeKey.startsWith("alt-")).flatMap((meal) => meal.ingredients.map((ingredient) => ingredient.name))
 ].filter((name) => !hasFoodTranslation(name));
 assert.deepEqual([...new Set(untranslatedFoods)], [], "every displayed food name has a translation");
 const englishKeys = new Set(flattenKeys(en));
@@ -804,6 +990,16 @@ assert.equal(getBatchPrep(batchMonday, preferences, {}, "DE"), null,
 // Days group into a 4-day (Mon-Thu) and a 3-day (Fri-Sun) batch.
 const batchLunches = batchWeek.map((date) =>
   getPersonalizedDayPlan(date, batchPreferences).meals.find((meal) => meal.type === "Lunch"));
+const followingBatchMondayLunch = getPersonalizedDayPlan(new Date(2026, 10, 9), batchPreferences)
+  .meals.find((meal) => meal.type === "Lunch");
+assert.equal(batchLunches[0].recipeKey, followingBatchMondayLunch.recipeKey,
+  "batch cooking retains the same underlying source recipe across its generated meals");
+assert.notEqual(getMenuMealGroupKey(batchLunches[0]), getMenuMealGroupKey(followingBatchMondayLunch),
+  "Menu grouping distinguishes batch meals with different displayed title or ingredients");
+assert.equal(getMenuMealGroupKey({ ...batchLunches[0], batch: undefined }), batchLunches[0].recipeKey,
+  "non-batch recipe occurrences retain their shared recipe grouping");
+assert.match(menuSource, /getMenuMealGroupKey\(meal\)/,
+  "Menu uses the batch-aware displayed-meal grouping key");
 batchLunches.forEach((lunch, index) => {
   assert.ok(lunch.batch, "lunch is assembled from a batch");
   assert.equal(lunch.batch.startDate, index < 4 ? "2026-11-02" : "2026-11-06",
@@ -1005,4 +1201,4 @@ assert.equal(translateTitle("Rice & lentils bowl", "ru"), "Боул: Рис & ч
     "an impossible budget still produces a plan");
 }
 
-console.log("Domain checks passed: seven-day calendar shopping aggregation, applied portions, modeled country pricing, currency formatting, and navigation contracts.");
+console.log("Domain checks passed: calendar shopping aggregation, applied portions, meal substitutions and bans, modeled pricing, currency formatting, and navigation contracts.");

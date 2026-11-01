@@ -37,6 +37,9 @@ export type MealPreferences = {
   /** Internal, set by the budget planner: 1 relaxes the protein floor, 2 also reduces food variety. */
   budgetRelaxation?: 0 | 1 | 2;
   bannedIngredients: IngredientBans;
+  bannedMeals: string[];
+  mealSubstitutes: Record<string, string>;
+  mealOccurrenceOverrides: Record<string, string>;
   typicalBreakfast: TypicalBreakfast;
 };
 
@@ -87,6 +90,12 @@ export type MealBatch = {
 
 export type Meal = {
   id: string;
+  /** Stable recipe identity shared by recurring copies. */
+  recipeKey: string;
+  sourceRecipeKey?: string;
+  occurrenceKey?: string;
+  isReplaced?: boolean;
+  isTypicalBreakfast?: boolean;
   type: MealType;
   slot?: MealSlot;
   batch?: MealBatch;

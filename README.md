@@ -51,7 +51,7 @@ minor unit. They do not account for package sizes, package waste, promotions,
 or store availability. The selected currency is displayed using a shared
 `Money` contract containing integer minor units and an ISO currency code.
 
-The app has three top tabs: Preferences, Meals and Groceries. Tap a tab or
+The app has four top tabs: Preferences, Meals, Menu and Groceries. Tap a tab or
 swipe left/right on the content; pages follow the finger and snap with a
 native paging scroll while the tab underline slides along. The calendar date
 strip keeps its own horizontal scrolling and disables tab swipes while touched.
@@ -82,6 +82,22 @@ still apply.
 The protein catalog includes poultry, canned fish, beef and pork mince, and a
 modeled frozen minced beef option for lower-cost substitutions. Its costs and
 availability are illustrative assumptions, not verified supermarket data.
+
+## Meal alternatives and bans
+
+Menu groups recurring recipes across the 31-day planning window and shows their
+planned dates. A meal can be replaced for one date or for all occurrences, or
+banned with a manually selected or closest-calorie same-type substitute. Banned
+recipes can be restored from Menu; restoring also removes their substitute
+mapping and occurrence overrides for that recipe. Substitutions happen before
+personalization and portion scaling, so ingredient bans, preferences, budget
+adjustments and grocery estimates continue to use the selected recipe. Meal
+bans and substitutions are in-memory only and reset when the app restarts.
+
+Batch-cooked lunches and dinners are not editable because batch membership and
+shared prep depend on the generated recipe. Generated snacks are omitted from
+replacement actions, and a user-selected typical breakfast is managed only in
+Preferences rather than treated as a catalog recipe.
 
 ## App structure
 

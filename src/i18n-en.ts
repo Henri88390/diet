@@ -11,6 +11,7 @@ export const en: Translation = {
   tabs: {
     preferences: "Preferences",
     meals: "Meals",
+    menu: "Menu",
     groceries: "Groceries"
   },
   mealType: {
@@ -102,6 +103,19 @@ export const en: Translation = {
     emptyCopy: "No meals planned for this day yet. Pick another day to see meal ideas.",
     planningDates: "Planning dates",
     dateHint: "Selects this date to view its meal plan"
+  },
+  mealActions: {
+    replace: "Replace", ban: "Ban meal", scopeTitle: "Choose how to replace", thisDay: "This day only", allOccurrences: "All occurrences",
+    replaced: "Replaced", revert: "Revert this day", batchUnavailable: "Batch-cooked meals cannot be changed here.", bannedUnavailable: "This meal is banned. Unban it in the Menu tab to use it again.", typicalUnavailable: "Your typical breakfast is managed in Preferences."
+  },
+  picker: {
+    scopeTitle: "Choose how to replace", banTitle: "Choose a substitute", replaceTitle: "Choose a replacement", thisDay: "This day only", allOccurrences: "All occurrences",
+    automatic: "Similar calories (automatic)", automaticHint: "The closest available recipe by calories will be used.", noAlternatives: "No alternatives available.", confirmTitle: "Confirm replacement", confirmBanTitle: "Confirm ban", confirmDay: "Replace {{current}} with {{substitute}} on this day only?", confirmAll: "Replace every occurrence of {{current}} with {{substitute}}?", confirmBan: "Ban {{current}} and replace it everywhere with {{substitute}}?", confirmBanAuto: "Ban {{current}} and replace it everywhere with the recipe closest in calories?", confirmAction: "Replace", confirmBanAction: "Ban and replace", back: "Back"
+  },
+  menu: {
+    title: "Menu", empty: "No meals are planned in this date range.", occurrences: "\u00d7{{count}}", showAll: "Show all", showLess: "Show less",
+    ban: "Ban", replaceAll: "Replace all", batchUnavailable: "Batch-cooked meals cannot be changed here.", typicalUnavailable: "Your typical breakfast is managed in Preferences.", bannedTitle: "Banned meals",
+    substitute: "\u2192 {{name}}", unban: "Unban", noBanned: "No banned meals."
   },
   meal: {
     a11y: "{{label}}: {{title}}, {{calories}} kilocalories, {{protein}} grams protein",

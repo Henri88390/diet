@@ -158,7 +158,7 @@ export function getCalendarDayPlans(
     date.setDate(start.getDate() + index);
     const goal = appliedGoals[formatDateKey(date)] ?? DEFAULT_DAILY_CALORIE_GOAL;
     const plan = getPersonalizedDayPlan(date, preferences, countryCode, goal);
-    const meals = scaleMealPlan(plan.meals, goal);
+    const meals = plan.meals.length > 0 ? scaleMealPlan(plan.meals, goal) : [];
     return repriceMeals(meals, countryCode);
   });
 }

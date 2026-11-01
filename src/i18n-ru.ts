@@ -9,9 +9,10 @@ export const ru: Translation = {
     languageOption: "Язык: {{language}}"
   },
   tabs: {
-    preferences: "????????????",
-    meals: "???????",
-    groceries: "???????"
+    preferences: "Предпочтения",
+    meals: "Питание",
+    menu: "\u041c\u0435\u043d\u044e",
+    groceries: "Покупки"
   },
   mealType: { Breakfast: "Завтрак", Lunch: "Обед", Dinner: "Ужин", Snack: "Перекус" },
   snackSlot: { Morning: "утренний", Afternoon: "дневной" },
@@ -47,8 +48,8 @@ export const ru: Translation = {
     planStyle: "Стиль плана питания",
     planStyleA11y: "Стиль плана питания: {{label}}",
     budget: "Недельный бюджет на еду",
-    budgetDecrease: "????????? ????????? ??????",
-    budgetIncrease: "????????? ????????? ??????",
+    budgetDecrease: "Уменьшить недельный бюджет",
+    budgetIncrease: "Увеличить недельный бюджет",
     budgetError: "Введите неотрицательную сумму или оставьте бюджет пустым.",
     meatFish: "Мясо / рыба",
     dairy: "Молочные продукты",
@@ -99,6 +100,19 @@ export const ru: Translation = {
     planningDates: "Даты планирования",
     dateHint: "Выбирает эту дату, чтобы увидеть план питания"
   },
+  mealActions: {
+    replace: "\u0417\u0430\u043c\u0435\u043d\u0438\u0442\u044c", ban: "\u0418\u0441\u043a\u043b\u044e\u0447\u0438\u0442\u044c \u0431\u043b\u044e\u0434\u043e", scopeTitle: "\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u043e\u0431\u043b\u0430\u0441\u0442\u044c \u0437\u0430\u043c\u0435\u043d\u044b", thisDay: "\u0422\u043e\u043b\u044c\u043a\u043e \u0432 \u044d\u0442\u043e\u0442 \u0434\u0435\u043d\u044c", allOccurrences: "\u0412\u0441\u0435 \u0432\u0445\u043e\u0436\u0434\u0435\u043d\u0438\u044f",
+    replaced: "\u0417\u0430\u043c\u0435\u043d\u0435\u043d\u043e", revert: "\u0412\u0435\u0440\u043d\u0443\u0442\u044c \u0431\u043b\u044e\u0434\u043e \u0432 \u044d\u0442\u043e\u0442 \u0434\u0435\u043d\u044c", batchUnavailable: "\u0411\u043b\u044e\u0434\u0430 \u0434\u043b\u044f \u0437\u0430\u0433\u043e\u0442\u043e\u0432\u043a\u0438 \u043d\u0435\u043b\u044c\u0437\u044f \u0438\u0437\u043c\u0435\u043d\u0438\u0442\u044c \u0437\u0434\u0435\u0441\u044c.", bannedUnavailable: "Это блюдо исключено. Верните его во вкладке «Меню», чтобы снова использовать.", typicalUnavailable: "\u041f\u0440\u0438\u0432\u044b\u0447\u043d\u044b\u0439 \u0437\u0430\u0432\u0442\u0440\u0430\u043a \u043d\u0430\u0441\u0442\u0440\u0430\u0438\u0432\u0430\u0435\u0442\u0441\u044f \u0432 \u043d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0430\u0445."
+  },
+  picker: {
+    scopeTitle: "\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u043e\u0431\u043b\u0430\u0441\u0442\u044c \u0437\u0430\u043c\u0435\u043d\u044b", banTitle: "\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0437\u0430\u043c\u0435\u043d\u0438\u0442\u0435\u043b\u044c", replaceTitle: "\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0437\u0430\u043c\u0435\u043d\u0443", thisDay: "\u0422\u043e\u043b\u044c\u043a\u043e \u0432 \u044d\u0442\u043e\u0442 \u0434\u0435\u043d\u044c", allOccurrences: "\u0412\u0441\u0435 \u0432\u0445\u043e\u0436\u0434\u0435\u043d\u0438\u044f",
+    automatic: "\u041f\u043e\u0445\u043e\u0436\u0438\u0435 \u043a\u0430\u043b\u043e\u0440\u0438\u0438 (\u0430\u0432\u0442\u043e\u043c\u0430\u0442\u0438\u0447\u0435\u0441\u043a\u0438)", automaticHint: "\u0411\u0443\u0434\u0435\u0442 \u0432\u044b\u0431\u0440\u0430\u043d\u043e \u0434\u043e\u0441\u0442\u0443\u043f\u043d\u043e\u0435 \u0431\u043b\u044e\u0434\u043e \u0441 \u043d\u0430\u0438\u0431\u043e\u043b\u0435\u0435 \u0431\u043b\u0438\u0437\u043a\u043e\u0439 \u043a\u0430\u043b\u043e\u0440\u0438\u0439\u043d\u043e\u0441\u0442\u044c\u044e.", noAlternatives: "\u041d\u0435\u0442 \u0434\u043e\u0441\u0442\u0443\u043f\u043d\u044b\u0445 \u0430\u043b\u044c\u0442\u0435\u0440\u043d\u0430\u0442\u0438\u0432.", confirmTitle: "Подтвердите замену", confirmBanTitle: "Подтвердите исключение", confirmDay: "Заменить {{current}} на {{substitute}} только в этот день?", confirmAll: "Заменить все вхождения {{current}} на {{substitute}}?", confirmBan: "Исключить {{current}} и везде заменить на {{substitute}}?", confirmBanAuto: "Исключить {{current}} и везде заменить рецептом с ближайшей калорийностью?", confirmAction: "Заменить", confirmBanAction: "Исключить и заменить", back: "Назад"
+  },
+  menu: {
+    title: "\u041c\u0435\u043d\u044e", empty: "\u041d\u0430 \u044d\u0442\u043e\u0442 \u043f\u0435\u0440\u0438\u043e\u0434 \u0431\u043b\u044e\u0434\u0430 \u043d\u0435 \u0437\u0430\u043f\u043b\u0430\u043d\u0438\u0440\u043e\u0432\u0430\u043d\u044b.", occurrences: "\u00d7{{count}}", showAll: "\u041f\u043e\u043a\u0430\u0437\u0430\u0442\u044c \u0432\u0441\u0435", showLess: "\u0421\u0432\u0435\u0440\u043d\u0443\u0442\u044c",
+    ban: "\u0418\u0441\u043a\u043b\u044e\u0447\u0438\u0442\u044c", replaceAll: "\u0417\u0430\u043c\u0435\u043d\u0438\u0442\u044c \u0432\u0435\u0437\u0434\u0435", batchUnavailable: "\u0411\u043b\u044e\u0434\u0430 \u0434\u043b\u044f \u0437\u0430\u0433\u043e\u0442\u043e\u0432\u043a\u0438 \u043d\u0435\u043b\u044c\u0437\u044f \u0438\u0437\u043c\u0435\u043d\u0438\u0442\u044c \u0437\u0434\u0435\u0441\u044c.", typicalUnavailable: "\u041f\u0440\u0438\u0432\u044b\u0447\u043d\u044b\u0439 \u0437\u0430\u0432\u0442\u0440\u0430\u043a \u043d\u0430\u0441\u0442\u0440\u0430\u0438\u0432\u0430\u0435\u0442\u0441\u044f \u0432 \u043d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0430\u0445.", bannedTitle: "\u0418\u0441\u043a\u043b\u044e\u0447\u0451\u043d\u043d\u044b\u0435 \u0431\u043b\u044e\u0434\u0430",
+    substitute: "\u2192 {{name}}", unban: "\u0412\u0435\u0440\u043d\u0443\u0442\u044c", noBanned: "\u041d\u0435\u0442 \u0438\u0441\u043a\u043b\u044e\u0447\u0451\u043d\u043d\u044b\u0445 \u0431\u043b\u044e\u0434."
+  },
   meal: {
     a11y: "{{label}}: {{title}}, {{calories}} килокалорий, {{protein}} г белка",
     hint: "Открывает детали блюда и примерные количества ингредиентов",
@@ -133,9 +147,9 @@ export const ru: Translation = {
     weeklyList: "список на неделю",
     selectedRange: "выбранный период",
     estimatedTotal: "Ориентировочная сумма",
-    progress: "??????? {{checked}} ?? {{total}}",
-    reset: "????????",
-    resetA11y: "????? ??????? ?? ???? ??????? ??????",
+    progress: "Куплено {{checked}} из {{total}}",
+    reset: "Сбросить",
+    resetA11y: "Снять отметки со всех пунктов списка",
     empty: "На эти даты ингредиенты пока не запланированы.",
     previousMonth: "Предыдущий месяц",
     nextMonth: "Следующий месяц",

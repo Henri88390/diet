@@ -9,8 +9,9 @@ export const fr: Translation = {
     languageOption: "Langue : {{language}}"
   },
   tabs: {
-    preferences: "Pr?f?rences",
+    preferences: "Préférences",
     meals: "Repas",
+    menu: "Menu",
     groceries: "Courses"
   },
   mealType: { Breakfast: "Petit-déjeuner", Lunch: "Déjeuner", Dinner: "Dîner", Snack: "Collation" },
@@ -95,6 +96,19 @@ export const fr: Translation = {
     planningDates: "Dates de planification",
     dateHint: "Sélectionne cette date pour voir son plan de repas"
   },
+  mealActions: {
+    replace: "Remplacer", ban: "Bannir le repas", scopeTitle: "Choisir la portee du remplacement", thisDay: "Ce jour uniquement", allOccurrences: "Toutes les occurrences",
+    replaced: "Remplace", revert: "Retablir ce jour", batchUnavailable: "Les repas prepares en lot ne peuvent pas etre modifies ici.", bannedUnavailable: "Ce repas est exclu. Réautorisez-le dans l'onglet Menu pour l'utiliser à nouveau.", typicalUnavailable: "Votre petit-dejeuner habituel se gere dans Preferences."
+  },
+  picker: {
+    scopeTitle: "Choisir la portee du remplacement", banTitle: "Choisir un substitut", replaceTitle: "Choisir un remplacement", thisDay: "Ce jour uniquement", allOccurrences: "Toutes les occurrences",
+    automatic: "Calories similaires (automatique)", automaticHint: "La recette disponible aux calories les plus proches sera utilisee.", noAlternatives: "Aucune alternative disponible.", confirmTitle: "Confirmer le remplacement", confirmBanTitle: "Confirmer l'exclusion", confirmDay: "Remplacer {{current}} par {{substitute}} pour ce jour uniquement ?", confirmAll: "Remplacer toutes les occurrences de {{current}} par {{substitute}} ?", confirmBan: "Exclure {{current}} et le remplacer partout par {{substitute}} ?", confirmBanAuto: "Exclure {{current}} et le remplacer partout par la recette la plus proche en calories ?", confirmAction: "Remplacer", confirmBanAction: "Exclure et remplacer", back: "Retour"
+  },
+  menu: {
+    title: "Menu", empty: "Aucun repas n'est prevu pour cette periode.", occurrences: "\u00d7{{count}}", showAll: "Tout afficher", showLess: "Afficher moins",
+    ban: "Bannir", replaceAll: "Tout remplacer", batchUnavailable: "Les repas prepares en lot ne peuvent pas etre modifies ici.", typicalUnavailable: "Votre petit-dejeuner habituel se gere dans Preferences.", bannedTitle: "Repas bannis",
+    substitute: "\u2192 {{name}}", unban: "Retablir", noBanned: "Aucun repas banni."
+  },
   meal: {
     a11y: "{{label}} : {{title}}, {{calories}} kilocalories, {{protein}} grammes de protéines",
     hint: "Ouvre les détails du repas et les quantités indicatives d'ingrédients",
@@ -128,9 +142,9 @@ export const fr: Translation = {
     weeklyList: "liste hebdomadaire",
     selectedRange: "période sélectionnée",
     estimatedTotal: "Total estimé",
-    progress: "{{checked}} sur {{total}} achet?s",
-    reset: "R?initialiser",
-    resetA11y: "D?cocher tous les articles de la liste",
+    progress: "{{checked}} sur {{total}} achetés",
+    reset: "Réinitialiser",
+    resetA11y: "Décocher tous les articles de la liste",
     empty: "Aucun ingrédient n'est encore prévu pour ces dates.",
     previousMonth: "Mois précédent",
     nextMonth: "Mois suivant",

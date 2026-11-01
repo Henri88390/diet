@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import type { ScrollViewInstance } from "react-native";
 import { formatDateKey } from "../sampleData";
@@ -21,6 +21,11 @@ export function CalendarDateStrip({ dates, selectedDate, today, batchCooking = f
   const dateLocale = useDateLocale();
   const scrollViewRef = useRef<ScrollViewInstance | null>(null);
   const selectedKey = formatDateKey(selectedDate);
+  const todayKey = formatDateKey(today);
+  const formatters = useMemo(() => ({
+    label: new Intl.DateTimeFormat(dateLocale, { weekday: "long", month: "long", day: "numeric" }),
+    weekday: new Intl.DateTimeFormat(dateLocale, { weekday: "short" })
+  }), [dateLocale]);
 
   useEffect(() => {
     const selectedIndex = dates.findIndex((date) => formatDateKey(date) === selectedKey);
@@ -44,27 +49,24 @@ export function CalendarDateStrip({ dates, selectedDate, today, batchCooking = f
       style={styles.scroll}
     >
       {dates.map((date) => {
-        const active = formatDateKey(date) === formatDateKey(selectedDate);
-        const isToday = formatDateKey(date) === formatDateKey(today);
+        const dateKey = formatDateKey(date);
+        const active = dateKey === selectedKey;
+        const isToday = dateKey === todayKey;
         // Batch starts (Mon/Fri), plus today when it falls inside a running batch.
         const isCookDay = batchCooking && (getBatchWindow(date).dayIndex === 0 || isToday);
-        const label =         date.toLocaleDateString(dateLocale, {
-          weekday: "long",
-          month: "long",
-          day: "numeric"
-        });
+        const label = formatters.label.format(date);
         return (
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={label}
             accessibilityHint={t("calendar.dateHint")}
             accessibilityState={{ selected: active }}
-            key={formatDateKey(date)}
+            key={dateKey}
             onPress={() => onSelectDate(date)}
             style={[styles.dayButton, isCookDay && !active && styles.dayButtonCook, active && styles.dayButtonActive]}
           >
             <Text style={[styles.dayName, active && styles.dayNameActive]}>
-              {date.toLocaleDateString(dateLocale, { weekday: "short" })}
+              {formatters.weekday.format(date)}
             </Text>
             <Text style={[styles.dayNumber, active && styles.dayNumberActive]}>{date.getDate()}</Text>
             {isCookDay ? <Text style={styles.cookIcon}>🍲</Text> : <View style={[styles.dayDot, (isToday || active) && styles.dayDotVisible]} />}

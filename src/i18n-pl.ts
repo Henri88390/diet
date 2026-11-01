@@ -10,7 +10,8 @@ export const pl: Translation = {
   },
   tabs: {
     preferences: "Preferencje",
-    meals: "Posi?ki",
+    meals: "Posiłki",
+    menu: "Menu",
     groceries: "Zakupy"
   },
   mealType: { Breakfast: "Śniadanie", Lunch: "Obiad", Dinner: "Kolacja", Snack: "Przekąska" },
@@ -47,8 +48,8 @@ export const pl: Translation = {
     planStyle: "Styl planu posiłków",
     planStyleA11y: "Styl planu posiłków: {{label}}",
     budget: "Tygodniowy budżet na jedzenie",
-    budgetDecrease: "Zmniejsz bud?et tygodniowy",
-    budgetIncrease: "Zwi?ksz bud?et tygodniowy",
+    budgetDecrease: "Zmniejsz budżet tygodniowy",
+    budgetIncrease: "Zwiększ budżet tygodniowy",
     budgetError: "Wpisz nieujemną kwotę lub zostaw budżet pusty.",
     meatFish: "Mięso / ryby",
     dairy: "Nabiał",
@@ -99,6 +100,19 @@ export const pl: Translation = {
     planningDates: "Daty planowania",
     dateHint: "Wybiera tę datę, aby zobaczyć plan posiłków"
   },
+  mealActions: {
+    replace: "Zamien", ban: "Zablokuj posilek", scopeTitle: "Wybierz zakres zmiany", thisDay: "Tylko ten dzien", allOccurrences: "Wszystkie wystapienia",
+    replaced: "Zamieniono", revert: "Przywroc ten dzien", batchUnavailable: "Posilkow przygotowanych z wyprzedzeniem nie mozna tu zmieniac.", bannedUnavailable: "Ten posiłek jest wykluczony. Przywróć go w zakładce Menu, aby znów go używać.", typicalUnavailable: "Typowe sniadanie zmienisz w Preferencjach."
+  },
+  picker: {
+    scopeTitle: "Wybierz zakres zmiany", banTitle: "Wybierz alternatywe", replaceTitle: "Wybierz zamiennik", thisDay: "Tylko ten dzien", allOccurrences: "Wszystkie wystapienia",
+    automatic: "Podobna kalorycznosc (automatycznie)", automaticHint: "Zostanie uzyty dostepny przepis o najbardziej zblizonej kalorycznosci.", noAlternatives: "Brak dostepnych alternatyw.", confirmTitle: "Potwierdź zamianę", confirmBanTitle: "Potwierdź wykluczenie", confirmDay: "Zamienić {{current}} na {{substitute}} tylko w tym dniu?", confirmAll: "Zamienić wszystkie wystąpienia {{current}} na {{substitute}}?", confirmBan: "Wykluczyć {{current}} i wszędzie zastąpić przez {{substitute}}?", confirmBanAuto: "Wykluczyć {{current}} i wszędzie zastąpić przepisem o najbardziej zbliżonej kaloryczności?", confirmAction: "Zamień", confirmBanAction: "Wyklucz i zamień", back: "Wstecz"
+  },
+  menu: {
+    title: "Menu", empty: "Brak zaplanowanych posilkow w tym zakresie dat.", occurrences: "\u00d7{{count}}", showAll: "Pokaz wszystkie", showLess: "Pokaz mniej",
+    ban: "Zablokuj", replaceAll: "Zamien wszystkie", batchUnavailable: "Posilkow przygotowanych z wyprzedzeniem nie mozna tu zmieniac.", typicalUnavailable: "Typowe sniadanie zmienisz w Preferencjach.", bannedTitle: "Zablokowane posilki",
+    substitute: "\u2192 {{name}}", unban: "Przywroc", noBanned: "Brak zablokowanych posilkow."
+  },
   meal: {
     a11y: "{{label}}: {{title}}, {{calories}} kilokalorii, {{protein}} gramów białka",
     hint: "Otwiera szczegóły posiłku i orientacyjne ilości składników",
@@ -135,7 +149,7 @@ export const pl: Translation = {
     estimatedTotal: "Szacunkowa suma",
     progress: "Kupiono {{checked}} z {{total}}",
     reset: "Resetuj",
-    resetA11y: "Odznacz wszystkie pozycje listy zakup?w",
+    resetA11y: "Odznacz wszystkie pozycje listy zakupów",
     empty: "Na te dni nie zaplanowano jeszcze składników.",
     previousMonth: "Poprzedni miesiąc",
     nextMonth: "Następny miesiąc",

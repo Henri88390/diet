@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useFoodNames } from "../i18n";
 import type { Meal } from "../models";
 import { formatMoney } from "../countryPricing";
-import { palette } from "../theme";
+import { mealAccent, palette } from "../theme";
 import { BottomSheet, SheetScrollView } from "./BottomSheet";
 
 type Mode = "scope" | "replace" | "ban";
@@ -13,13 +13,15 @@ type Props = {
   mode: Mode;
   scope: "day" | "all";
   meal: Meal | null;
+  /** How many times the meal appears in the planned date range. */
+  occurrenceCount?: number;
   options: Meal[];
   onClose: () => void;
   onScope: (scope: "day" | "all") => void;
   onSelect: (recipeKey: string | null) => void;
 };
 
-export function MealAlternativePicker({ visible, mode, scope, meal, options, onClose, onScope, onSelect }: Props): React.JSX.Element {
+export function MealAlternativePicker({ visible, mode, scope, meal, occurrenceCount = 1, options, onClose, onScope, onSelect }: Props): React.JSX.Element {
   const { t } = useTranslation();
   const { food } = useFoodNames();
   const [pending, setPending] = useState<{ recipeKey: string | null; meal: Meal | null } | null>(null);
@@ -35,7 +37,12 @@ export function MealAlternativePicker({ visible, mode, scope, meal, options, onC
   return (
     <BottomSheet visible={visible} onClose={onClose} closeLabel={t("details.close")} sheetStyle={styles.sheet}>
           <Text accessibilityRole="header" style={styles.title}>{title}</Text>
-          {meal && <Text style={styles.subtitle}>{food(meal.title)}</Text>}
+          {meal && <View style={styles.currentMeal}>
+            <View style={[styles.currentIcon, { backgroundColor: mealAccent[meal.type] }]}>
+              <Text style={styles.currentEmoji}>{meal.emoji}</Text>
+            </View>
+            <Text numberOfLines={2} style={styles.currentTitle}>{food(meal.title)}</Text>
+          </View>}
           {pending ? (
             <View style={styles.confirm}>
               <Text style={styles.confirmText}>{confirmMessage}</Text>
@@ -48,8 +55,21 @@ export function MealAlternativePicker({ visible, mode, scope, meal, options, onC
               <Pressable accessibilityRole="button" onPress={() => onScope("day")} style={styles.scopeButton}>
                 <Text style={styles.optionTitle}>{t("picker.thisDay")}</Text>
               </Pressable>
-              <Pressable accessibilityRole="button" onPress={() => onScope("all")} style={styles.scopeButton}>
-                <Text style={styles.optionTitle}>{t("picker.allOccurrences")}</Text>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`${t("picker.allOccurrences")}, ${t("menu.occurrences", { count: occurrenceCount })}`}
+                accessibilityState={{ disabled: occurrenceCount <= 1 }}
+                disabled={occurrenceCount <= 1}
+                onPress={() => onScope("all")}
+                style={[styles.scopeButton, styles.scopeButtonRow, occurrenceCount <= 1 && styles.scopeButtonDisabled]}
+              >
+                <View style={styles.optionCopy}>
+                  <Text style={[styles.optionTitle, occurrenceCount <= 1 && styles.disabledText]}>{t("picker.allOccurrences")}</Text>
+                  {occurrenceCount <= 1 && <Text style={styles.optionHint}>{t("picker.singleOccurrence")}</Text>}
+                </View>
+                <View style={[styles.countBadge, occurrenceCount <= 1 && styles.countBadgeDisabled]}>
+                  <Text style={[styles.countText, occurrenceCount <= 1 && styles.disabledText]}>{t("menu.occurrences", { count: occurrenceCount })}</Text>
+                </View>
               </Pressable>
             </View>
           ) : (
@@ -75,10 +95,20 @@ export function MealAlternativePicker({ visible, mode, scope, meal, options, onC
               )}
               {options.map((option) => (
                 <Pressable key={option.recipeKey} accessibilityRole="button" onPress={() => setPending({ recipeKey: option.recipeKey, meal: option })} style={styles.option}>
-                  <Text style={styles.emoji}>{option.emoji}</Text>
+                  <View style={[styles.optionIcon, { backgroundColor: mealAccent[option.type] }]}>
+                    <Text style={styles.emoji}>{option.emoji}</Text>
+                  </View>
                   <View style={styles.optionCopy}>
                     <Text style={styles.optionTitle}>{food(option.title)}</Text>
-                    <Text style={styles.meta}>{t("meal.kcalChip", { value: option.calories })} · {t("meal.proteinChip", { value: option.proteinGrams })} · ~{formatMoney(option.estimatedCost ?? { amountMinorUnits: option.estimatedCostCents, currencyCode: option.currencyCode ?? "EUR" }, option.currencyLocale)}</Text>
+                    <View style={styles.metaRow}>
+                      <View style={styles.chip}><Text style={styles.chipText}>{t("meal.kcalChip", { value: option.calories })}</Text></View>
+                      <View style={[styles.chip, styles.chipProtein]}>
+                        <Text style={[styles.chipText, styles.chipTextProtein]}>{t("meal.proteinChip", { value: option.proteinGrams })}</Text>
+                      </View>
+                      <View style={[styles.chip, styles.chipCost]}>
+                        <Text style={[styles.chipText, styles.chipTextCost]}>~{formatMoney(option.estimatedCost ?? { amountMinorUnits: option.estimatedCostCents, currencyCode: option.currencyCode ?? "EUR" }, option.currencyLocale)}</Text>
+                      </View>
+                    </View>
                   </View>
                   <Text style={styles.arrow}>›</Text>
                 </Pressable>
@@ -98,17 +128,33 @@ export function MealAlternativePicker({ visible, mode, scope, meal, options, onC
 const styles = StyleSheet.create({
   sheet: { maxHeight: "82%", paddingHorizontal: 20, paddingTop: 10, paddingBottom: 22 },
   title: { color: palette.ink, fontSize: 20, fontWeight: "800" },
-  subtitle: { color: palette.muted, fontSize: 12, marginTop: 4, marginBottom: 12 },
+  currentMeal: { flexDirection: "row", alignItems: "center", gap: 11, marginTop: 10, marginBottom: 14, padding: 10, borderRadius: 14, backgroundColor: palette.white, borderWidth: 1, borderColor: palette.line },
+  currentIcon: { width: 44, height: 44, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  currentEmoji: { fontSize: 24 },
+  currentTitle: { flex: 1, color: palette.ink, fontSize: 16, fontWeight: "800" },
   scopeOptions: { gap: 9, marginTop: 17 },
   scopeButton: { backgroundColor: palette.white, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: palette.line },
+  scopeButtonRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  scopeButtonDisabled: { backgroundColor: "#F4F3EE", borderColor: "#ECEAE1" },
+  disabledText: { color: palette.muted, opacity: 0.7 },
+  countBadge: { minWidth: 30, height: 24, borderRadius: 12, paddingHorizontal: 8, alignItems: "center", justifyContent: "center", backgroundColor: palette.softGreen },
+  countBadgeDisabled: { backgroundColor: "#ECEAE1" },
+  countText: { color: palette.green, fontSize: 12, fontWeight: "800" },
   list: { gap: 8, paddingTop: 4, paddingBottom: 8 },
   automatic: { flexDirection: "row", alignItems: "center", backgroundColor: palette.softGreen, borderRadius: 14, padding: 13, borderWidth: 1, borderColor: "#C9D9C9" },
   option: { flexDirection: "row", alignItems: "center", backgroundColor: palette.white, borderRadius: 14, padding: 12, borderWidth: 1, borderColor: palette.line },
-  emoji: { fontSize: 23, marginRight: 11 },
+  optionIcon: { width: 44, height: 44, borderRadius: 12, alignItems: "center", justifyContent: "center", marginRight: 11 },
+  emoji: { fontSize: 22 },
   optionCopy: { flex: 1 },
   optionTitle: { color: palette.ink, fontSize: 13, fontWeight: "700" },
   optionHint: { color: palette.muted, fontSize: 10, lineHeight: 15, marginTop: 3 },
-  meta: { color: palette.muted, fontSize: 10, marginTop: 4 },
+  metaRow: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 6 },
+  chip: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, backgroundColor: "#F1EEE4" },
+  chipProtein: { backgroundColor: palette.softGreen },
+  chipCost: { backgroundColor: "#F6E9D8" },
+  chipText: { color: palette.ink, fontSize: 10, fontWeight: "700" },
+  chipTextProtein: { color: palette.green },
+  chipTextCost: { color: "#8A5A1F" },
   arrow: { color: palette.green, fontSize: 20, fontWeight: "700", marginLeft: 8 },
   confirm: { gap: 16, paddingTop: 6 },
   confirmText: { color: palette.ink, fontSize: 14, lineHeight: 21 },

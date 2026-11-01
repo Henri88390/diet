@@ -29,7 +29,10 @@ const {
   getIngredientReplacementOptions,
   toggleIngredientBanPreference,
   toggleIngredientCategoryBanPreference,
-  scaleMealPlan
+  scaleMealPlan,
+  scaleMealToCalories,
+  getMealRevertPreferences,
+  getRevertableOccurrenceKeys
 } =
   require("../src/sampleData.ts");
 const {
@@ -79,6 +82,18 @@ const mealDetailsSource = fs.readFileSync(
 );
 const menuSource = fs.readFileSync(require.resolve("../src/screens/MenuScreen.tsx"), "utf8");
 const pickerSource = fs.readFileSync(require.resolve("../src/components/MealAlternativePicker.tsx"), "utf8");
+assert.match(pickerSource, /disabled=\{occurrenceCount <= 1\}/, "All occurrences is disabled when the meal is planned only once");
+assert.match(pickerSource, /t\("menu\.occurrences", \{ count: occurrenceCount \}\)/, "the scope step shows how many times the meal is planned");
+{
+  for (const recipe of getRecipeCatalog()) {
+    const scaled = scaleMealToCalories(recipe, 637);
+    assert.equal(scaled.calories, 637, `${recipe.recipeKey} replacement preview matches the current meal's calories`);
+    assert.equal(scaled.ingredients.reduce((sum, item) => sum + item.calories, 0), 637, `${recipe.recipeKey} ingredient calories add up after scaling`);
+    if (recipe.calories > 0 && recipe.calories < 637) assert.ok(scaled.estimatedCostCents >= recipe.estimatedCostCents, `${recipe.recipeKey} cost follows larger portions`);
+  }
+  const appText = fs.readFileSync(require.resolve("../App.tsx"), "utf8");
+  assert.match(appText, /scaleMealToCalories\(meal, pickerRequest\.meal\.calories\)/, "replacement options are scaled to the replaced meal's calories");
+}
 const dateStripSource = fs.readFileSync(
   require.resolve("../src/components/CalendarDateStrip.tsx"), "utf8"
 );
@@ -491,6 +506,52 @@ const plans = getSevenCalendarDayPlans(today, preferences, appliedGoals, "DE");
     assert.equal(count, withBans ? 6384 : 112);
   }
   console.log("Legacy regression matrix passed: 6,384 automatic bans and 112 no-ban cases with snack occurrence keys.");
+}
+
+// "Revert this meal" restores the original recipe for every kind of replacement it can undo.
+{
+  const monday = new Date(2026, 10, 2);
+  const nextMonday = new Date(2026, 10, 9);
+  const lunchOf = (date, prefs) => getPersonalizedDayPlan(date, prefs).meals.find((meal) => meal.type === "Lunch");
+  const source = "monday-l";
+  const replacement = "alt-lunch-tuna-bean";
+  assert.equal(getMealRevertPreferences(preferences, lunchOf(monday, preferences)), null, "an original meal has nothing to revert");
+
+  const dayOnly = { ...preferences, mealOccurrenceOverrides: { [`${formatDateKey(monday)}|Lunch`]: replacement } };
+  const dayReverted = getMealRevertPreferences(dayOnly, lunchOf(monday, dayOnly));
+  assert.ok(dayReverted, "a single-day replacement can be reverted");
+  assert.equal(lunchOf(monday, dayReverted).recipeKey, source);
+  assert.deepEqual(dayReverted.mealOccurrenceOverrides, {}, "reverting a day replacement drops its override");
+
+  const replacedEverywhere = applyGlobalMealReplacement(preferences, [source], source, replacement);
+  const globalMeal = lunchOf(monday, replacedEverywhere);
+  assert.ok(globalMeal.isReplaced);
+  const globalReverted = getMealRevertPreferences(replacedEverywhere, globalMeal);
+  assert.ok(globalReverted, "a meal changed with Replace all can be reverted");
+  assert.equal(lunchOf(monday, globalReverted).recipeKey, source, "revert restores the original recipe on that day");
+  assert.equal(lunchOf(nextMonday, globalReverted).recipeKey, replacement, "revert keeps the replacement on other days");
+
+  const displayed = [0, 7, 14].map((offset) => lunchOf(new Date(2026, 10, 2 + offset), replacedEverywhere));
+  const allKeys = getRevertableOccurrenceKeys(replacedEverywhere, globalMeal, displayed);
+  assert.equal(allKeys.length, 3, "every displayed replacement of the original meal is offered for Revert all");
+  const allReverted = getMealRevertPreferences(replacedEverywhere, globalMeal, allKeys);
+  assert.ok(allReverted, "all occurrences can be reverted at once");
+  [0, 7, 14].forEach((offset) => assert.equal(lunchOf(new Date(2026, 10, 2 + offset), allReverted).recipeKey, source,
+    "revert all restores the original recipe on every displayed day"));
+  assert.deepEqual(getRevertableOccurrenceKeys(dayOnly, lunchOf(monday, dayOnly), [lunchOf(monday, dayOnly), lunchOf(nextMonday, dayOnly)]),
+    [`${formatDateKey(monday)}|Lunch`], "original occurrences are not counted as revertable");
+
+  const banned = { ...preferences, bannedMeals: [source], mealSubstitutes: { [source]: replacement } };
+  assert.equal(getMealRevertPreferences(banned, lunchOf(monday, banned)), null, "a banned original meal cannot be reverted");
+
+  const ingredientBanned = setIngredientBanChoices({ ...preferences, bannedIngredients: ["chickpeas"] }, "chickpeas", [
+    { ingredientId: "chickpeas", recipeKey: source, action: "replaceMeal", replacementMealKey: replacement }
+  ]);
+  const ingredientMeal = lunchOf(monday, ingredientBanned);
+  assert.equal(ingredientMeal.recipeKey, replacement);
+  assert.equal(getMealRevertPreferences(ingredientBanned, ingredientMeal), null, "a meal replaced because of a banned ingredient cannot be reverted");
+  assert.match(fs.readFileSync(require.resolve("../App.tsx"), "utf8"), /getMealRevertPreferences\(mealPreferences, selectedMeal\)/,
+    "the details sheet offers revert for every revertible replacement");
 }
 
 // Recipe substitutions resolve before personalization and are shared by Calendar and Groceries.

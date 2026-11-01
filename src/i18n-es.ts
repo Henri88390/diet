@@ -97,11 +97,11 @@ export const es: Translation = {
     dateHint: "Selecciona esta fecha para ver su plan de comidas"
   },
   mealActions: {
-    replace: "Reemplazar", ban: "Excluir comida", scopeTitle: "Elige el alcance del cambio", thisDay: "Solo este dia", allOccurrences: "Todas las apariciones",
-    replaced: "Reemplazado", revert: "Restaurar este dia", batchUnavailable: "Las comidas preparadas por lotes no se pueden cambiar aqui.", typicalUnavailable: "Tu desayuno habitual se configura en Preferencias."
+    replace: "Reemplazar", ban: "Excluir comida", scopeTitle: "Elige el alcance del cambio", thisDay: "Solo esta comida", allOccurrences: "Todas las apariciones",
+    replaced: "Reemplazado", revert: "Volver a la comida original", batchUnavailable: "Las comidas preparadas por lotes no se pueden cambiar aqui.", typicalUnavailable: "Tu desayuno habitual se configura en Preferencias."
   },
   picker: {
-    scopeTitle: "Elige el alcance del cambio", banTitle: "Elige un sustituto", replaceTitle: "Elige un reemplazo", thisDay: "Solo este dia", allOccurrences: "Todas las apariciones",
+    scopeTitle: "Elige el alcance del cambio", banTitle: "Elige un sustituto", replaceTitle: "Elige un reemplazo", thisDay: "Solo esta comida", allOccurrences: "Todas las apariciones", singleOccurrence: "Esta comida aparece solo una vez en tu plan.",
     automatic: "Calorias similares (automatico)", automaticHint: "Se usara la receta disponible con las calorias mas similares.", noAlternatives: "No hay alternativas disponibles.", confirmTitle: "Confirmar sustitución", confirmBanTitle: "Confirmar exclusión", confirmDay: "¿Sustituir {{current}} por {{substitute}} solo este día?", confirmAll: "¿Sustituir todas las apariciones de {{current}} por {{substitute}}?", confirmBan: "¿Excluir {{current}} y sustituirlo en todas partes por {{substitute}}?", confirmBanAuto: "¿Excluir {{current}} y sustituirlo en todas partes por la receta con calorías más parecidas?", confirmAction: "Sustituir", confirmBanAction: "Excluir y sustituir", back: "Atrás"
   },
   menu: {

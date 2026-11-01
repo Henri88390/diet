@@ -256,36 +256,47 @@ export function scaleMealPlan(meals: Meal[], goal: number): Meal[] {
     const portionScale = sourceMeal.calories > 0
       ? item.meal.calories / sourceMeal.calories
       : goal / sourceTotal;
-    const ingredients = sourceMeal.ingredients.map((ingredient) => ({
-      ...ingredient,
-      quantity: formatScaledQuantity(parseQuantity(ingredient.quantity) * portionScale, ingredient.unit, ingredient.name)
-    }));
+    return scaleMealPortions(sourceMeal, item.meal, portionScale);
+  });
+}
 
-    const quantityEstimates = ingredients.map((ingredient) =>
-      estimateIngredient(ingredient.name, ingredient.quantity, ingredient.unit)
-    );
-    distributeToTotal(
-      quantityEstimates.map((estimate, index) => ({
-        weight: estimate.calories,
-        index
-      })),
-      item.meal.calories
-    ).forEach((value, index) => {
-      ingredients[index].calories = value;
-    });
-    ingredients.forEach((ingredient, index) => {
-      const estimate = quantityEstimates[index];
-      ingredient.category = estimate.category;
-      ingredient.estimatedCostCents = estimate.estimatedCostCents;
-      ingredient.proteinGrams = estimate.proteinGrams;
-    });
+/** Scale one meal's portions so it provides `calories`; protein and cost follow the new quantities. */
+export function scaleMealToCalories(meal: Meal, calories: number): Meal {
+  if (!Number.isFinite(calories) || calories <= 0 || meal.calories <= 0 || meal.ingredients.length === 0) return meal;
+  const target = Math.round(calories);
+  return scaleMealPortions(meal, { ...meal, calories: target }, target / meal.calories);
+}
 
-    return copyMealBanMetadata(sourceMeal, {
-      ...item.meal,
-      estimatedCostCents: ingredients.reduce((sum, ingredient) => sum + ingredient.estimatedCostCents, 0),
-      proteinGrams: ingredients.reduce((sum, ingredient) => sum + ingredient.proteinGrams, 0),
-      ingredients
-    });
+function scaleMealPortions(sourceMeal: Meal, scaledMeal: Meal, portionScale: number): Meal {
+  const ingredients = sourceMeal.ingredients.map((ingredient) => ({
+    ...ingredient,
+    quantity: formatScaledQuantity(parseQuantity(ingredient.quantity) * portionScale, ingredient.unit, ingredient.name)
+  }));
+
+  const quantityEstimates = ingredients.map((ingredient) =>
+    estimateIngredient(ingredient.name, ingredient.quantity, ingredient.unit)
+  );
+  distributeToTotal(
+    quantityEstimates.map((estimate, index) => ({
+      weight: estimate.calories,
+      index
+    })),
+    scaledMeal.calories
+  ).forEach((value, index) => {
+    ingredients[index].calories = value;
+  });
+  ingredients.forEach((ingredient, index) => {
+    const estimate = quantityEstimates[index];
+    ingredient.category = estimate.category;
+    ingredient.estimatedCostCents = estimate.estimatedCostCents;
+    ingredient.proteinGrams = estimate.proteinGrams;
+  });
+
+  return copyMealBanMetadata(sourceMeal, {
+    ...scaledMeal,
+    estimatedCostCents: ingredients.reduce((sum, ingredient) => sum + ingredient.estimatedCostCents, 0),
+    proteinGrams: ingredients.reduce((sum, ingredient) => sum + ingredient.proteinGrams, 0),
+    ingredients
   });
 }
 
@@ -1538,6 +1549,53 @@ export function applyGlobalMealReplacement(
     ])
   );
   return { ...preferences, mealSubstitutes, mealOccurrenceOverrides };
+}
+
+/**
+ * Preferences that bring the original recipe back for the meal's day occurrences, whether it was
+ * replaced for one day or through "Replace all". Returns null when nothing can be restored,
+ * e.g. the original recipe (or one of its ingredients) is banned. Pass `scopeOccurrenceKeys` to
+ * revert several occurrences of the same original recipe at once.
+ */
+export function getMealRevertPreferences(preferences: MealPreferences, meal: Meal, scopeOccurrenceKeys?: string[]): MealPreferences | null {
+  const sourceRecipeKey = meal.sourceRecipeKey;
+  const occurrenceKeys = scopeOccurrenceKeys ?? getMealOccurrenceKeys(meal);
+  if (!sourceRecipeKey || meal.type === "Snack" || occurrenceKeys.length === 0) return null;
+  if (preferences.bannedMeals.includes(sourceRecipeKey)) return null;
+  const pinOriginal = resolveRecipeKey(sourceRecipeKey, meal.type, preferences) !== sourceRecipeKey;
+  const mealOccurrenceOverrides = { ...preferences.mealOccurrenceOverrides };
+  occurrenceKeys.forEach((key) => {
+    if (pinOriginal) mealOccurrenceOverrides[key] = sourceRecipeKey;
+    else delete mealOccurrenceOverrides[key];
+  });
+  const next = { ...preferences, mealOccurrenceOverrides };
+  const displayedRecipe = (prefs: MealPreferences, key: string): string | undefined => {
+    const [year, month, day] = key.split("|")[0].split("-").map(Number);
+    return getDayPlan(new Date(year, month - 1, day), prefs).meals.find((item) => item.occurrenceKey === key)?.recipeKey;
+  };
+  const wasReplaced = occurrenceKeys.some((key) => displayedRecipe(preferences, key) !== sourceRecipeKey);
+  const restores = occurrenceKeys.every((key) => displayedRecipe(next, key) === sourceRecipeKey);
+  return wasReplaced && restores ? next : null;
+}
+
+function getMealOccurrenceKeys(meal: Meal): string[] {
+  return meal.occurrenceKeys?.length ? meal.occurrenceKeys : meal.occurrenceKey ? [meal.occurrenceKey] : [];
+}
+
+/**
+ * Occurrence keys of every displayed replacement of `meal`'s original recipe that can be reverted.
+ * Includes `meal`'s own keys when it is revertable.
+ */
+export function getRevertableOccurrenceKeys(preferences: MealPreferences, meal: Meal, displayedMeals: Meal[]): string[] {
+  if (!meal.sourceRecipeKey) return [];
+  const keys = new Set<string>();
+  displayedMeals.forEach((candidate) => {
+    if (candidate.sourceRecipeKey !== meal.sourceRecipeKey || candidate.type !== meal.type || !candidate.isReplaced) return;
+    const candidateKeys = getMealOccurrenceKeys(candidate);
+    if (candidateKeys.every((key) => keys.has(key))) return;
+    if (getMealRevertPreferences(preferences, candidate)) candidateKeys.forEach((key) => keys.add(key));
+  });
+  return [...keys];
 }
 
 /** Removing a ban also removes that recipe's outgoing choice, but keeps choices pointing to it. */

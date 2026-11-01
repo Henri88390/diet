@@ -97,11 +97,11 @@ export const fr: Translation = {
     dateHint: "Sélectionne cette date pour voir son plan de repas"
   },
   mealActions: {
-    replace: "Remplacer", ban: "Bannir le repas", scopeTitle: "Choisir la portee du remplacement", thisDay: "Ce jour uniquement", allOccurrences: "Toutes les occurrences",
-    replaced: "Remplace", revert: "Retablir ce jour", batchUnavailable: "Les repas prepares en lot ne peuvent pas etre modifies ici.", typicalUnavailable: "Votre petit-dejeuner habituel se gere dans Preferences."
+    replace: "Remplacer", ban: "Bannir le repas", scopeTitle: "Choisir la portee du remplacement", thisDay: "Ce repas uniquement", allOccurrences: "Toutes les occurrences",
+    replaced: "Remplace", revert: "Rétablir le repas d'origine", batchUnavailable: "Les repas prepares en lot ne peuvent pas etre modifies ici.", typicalUnavailable: "Votre petit-dejeuner habituel se gere dans Preferences."
   },
   picker: {
-    scopeTitle: "Choisir la portee du remplacement", banTitle: "Choisir un substitut", replaceTitle: "Choisir un remplacement", thisDay: "Ce jour uniquement", allOccurrences: "Toutes les occurrences",
+    scopeTitle: "Choisir la portee du remplacement", banTitle: "Choisir un substitut", replaceTitle: "Choisir un remplacement", thisDay: "Ce repas uniquement", allOccurrences: "Toutes les occurrences", singleOccurrence: "Ce repas n'apparaît qu'une fois dans votre plan.",
     automatic: "Calories similaires (automatique)", automaticHint: "La recette disponible aux calories les plus proches sera utilisee.", noAlternatives: "Aucune alternative disponible.", confirmTitle: "Confirmer le remplacement", confirmBanTitle: "Confirmer l'exclusion", confirmDay: "Remplacer {{current}} par {{substitute}} pour ce jour uniquement ?", confirmAll: "Remplacer toutes les occurrences de {{current}} par {{substitute}} ?", confirmBan: "Exclure {{current}} et le remplacer partout par {{substitute}} ?", confirmBanAuto: "Exclure {{current}} et le remplacer partout par la recette la plus proche en calories ?", confirmAction: "Remplacer", confirmBanAction: "Exclure et remplacer", back: "Retour"
   },
   menu: {

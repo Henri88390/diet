@@ -101,11 +101,11 @@ export const pl: Translation = {
     dateHint: "Wybiera tę datę, aby zobaczyć plan posiłków"
   },
   mealActions: {
-    replace: "Zamien", ban: "Zablokuj posilek", scopeTitle: "Wybierz zakres zmiany", thisDay: "Tylko ten dzien", allOccurrences: "Wszystkie wystapienia",
-    replaced: "Zamieniono", revert: "Przywroc ten dzien", batchUnavailable: "Posilkow przygotowanych z wyprzedzeniem nie mozna tu zmieniac.", typicalUnavailable: "Typowe sniadanie zmienisz w Preferencjach."
+    replace: "Zamien", ban: "Zablokuj posilek", scopeTitle: "Wybierz zakres zmiany", thisDay: "Tylko ten posilek", allOccurrences: "Wszystkie wystapienia",
+    replaced: "Zamieniono", revert: "Przywróć oryginalny posiłek", batchUnavailable: "Posilkow przygotowanych z wyprzedzeniem nie mozna tu zmieniac.", typicalUnavailable: "Typowe sniadanie zmienisz w Preferencjach."
   },
   picker: {
-    scopeTitle: "Wybierz zakres zmiany", banTitle: "Wybierz alternatywe", replaceTitle: "Wybierz zamiennik", thisDay: "Tylko ten dzien", allOccurrences: "Wszystkie wystapienia",
+    scopeTitle: "Wybierz zakres zmiany", banTitle: "Wybierz alternatywe", replaceTitle: "Wybierz zamiennik", thisDay: "Tylko ten posilek", allOccurrences: "Wszystkie wystapienia", singleOccurrence: "Ten posiłek występuje w planie tylko raz.",
     automatic: "Podobna kalorycznosc (automatycznie)", automaticHint: "Zostanie uzyty dostepny przepis o najbardziej zblizonej kalorycznosci.", noAlternatives: "Brak dostepnych alternatyw.", confirmTitle: "Potwierdź zamianę", confirmBanTitle: "Potwierdź wykluczenie", confirmDay: "Zamienić {{current}} na {{substitute}} tylko w tym dniu?", confirmAll: "Zamienić wszystkie wystąpienia {{current}} na {{substitute}}?", confirmBan: "Wykluczyć {{current}} i wszędzie zastąpić przez {{substitute}}?", confirmBanAuto: "Wykluczyć {{current}} i wszędzie zastąpić przepisem o najbardziej zbliżonej kaloryczności?", confirmAction: "Zamień", confirmBanAction: "Wyklucz i zamień", back: "Wstecz"
   },
   menu: {

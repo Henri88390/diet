@@ -28,15 +28,19 @@ type Props = {
   onBan?: (meal: Meal) => void;
   onBanIngredient?: (meal: Meal, ingredientId: string) => void;
   canRevert?: boolean;
-  onRevert?: (meal: Meal) => void;
+  /** Number of planned occurrences "All occurrences" would revert; 0 hides the choice. */
+  revertAllCount?: number;
+  onRevert?: (meal: Meal, scope: "meal" | "all") => void;
   restrictionReason?: string | null;
   /** When set, the meal is banned and only an Unban action is offered. */
   onUnban?: (meal: Meal) => void;
 };
 
-export function MealDetailsModal({ meal, onClose, onReplace, onBan, onBanIngredient, canRevert = false, onRevert, restrictionReason, onUnban }: Props): React.JSX.Element {
+export function MealDetailsModal({ meal, onClose, onReplace, onBan, onBanIngredient, canRevert = false, revertAllCount = 0, onRevert, restrictionReason, onUnban }: Props): React.JSX.Element {
   const { t } = useTranslation();
   const { food } = useFoodNames();
+  const [revertChoiceOpen, setRevertChoiceOpen] = React.useState(false);
+  React.useEffect(() => setRevertChoiceOpen(false), [meal]);
   const currencyCode = meal?.currencyCode ?? "EUR";
   const currencyLocale = meal?.currencyLocale;
   const formatCost = (minorUnits: number): string =>
@@ -126,9 +130,32 @@ export function MealDetailsModal({ meal, onClose, onReplace, onBan, onBanIngredi
                     <Pressable accessibilityRole="button" onPress={() => onBan?.(meal)} style={({ pressed }) => [styles.actionButton, styles.banButton, pressed && styles.actionPressed]}>
                       <Text style={styles.banActionText}>{t("mealActions.ban")}</Text>
                     </Pressable>
-                    {canRevert && <Pressable accessibilityRole="button" onPress={() => onRevert?.(meal)} style={styles.revertButton}>
+                    {canRevert && <Pressable
+                      accessibilityRole="button"
+                      accessibilityState={{ expanded: revertAllCount > 0 ? revertChoiceOpen : undefined }}
+                      onPress={() => revertAllCount > 0 ? setRevertChoiceOpen((open) => !open) : onRevert?.(meal, "meal")}
+                      style={({ pressed }) => [styles.actionButton, styles.revertButton, pressed && styles.actionPressed]}
+                    >
                       <Text style={styles.revertText}>{t("mealActions.revert")}</Text>
                     </Pressable>}
+                    {canRevert && revertAllCount > 0 && revertChoiceOpen && (
+                      <View style={styles.revertChoices}>
+                        <Pressable accessibilityRole="button" onPress={() => onRevert?.(meal, "meal")} style={({ pressed }) => [styles.revertChoice, pressed && styles.actionPressed]}>
+                          <Text style={styles.revertText}>{t("mealActions.thisDay")}</Text>
+                        </Pressable>
+                        <Pressable
+                          accessibilityRole="button"
+                          accessibilityLabel={`${t("mealActions.allOccurrences")}, ${t("menu.occurrences", { count: revertAllCount })}`}
+                          onPress={() => onRevert?.(meal, "all")}
+                          style={({ pressed }) => [styles.revertChoice, pressed && styles.actionPressed]}
+                        >
+                          <Text style={styles.revertText}>{t("mealActions.allOccurrences")}</Text>
+                          <View style={styles.revertCount}>
+                            <Text style={styles.revertCountText}>{t("menu.occurrences", { count: revertAllCount })}</Text>
+                          </View>
+                        </Pressable>
+                      </View>
+                    )}
                   </>
                 )}
               </View>
@@ -242,8 +269,24 @@ const styles = StyleSheet.create({
   actionText: { color: palette.green, fontSize: 13, fontWeight: "800" },
   banButton: { backgroundColor: "#F8E9E5", borderColor: "#E6C3BB" },
   banActionText: { color: "#A23A2B", fontSize: 13, fontWeight: "800" },
-  revertButton: { justifyContent: "center", paddingHorizontal: 8 },
-  revertText: { color: palette.muted, fontSize: 11, fontWeight: "600" },
+  revertButton: { backgroundColor: "#F1EEE4", borderColor: "#DDD7C8" },
+  revertText: { color: palette.ink, fontSize: 13, fontWeight: "800" },
+  revertChoices: { flexBasis: "100%", flexDirection: "row", gap: 8 },
+  revertChoice: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    backgroundColor: palette.white,
+    borderWidth: 1,
+    borderColor: "#DDD7C8",
+    borderRadius: 11,
+    paddingHorizontal: 10,
+    paddingVertical: 10
+  },
+  revertCount: { borderRadius: 10, paddingHorizontal: 7, paddingVertical: 2, backgroundColor: "#F1EEE4" },
+  revertCountText: { color: palette.ink, fontSize: 11, fontWeight: "800" },
   restriction: { color: palette.muted, fontSize: 11, lineHeight: 16 },
   scrollContent: { paddingBottom: 12 },
   sectionTitle: { color: palette.ink, fontSize: 16, fontWeight: "700", marginTop: 19, marginBottom: 8 },

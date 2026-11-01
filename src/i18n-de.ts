@@ -97,11 +97,11 @@ export const de: Translation = {
     dateHint: "Wählt dieses Datum aus, um den Essensplan zu sehen"
   },
   mealActions: {
-    replace: "Ersetzen", ban: "Mahlzeit meiden", scopeTitle: "Umfang des Ersatzes waehlen", thisDay: "Nur dieser Tag", allOccurrences: "Alle Vorkommen",
-    replaced: "Ersetzt", revert: "Diesen Tag zuruecksetzen", batchUnavailable: "Mahlzeiten aus dem Batch-Kochen koennen hier nicht geaendert werden.", typicalUnavailable: "Dein typisches Fruehstueck wird unter Einstellungen verwaltet."
+    replace: "Ersetzen", ban: "Mahlzeit meiden", scopeTitle: "Umfang des Ersatzes waehlen", thisDay: "Nur diese Mahlzeit", allOccurrences: "Alle Vorkommen",
+    replaced: "Ersetzt", revert: "Ursprüngliche Mahlzeit wiederherstellen", batchUnavailable: "Mahlzeiten aus dem Batch-Kochen koennen hier nicht geaendert werden.", typicalUnavailable: "Dein typisches Fruehstueck wird unter Einstellungen verwaltet."
   },
   picker: {
-    scopeTitle: "Umfang des Ersatzes waehlen", banTitle: "Ersatz auswaehlen", replaceTitle: "Ersatz waehlen", thisDay: "Nur dieser Tag", allOccurrences: "Alle Vorkommen",
+    scopeTitle: "Umfang des Ersatzes waehlen", banTitle: "Ersatz auswaehlen", replaceTitle: "Ersatz waehlen", thisDay: "Nur diese Mahlzeit", allOccurrences: "Alle Vorkommen", singleOccurrence: "Diese Mahlzeit kommt nur einmal in deinem Plan vor.",
     automatic: "Aehnliche Kalorien (automatisch)", automaticHint: "Das verfuegbare Rezept mit den aehnlichsten Kalorien wird verwendet.", noAlternatives: "Keine Alternativen verfuegbar.", confirmTitle: "Ersetzen bestätigen", confirmBanTitle: "Sperren bestätigen", confirmDay: "{{current}} nur an diesem Tag durch {{substitute}} ersetzen?", confirmAll: "Jedes Vorkommen von {{current}} durch {{substitute}} ersetzen?", confirmBan: "{{current}} sperren und überall durch {{substitute}} ersetzen?", confirmBanAuto: "{{current}} sperren und überall durch das Rezept mit den ähnlichsten Kalorien ersetzen?", confirmAction: "Ersetzen", confirmBanAction: "Sperren und ersetzen", back: "Zurück"
   },
   menu: {

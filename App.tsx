@@ -38,8 +38,11 @@ import {
   MAX_DAILY_CALORIE_GOAL,
   MIN_DAILY_CALORIE_GOAL,
   scaleMealPlan,
+  scaleMealToCalories,
   getPersonalizedDayPlan,
   getRecipeAlternatives,
+  getMealRevertPreferences,
+  getRevertableOccurrenceKeys,
   getRecipeCatalog,
   getDisplayedRecipeSourceKeys,
   applyGlobalMealReplacement,
@@ -157,11 +160,22 @@ export default function App(): React.JSX.Element {
     return plans.map((dayMeals, index) => ({ dateKey: formatDateKey(dates[index]), meals: dayMeals }));
   }, [dates, planPreferences, appliedGoals, countryCode]);
   const recipeCatalog = useMemo(() => repriceMeals(getRecipeCatalog(), countryCode), [countryCode]);
+  const canRevertSelectedMeal = useMemo(
+    () => Boolean(selectedMeal && getMealRevertPreferences(mealPreferences, selectedMeal)),
+    [selectedMeal, mealPreferences]
+  );
+  const revertAllOccurrenceKeys = useMemo(() => {
+    if (!selectedMeal || !canRevertSelectedMeal) return [];
+    const ownKeys = selectedMeal.occurrenceKeys?.length ? selectedMeal.occurrenceKeys : [selectedMeal.occurrenceKey ?? ""];
+    const keys = getRevertableOccurrenceKeys(mealPreferences, selectedMeal, menuDays.flatMap((day) => day.meals));
+    return keys.some((key) => !ownKeys.includes(key)) && getMealRevertPreferences(mealPreferences, selectedMeal, keys) ? keys : [];
+  }, [selectedMeal, canRevertSelectedMeal, mealPreferences, menuDays]);
   const pickerOptions = useMemo(() => pickerRequest && pickerRequest.mode !== "scope"
     ? repriceMeals(getRecipeAlternatives(pickerRequest.meal.type, pickerRequest.meal.recipeKey, mealPreferences.bannedMeals)
       .filter((meal) => pickerRequest.occurrenceKey || !createsSubstitutionCycle(
         pickerRequest.targetRecipeKeys, meal.recipeKey, mealPreferences.mealSubstitutes
-      )), countryCode)
+      ))
+      .map((meal) => scaleMealToCalories(meal, pickerRequest.meal.calories)), countryCode)
     : [], [pickerRequest, mealPreferences.bannedMeals, mealPreferences.mealSubstitutes, countryCode]);
   const ingredientBanOptions = useMemo(() => {
     if (!ingredientBanRequest) return {} as Record<string, Meal[]>;
@@ -316,17 +330,9 @@ export default function App(): React.JSX.Element {
     setSelectedMeal((current) => current?.recipeKey === meal.recipeKey ? null : current);
   }
 
-  function revertOccurrence(meal: Meal): void {
-    const occurrenceKeys = meal.occurrenceKeys?.length
-      ? meal.occurrenceKeys
-      : meal.occurrenceKey ? [meal.occurrenceKey] : [];
-    if (occurrenceKeys.length === 0) return;
-    const revertedKeys = new Set(occurrenceKeys);
-    setMealPreferences((current) => ({
-      ...current,
-      mealOccurrenceOverrides: Object.fromEntries(Object.entries(current.mealOccurrenceOverrides)
-        .filter(([key]) => !revertedKeys.has(key)))
-    }));
+  function revertOccurrence(meal: Meal, scope: "meal" | "all" = "meal"): void {
+    const keys = scope === "all" && revertAllOccurrenceKeys.length > 0 ? revertAllOccurrenceKeys : undefined;
+    setMealPreferences((current) => getMealRevertPreferences(current, meal, keys) ?? current);
     setSelectedMeal(null);
   }
 
@@ -546,8 +552,8 @@ export default function App(): React.JSX.Element {
         onReplace={requestReplacement}
         onBan={requestBan}
         onBanIngredient={requestIngredientBan}
-        canRevert={Boolean(selectedMeal && (selectedMeal.occurrenceKeys?.some((key) => mealPreferences.mealOccurrenceOverrides[key]) ||
-          (selectedMeal.occurrenceKey && mealPreferences.mealOccurrenceOverrides[selectedMeal.occurrenceKey])))}
+        canRevert={canRevertSelectedMeal}
+        revertAllCount={revertAllOccurrenceKeys.length}
         onRevert={revertOccurrence}
         restrictionReason={selectedMeal?.isTypicalBreakfast
           ? t("mealActions.typicalUnavailable")
@@ -561,6 +567,7 @@ export default function App(): React.JSX.Element {
         mode={pickerRequest?.mode ?? "replace"}
         scope={pickerRequest?.occurrenceKey ? "day" : "all"}
         meal={pickerRequest?.meal ?? null}
+        occurrenceCount={Math.max(1, pickerRequest?.targetOccurrenceKeys?.length ?? 1)}
         options={pickerOptions}
         onClose={() => setPickerRequest(null)}
         onScope={(scope) => setPickerRequest((current) => current ? {

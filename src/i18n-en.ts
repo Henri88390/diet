@@ -105,11 +105,11 @@ export const en: Translation = {
     dateHint: "Selects this date to view its meal plan"
   },
   mealActions: {
-    replace: "Replace", ban: "Ban meal", scopeTitle: "Choose how to replace", thisDay: "This day only", allOccurrences: "All occurrences",
-    replaced: "Replaced", revert: "Revert this day", batchUnavailable: "Batch-cooked meals cannot be changed here.", typicalUnavailable: "Your typical breakfast is managed in Preferences."
+    replace: "Replace", ban: "Ban meal", scopeTitle: "Choose how to replace", thisDay: "This meal only", allOccurrences: "All occurrences",
+    replaced: "Replaced", revert: "Revert to original meal", batchUnavailable: "Batch-cooked meals cannot be changed here.", typicalUnavailable: "Your typical breakfast is managed in Preferences."
   },
   picker: {
-    scopeTitle: "Choose how to replace", banTitle: "Choose a substitute", replaceTitle: "Choose a replacement", thisDay: "This day only", allOccurrences: "All occurrences",
+    scopeTitle: "Choose how to replace", banTitle: "Choose a substitute", replaceTitle: "Choose a replacement", thisDay: "This meal only", allOccurrences: "All occurrences", singleOccurrence: "This meal appears only once in your plan.",
     automatic: "Similar calories (automatic)", automaticHint: "The closest available recipe by calories will be used.", noAlternatives: "No alternatives available.", confirmTitle: "Confirm replacement", confirmBanTitle: "Confirm ban", confirmDay: "Replace {{current}} with {{substitute}} on this day only?", confirmAll: "Replace every occurrence of {{current}} with {{substitute}}?", confirmBan: "Ban {{current}} and replace it everywhere with {{substitute}}?", confirmBanAuto: "Ban {{current}} and replace it everywhere with the recipe closest in calories?", confirmAction: "Replace", confirmBanAction: "Ban and replace", back: "Back"
   },
   menu: {

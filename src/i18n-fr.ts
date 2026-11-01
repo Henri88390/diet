@@ -112,14 +112,15 @@ export const fr: Translation = {
     banCategory: "Exclure {{name}}", unbanCategory: "Réinclure {{name}}", banCategoryConfirmTitle: "Exclure cette catégorie ?", banCategoryConfirmMessage: "Tous les ingrédients de {{name}} seront exclus. Les repas concernés sont ajustés automatiquement, et les réinclure les remet en place."
   },
   ingredientBan: {
-    banAction: "Exclure l'ingrédient", confirmTitle: "Exclure cet ingrédient", confirmMessage: "Exclure {{ingredient}} de {{meal}} et examiner les autres repas concernés.", continue: "Continuer",
-    chooseTitle: "Choisir la suite", mealChoice: "Pour {{name}}", skipAction: "Retirer l'ingrédient", skipHint: "Conserver ce repas sans cet ingrédient.",
+    banAction: "Exclure l'ingrédient",
+    chooseTitle: "Choisir la suite", mealChoice: "Pour {{name}}", skipAction: "Retirer l'ingrédient",
     optionalReplacement: "Ingrédient de remplacement facultatif", noReplacement: "Aucun remplacement", replaceMealAction: "Remplacer ce repas", automaticHint: "Utiliser le repas le plus proche en calories ou en choisir un ci-dessous.",
     reviewTitle: "Examiner les autres repas", reviewHint: "Les autres recettes concernées sont remplacées automatiquement par défaut.", affectedCount: "{{count}} portions prévues", chooseMeal: "Choisir un repas",
     restricted: "Le remplacement du repas est indisponible ; l'ingrédient utilise le substitut automatique habituel.", noAffected: "Aucun autre repas prévu n'utilise cet ingrédient.", reviewContinue: "Examiner les repas concernés", applyAction: "Appliquer l'exclusion",
     applyEverywhere: "Utiliser {{replacement}} dans tous les repas", applyEverywhereHint: "Remplacer {{ingredient}} par {{replacement}} dans tous les autres repas qui l'utilisent, si possible.",
     reviewHintEverywhere: "Les repas qui peuvent utiliser {{replacement}} à la place de {{ingredient}} gardent leur recette. Vous pouvez toujours choisir un repas de remplacement.",
-    useReplacement: "Utiliser {{replacement}}", useReplacementHint: "Garder ce repas et remplacer {{ingredient}} par {{replacement}}."
+    useReplacement: "Utiliser {{replacement}}", useReplacementHint: "Garder ce repas et remplacer {{ingredient}} par {{replacement}}.",
+    omitIngredient: "Garder le repas, sans {{ingredient}}", omitIngredientHint: "Même repas, simplement sans {{ingredient}}."
   },
   meal: {
     a11y: "{{label}} : {{title}}, {{calories}} kilocalories, {{protein}} grammes de protéines",
@@ -138,9 +139,7 @@ export const fr: Translation = {
     mainIngredients: "Ingrédients principaux",
     mainHelper: "Aliments de base de cette portion exemple",
     seasonings: "Assaisonnements et ajouts de cuisson",
-    seasoningsHelper: "Affichés séparément des ingrédients principaux",
-    total: "Total",
-    totalValue: "{{kcal}} kcal · {{protein}} g de protéines · ~{{cost}}",
+    seasoningsHelper: "Affichés séparément des ingrédients principaux",
     disclaimer: "La nutrition et les coûts reposent sur des quantités d'ingrédients et des prix unitaires modélisés ; les calories sont ajustées à l'objectif quotidien choisi. Les coûts sont arrondis à la plus petite unité monétaire, une très petite portion peut donc s'afficher à zéro. Les portions et valeurs sont indicatives : ce ne sont ni des recettes vérifiées, ni des prix régionaux, ni des conseils nutritionnels ou médicaux."
   },
   grocery: {

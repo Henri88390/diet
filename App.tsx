@@ -181,7 +181,8 @@ export default function App(): React.JSX.Element {
     if (!ingredientBanRequest) return {} as Record<string, Meal[]>;
     const meals = [ingredientBanRequest.meal, ...ingredientBanRequest.affectedMeals.map((entry) => entry.meal)];
     return Object.fromEntries(meals.map((meal) => [meal.recipeKey,
-      repriceMeals(getRecipeAlternatives(meal.type, meal.recipeKey, mealPreferences.bannedMeals), countryCode)
+      repriceMeals(getRecipeAlternatives(meal.type, meal.recipeKey, mealPreferences.bannedMeals)
+        .map((option) => scaleMealToCalories(option, meal.calories)), countryCode)
     ]));
   }, [ingredientBanRequest, mealPreferences.bannedMeals, countryCode]);
   const replacementIngredientOptions = useMemo(() => ingredientBanRequest

@@ -6,6 +6,7 @@ import type { IngredientBanChoice, IngredientOption, Meal } from "../models";
 import { formatMoney } from "../countryPricing";
 import { palette } from "../theme";
 import { BottomSheet, SheetScrollView } from "./BottomSheet";
+import { MealStatChips } from "./MealStatChips";
 
 type AffectedMeal = { meal: Meal; count: number; restricted: boolean; options: Meal[]; replacementIngredientIds: string[] };
 type Props = {
@@ -18,36 +19,38 @@ type Props = {
   onClose: () => void;
   onConfirm: (choices: IngredientBanChoice[]) => void;
 };
-type Stage = "confirm" | "choose" | "review";
+type Stage = "choose" | "review";
 type MainAction = "skip" | "replaceMeal";
 /** "ingredient" swaps the banned ingredient for the replacement chosen for the main meal. */
-type OtherSelection = { kind: "automatic" } | { kind: "ingredient" } | { kind: "meal"; recipeKey: string };
+type OtherSelection = { kind: "automatic" } | { kind: "ingredient" } | { kind: "omit" } | { kind: "meal"; recipeKey: string };
 
 export function IngredientBanFlowSheet({
   visible, meal, ingredient, affectedMeals, mainOptions, replacementIngredients, onClose, onConfirm
 }: Props): React.JSX.Element {
   const { t } = useTranslation();
   const { food } = useFoodNames();
-  const [stage, setStage] = useState<Stage>("confirm");
+  const [stage, setStage] = useState<Stage>("choose");
   const [mainAction, setMainAction] = useState<MainAction>("skip");
   const [replacementIngredient, setReplacementIngredient] = useState<string | null>(null);
   const [mainReplacement, setMainReplacement] = useState<string | null>(null);
   const [applyEverywhere, setApplyEverywhere] = useState(false);
   const [otherSelections, setOtherSelections] = useState<Record<string, OtherSelection>>({});
+  // Replacement meals picked per affected recipe stay listed after switching to another option.
+  const [pickedMeals, setPickedMeals] = useState<Record<string, string>>({});
   const [expandedRecipe, setExpandedRecipe] = useState<string | null>(null);
 
   useEffect(() => {
-    setStage("confirm");
+    setStage("choose");
     setMainAction("skip");
     setReplacementIngredient(null);
     setMainReplacement(null);
     setApplyEverywhere(false);
     setOtherSelections({});
+    setPickedMeals({});
     setExpandedRecipe(null);
   }, [visible, ingredient?.id, meal?.recipeKey]);
 
-  const title = stage === "confirm" ? t("ingredientBan.confirmTitle")
-    : stage === "choose" ? t("ingredientBan.chooseTitle") : t("ingredientBan.reviewTitle");
+  const title = stage === "choose" ? t("ingredientBan.chooseTitle") : t("ingredientBan.reviewTitle");
   const restricted = Boolean(meal?.isTypicalBreakfast || meal?.batch || meal?.type === "Snack");
   const sharedReplacement = mainAction === "skip" && replacementIngredient && !meal?.batch
     ? replacementIngredients.find((option) => option.id === replacementIngredient) ?? null
@@ -58,9 +61,15 @@ export function IngredientBanFlowSheet({
     return Boolean(sharedReplacement && !affected.meal.batch && affected.replacementIngredientIds.includes(sharedReplacement.id));
   }
 
+  // Batch components ignore skips, so leaving the ingredient out is not offered there.
+  function canOmit(affected: AffectedMeal): boolean {
+    return mainAction === "skip" && !meal?.batch && !affected.meal.batch;
+  }
+
   function selectionFor(affected: AffectedMeal): OtherSelection {
     const explicit = otherSelections[affected.meal.recipeKey];
-    if (explicit && (explicit.kind !== "ingredient" || canUseShared(affected))) return explicit;
+    if (explicit && (explicit.kind === "ingredient" ? canUseShared(affected)
+      : explicit.kind === "omit" ? canOmit(affected) : true)) return explicit;
     return everywhere && canUseShared(affected) ? { kind: "ingredient" } : { kind: "automatic" };
   }
 
@@ -96,6 +105,13 @@ export function IngredientBanFlowSheet({
         });
         return;
       }
+      if (selection.kind === "omit") {
+        choices.push({
+          ingredientId: ingredient.id, recipeKey: affected.meal.recipeKey, action: "skip",
+          replacementIngredient: null
+        });
+        return;
+      }
       if (affected.restricted) return;
       choices.push({
         ingredientId: ingredient.id,
@@ -107,38 +123,48 @@ export function IngredientBanFlowSheet({
     onConfirm(choices);
   }
 
-  function renderMealOption(option: Meal, onSelect: () => void): React.JSX.Element {
+  function renderMealOption(option: Meal, onSelect: () => void, selected = false): React.JSX.Element {
     return (
-      <Pressable key={option.recipeKey} accessibilityRole="button" onPress={onSelect} style={styles.option}>
+      <Pressable
+        key={option.recipeKey}
+        accessibilityRole="button"
+        accessibilityState={{ selected }}
+        onPress={onSelect}
+        style={({ pressed }) => [styles.option, selected && styles.choiceSelected, pressed && styles.optionPressed]}
+      >
         <Text style={styles.optionEmoji}>{option.emoji}</Text>
         <View style={styles.optionCopy}>
           <Text style={styles.optionTitle}>{food(option.title)}</Text>
-          <Text style={styles.meta}>{t("meal.kcalChip", { value: option.calories })} {String.fromCharCode(183)} {t("meal.proteinChip", { value: option.proteinGrams })} {String.fromCharCode(183)} ~{formatMoney(option.estimatedCost ?? { amountMinorUnits: option.estimatedCostCents, currencyCode: option.currencyCode ?? "EUR" }, option.currencyLocale)}</Text>
+          <MealStatChips
+            style={styles.optionStats}
+            calories={option.calories}
+            proteinGrams={option.proteinGrams}
+            cost={formatMoney(option.estimatedCost ?? { amountMinorUnits: option.estimatedCostCents, currencyCode: option.currencyCode ?? "EUR" }, option.currencyLocale)}
+          />
         </View>
-        <Text style={styles.arrow}>{String.fromCharCode(8250)}</Text>
+        <Text style={styles.arrow}>{String.fromCharCode(selected ? 10003 : 8250)}</Text>
       </Pressable>
     );
   }
 
   return (
-    <BottomSheet visible={visible} onClose={onClose} closeLabel={t("details.close")} sheetStyle={styles.sheet} swipeToClose={stage === "review" ? "firm" : "normal"}>
+    <BottomSheet
+      visible={visible}
+      onClose={onClose}
+      onBack={stage === "review" ? () => setStage("choose") : undefined}
+      closeLabel={t("details.close")}
+      sheetStyle={styles.sheet}
+      swipeToClose={stage === "review" ? "firm" : "normal"}
+    >
       {meal && ingredient && <>
         <Text accessibilityRole="header" style={styles.title}>{title}</Text>
         <Text style={styles.subtitle}>{meal.emoji} {food(meal.title)} {String.fromCharCode(183)} {food(ingredient.name)}</Text>
-        {stage === "confirm" ? (
-          <View style={styles.confirm}>
-            <Text style={styles.bodyText}>{t("ingredientBan.confirmMessage", { ingredient: food(ingredient.name), meal: food(meal.title) })}</Text>
-            <Pressable accessibilityRole="button" onPress={() => setStage("choose")} style={styles.primaryButton}>
-              <Text style={styles.primaryText}>{t("ingredientBan.continue")}</Text>
-            </Pressable>
-          </View>
-        ) : stage === "choose" ? (
-          <SheetScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
+        {stage === "choose" ? (
+          <SheetScrollView key="choose" contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
             <Text style={styles.sectionTitle}>{t("ingredientBan.mealChoice", { name: food(meal.title) })}</Text>
             {!meal.batch && <>
               <Pressable accessibilityRole="button" accessibilityState={{ selected: mainAction === "skip" }} onPress={() => setMainAction("skip")} style={[styles.choice, mainAction === "skip" && styles.choiceSelected]}>
                 <Text style={styles.choiceTitle}>{t("ingredientBan.skipAction")}</Text>
-                <Text style={styles.choiceHint}>{t("ingredientBan.skipHint")}</Text>
               </Pressable>
               {mainAction === "skip" && <View style={styles.ingredientChoices}>
                 <Text style={styles.subheading}>{t("ingredientBan.optionalReplacement")}</Text>
@@ -174,18 +200,18 @@ export function IngredientBanFlowSheet({
                   <View style={styles.optionCopy}><Text style={styles.choiceTitle}>{t("picker.automatic")}</Text><Text style={styles.choiceHint}>{t("ingredientBan.automaticHint")}</Text></View>
                   <Text style={styles.arrow}>{String.fromCharCode(10003)}</Text>
                 </Pressable>
-                {mainOptions.map((option) => renderMealOption(option, () => setMainReplacement(option.recipeKey)))}
+                {mainOptions.map((option) => renderMealOption(option, () => setMainReplacement(option.recipeKey), mainReplacement === option.recipeKey))}
                 {mainOptions.length === 0 && <Text style={styles.empty}>{t("picker.noAlternatives")}</Text>}
               </>}
             </>}
             {meal.batch && <Text style={styles.restriction}>{t("ingredientBan.restricted")}</Text>}
-            <Pressable accessibilityRole="button" onPress={() => setStage("review")} style={styles.primaryButton}>
-              <Text style={styles.primaryText}>{t("ingredientBan.reviewContinue")}</Text>
+            <Pressable accessibilityRole="button" onPress={everywhere ? confirmChoices : () => setStage("review")} style={styles.primaryButton}>
+              <Text style={styles.primaryText}>{t(everywhere ? "ingredientBan.applyAction" : "ingredientBan.reviewContinue")}</Text>
             </Pressable>
-            <Pressable accessibilityRole="button" onPress={() => setStage("confirm")} style={styles.backButton}><Text style={styles.backText}>{t("picker.back")}</Text></Pressable>
+            <Pressable accessibilityRole="button" onPress={onClose} style={styles.backButton}><Text style={styles.backText}>{t("common.cancel")}</Text></Pressable>
           </SheetScrollView>
         ) : (
-          <SheetScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
+          <SheetScrollView key="review" contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
             <Text style={styles.bodyText}>{everywhere && sharedReplacement
               ? t("ingredientBan.reviewHintEverywhere", { ingredient: food(ingredient.name), replacement: food(sharedReplacement.name) })
               : t("ingredientBan.reviewHint", { ingredient: food(ingredient.name) })}</Text>
@@ -197,6 +223,7 @@ export function IngredientBanFlowSheet({
               const expanded = expandedRecipe === affected.recipeKey;
               const select = (next: OtherSelection): void => {
                 setOtherSelections((current) => ({ ...current, [affected.recipeKey]: next }));
+                if (next.kind === "meal") setPickedMeals((current) => ({ ...current, [affected.recipeKey]: next.recipeKey }));
                 setExpandedRecipe(null);
               };
               return <View key={affected.recipeKey} style={styles.affectedCard}>
@@ -214,23 +241,31 @@ export function IngredientBanFlowSheet({
                   </View>
                   {selection.kind === "ingredient" && <Text style={styles.arrow}>{String.fromCharCode(10003)}</Text>}
                 </Pressable>}
-                {isRestricted ? (!sharedAvailable || selection.kind !== "ingredient") && <Text style={styles.restriction}>{t("ingredientBan.restricted")}</Text> : <>
+                {canOmit(affectedEntry) && <Pressable accessibilityRole="button" accessibilityState={{ selected: selection.kind === "omit" }} onPress={() => select({ kind: "omit" })} style={[styles.automatic, styles.unselected, selection.kind === "omit" && styles.choiceSelected]}>
+                  <View style={styles.optionCopy}>
+                    <Text style={styles.choiceTitle}>{t("ingredientBan.omitIngredient", { ingredient: food(ingredient.name) })}</Text>
+                    <Text style={styles.choiceHint}>{t("ingredientBan.omitIngredientHint", { ingredient: food(ingredient.name) })}</Text>
+                  </View>
+                  {selection.kind === "omit" && <Text style={styles.arrow}>{String.fromCharCode(10003)}</Text>}
+                </Pressable>}
+                {isRestricted ? (sharedAvailable || canOmit(affectedEntry)
+                  ? <Pressable accessibilityRole="button" accessibilityState={{ selected: selection.kind === "automatic" }} onPress={() => select({ kind: "automatic" })} style={[styles.automatic, styles.unselected, selection.kind === "automatic" && styles.choiceSelected]}>
+                    <View style={styles.optionCopy}><Text style={styles.choiceTitle}>{t("picker.automatic")}</Text><Text style={styles.choiceHint}>{t("ingredientBan.restricted")}</Text></View>
+                    {selection.kind === "automatic" && <Text style={styles.arrow}>{String.fromCharCode(10003)}</Text>}
+                  </Pressable>
+                  : <Text style={styles.restriction}>{t("ingredientBan.restricted")}</Text>) : <>
                   <Pressable accessibilityRole="button" accessibilityState={{ selected: selection.kind === "automatic" }} onPress={() => select({ kind: "automatic" })} style={[styles.automatic, styles.unselected, selection.kind === "automatic" && styles.choiceSelected]}>
                     <View style={styles.optionCopy}><Text style={styles.choiceTitle}>{t("picker.automatic")}</Text><Text style={styles.choiceHint}>{t("ingredientBan.automaticHint")}</Text></View>
                     {selection.kind === "automatic" && <Text style={styles.arrow}>{String.fromCharCode(10003)}</Text>}
                   </Pressable>
-                  {selection.kind === "meal" && (() => {
-                    const chosen = options.find((option) => option.recipeKey === selection.recipeKey);
-                    return chosen ? <View style={[styles.option, styles.choiceSelected]}>
-                      <Text style={styles.optionEmoji}>{chosen.emoji}</Text>
-                      <View style={styles.optionCopy}><Text style={styles.optionTitle}>{food(chosen.title)}</Text></View>
-                      <Text style={styles.arrow}>{String.fromCharCode(10003)}</Text>
-                    </View> : null;
+                  {(() => {
+                    const picked = options.find((option) => option.recipeKey === pickedMeals[affected.recipeKey]);
+                    return picked ? renderMealOption(picked, () => select({ kind: "meal", recipeKey: picked.recipeKey }), selection.kind === "meal" && selection.recipeKey === picked.recipeKey) : null;
                   })()}
                   <Pressable accessibilityRole="button" onPress={() => setExpandedRecipe(expanded ? null : affected.recipeKey)} style={styles.chooseButton}>
                     <Text style={styles.chooseText}>{t("ingredientBan.chooseMeal")}</Text>
                   </Pressable>
-                  {expanded && options.map((option) => renderMealOption(option, () => select({ kind: "meal", recipeKey: option.recipeKey })))}
+                  {expanded && options.filter((option) => option.recipeKey !== pickedMeals[affected.recipeKey]).map((option) => renderMealOption(option, () => select({ kind: "meal", recipeKey: option.recipeKey }), false))}
                 </>}
               </View>;
             })}
@@ -249,7 +284,6 @@ const styles = StyleSheet.create({
   sheet: { maxHeight: "88%", paddingHorizontal: 20, paddingTop: 10, paddingBottom: 22 },
   title: { color: palette.ink, fontSize: 20, fontWeight: "800" },
   subtitle: { color: palette.muted, fontSize: 12, marginTop: 4, marginBottom: 12 },
-  confirm: { gap: 16, paddingTop: 6 },
   bodyText: { color: palette.ink, fontSize: 13, lineHeight: 20 },
   list: { gap: 8, paddingTop: 5, paddingBottom: 8 },
   sectionTitle: { color: palette.ink, fontSize: 15, fontWeight: "800", marginBottom: 3 },
@@ -269,10 +303,11 @@ const styles = StyleSheet.create({
   checkboxChecked: { backgroundColor: palette.green, borderColor: palette.green },
   checkmark: { color: palette.white, fontSize: 12, fontWeight: "800" },
   option: { flexDirection: "row", alignItems: "center", backgroundColor: palette.white, borderRadius: 13, padding: 11, borderWidth: 1, borderColor: palette.line },
+  optionPressed: { opacity: 0.7 },
   optionEmoji: { fontSize: 21, marginRight: 9 },
   optionCopy: { flex: 1 },
   optionTitle: { color: palette.ink, fontSize: 12, fontWeight: "700" },
-  meta: { color: palette.muted, fontSize: 9, marginTop: 4 },
+  optionStats: { marginTop: 5 },
   arrow: { color: palette.green, fontSize: 19, fontWeight: "800", marginLeft: 8 },
   affectedCard: { gap: 7, padding: 10, borderRadius: 14, backgroundColor: "#F8F7F1", borderWidth: 1, borderColor: palette.line },
   affectedHeader: { flexDirection: "row", alignItems: "center" },

@@ -116,14 +116,15 @@ export const pl: Translation = {
     banCategory: "Wyklucz: {{name}}", unbanCategory: "Przywróć: {{name}}", banCategoryConfirmTitle: "Wykluczyć tę kategorię?", banCategoryConfirmMessage: "Wszystkie składniki z kategorii {{name}} zostaną wykluczone. Posiłki zostaną automatycznie dostosowane, a przywrócenie kategorii przywróci je."
   },
   ingredientBan: {
-    banAction: "Wyklucz składnik", confirmTitle: "Wyklucz ten składnik", confirmMessage: "Wyklucz {{ingredient}} z posiłku {{meal}} i sprawdź inne posiłki.", continue: "Dalej",
-    chooseTitle: "Wybierz działanie", mealChoice: "Dla: {{name}}", skipAction: "Pomiń składnik", skipHint: "Zachowaj posiłek bez tego składnika.",
+    banAction: "Wyklucz składnik",
+    chooseTitle: "Wybierz działanie", mealChoice: "Dla: {{name}}", skipAction: "Pomiń składnik",
     optionalReplacement: "Opcjonalny składnik zastępczy", noReplacement: "Bez zamiennika", replaceMealAction: "Zastąp posiłek", automaticHint: "Wybierz posiłek o najbardziej zbliżonej kaloryczności lub wskaż go poniżej.",
     reviewTitle: "Sprawdź inne posiłki", reviewHint: "Pozostałe dotknięte przepisy są domyślnie zastępowane automatycznie.", affectedCount: "{{count}} zaplanowane porcje", chooseMeal: "Wybierz posiłek",
     restricted: "Nie można zastąpić posiłku; używany jest zwykły automatyczny zamiennik składnika.", noAffected: "W bieżącym planie nie ma innych posiłków z tym składnikiem.", reviewContinue: "Sprawdź dotknięte posiłki", applyAction: "Zastosuj wykluczenie",
     applyEverywhere: "Użyj {{replacement}} we wszystkich posiłkach", applyEverywhereHint: "Zastąp {{ingredient}} składnikiem {{replacement}} we wszystkich innych posiłkach, w których występuje, jeśli to możliwe.",
     reviewHintEverywhere: "Posiłki, w których można użyć {{replacement}} zamiast {{ingredient}}, zachowują przepis. Nadal możesz wybrać posiłek zastępczy.",
-    useReplacement: "Użyj {{replacement}}", useReplacementHint: "Zachowaj ten posiłek i zastąp {{ingredient}} składnikiem {{replacement}}."
+    useReplacement: "Użyj {{replacement}}", useReplacementHint: "Zachowaj ten posiłek i zastąp {{ingredient}} składnikiem {{replacement}}.",
+    omitIngredient: "Zostaw posiłek bez: {{ingredient}}", omitIngredientHint: "Ten sam posiłek, tylko bez składnika: {{ingredient}}."
   },
   meal: {
     a11y: "{{label}}: {{title}}, {{calories}} kilokalorii, {{protein}} gramów białka",
@@ -142,9 +143,7 @@ export const pl: Translation = {
     mainIngredients: "Główne składniki",
     mainHelper: "Podstawowe produkty w tej przykładowej porcji",
     seasonings: "Przyprawy i dodatki do gotowania",
-    seasoningsHelper: "Pokazane osobno od głównych składników",
-    total: "Razem",
-    totalValue: "{{kcal}} kcal · {{protein}} g białka · ~{{cost}}",
+    seasoningsHelper: "Pokazane osobno od głównych składników",
     disclaimer: "Wartości odżywcze i koszty opierają się na modelowych ilościach składników i cenach jednostkowych; kalorie są dopasowywane do wybranego dziennego celu. Koszty są zaokrąglane do najmniejszej jednostki waluty, więc bardzo mała porcja może wyświetlić się jako zero. Porcje i wartości są orientacyjne – to nie zweryfikowane przepisy, ceny regionalne, zalecenia żywieniowe ani porady medyczne."
   },
   grocery: {

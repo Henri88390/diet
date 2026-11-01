@@ -5,6 +5,7 @@ import type { BatchPrep } from "../groceryEstimate";
 import type { BudgetPlan, BudgetWarning } from "../budgetPlan";
 import { formatMoney } from "../countryPricing";
 import { formatDateKey, getDailyProtein, getMealsInDisplayOrder } from "../sampleData";
+import { MealStatChips } from "../components/MealStatChips";
 import { palette } from "../theme";
 import { CalendarDateStrip } from "../components/CalendarDateStrip";
 import { MealCard } from "../components/MealCard";
@@ -69,7 +70,7 @@ export function CalendarScreen(props: Props): React.JSX.Element {
       />
 
       {meals.length > 0 && (
-        <Text style={styles.dailyTotals}>{t("details.totalValue", { kcal: calories, protein, cost })}</Text>
+        <MealStatChips style={styles.dailyTotals} calories={calories} proteinGrams={protein} cost={cost} />
       )}
 
       {props.budgetStatus === "compromised" && (
@@ -112,7 +113,7 @@ const styles = StyleSheet.create({
   todayButtonText: { color: palette.green, fontSize: 12, fontWeight: "700" },
   todayButtonDisabled: { backgroundColor: "transparent", borderColor: palette.line },
   todayButtonTextDisabled: { color: palette.muted, opacity: 0.6 },
-  dailyTotals: { color: palette.muted, fontSize: 12, fontWeight: "600", textAlign: "right", marginTop: 4 },
+  dailyTotals: { justifyContent: "flex-end", marginTop: 6 },
   budgetNotice: { backgroundColor: "#FFF4DC", borderRadius: 14, padding: 12, marginTop: 12, gap: 4 },
   budgetNoticeText: { color: palette.ink, fontSize: 12, lineHeight: 17 },
   pressed: { opacity: 0.84 },

@@ -112,14 +112,15 @@ export const de: Translation = {
     banCategory: "{{name}} meiden", unbanCategory: "{{name}} wieder erlauben", banCategoryConfirmTitle: "Diese Kategorie meiden?", banCategoryConfirmMessage: "Alle Zutaten aus {{name}} werden gemieden. Betroffene Mahlzeiten werden automatisch angepasst; wieder erlauben stellt sie wieder her."
   },
   ingredientBan: {
-    banAction: "Zutat meiden", confirmTitle: "Diese Zutat meiden", confirmMessage: "{{ingredient}} in {{meal}} meiden und weitere betroffene Mahlzeiten prüfen.", continue: "Weiter",
-    chooseTitle: "Aktion auswählen", mealChoice: "Für {{name}}", skipAction: "Zutat weglassen", skipHint: "Diese Mahlzeit ohne die Zutat beibehalten.",
+    banAction: "Zutat meiden",
+    chooseTitle: "Aktion auswählen", mealChoice: "Für {{name}}", skipAction: "Zutat weglassen",
     optionalReplacement: "Optionale Ersatzzutat", noReplacement: "Kein Ersatz", replaceMealAction: "Diese Mahlzeit ersetzen", automaticHint: "Die kalorienähnlichste Mahlzeit verwenden oder unten eine auswählen.",
     reviewTitle: "Weitere Mahlzeiten prüfen", reviewHint: "Andere betroffene Rezepte werden standardmäßig automatisch ersetzt.", affectedCount: "{{count}} geplante Portionen", chooseMeal: "Mahlzeit auswählen",
     restricted: "Ein Mahlzeitenersatz ist nicht möglich; die Zutat wird wie üblich automatisch ersetzt.", noAffected: "Keine weiteren geplanten Mahlzeiten enthalten diese Zutat.", reviewContinue: "Betroffene Mahlzeiten prüfen", applyAction: "Zutat meiden",
     applyEverywhere: "{{replacement}} in allen Mahlzeiten verwenden", applyEverywhereHint: "{{ingredient}} in allen anderen Mahlzeiten, die es enthalten, nach Möglichkeit durch {{replacement}} ersetzen.",
     reviewHintEverywhere: "Mahlzeiten, die {{replacement}} statt {{ingredient}} verwenden können, behalten ihr Rezept. Du kannst trotzdem eine Ersatzmahlzeit wählen.",
-    useReplacement: "{{replacement}} verwenden", useReplacementHint: "Diese Mahlzeit behalten und {{ingredient}} durch {{replacement}} ersetzen."
+    useReplacement: "{{replacement}} verwenden", useReplacementHint: "Diese Mahlzeit behalten und {{ingredient}} durch {{replacement}} ersetzen.",
+    omitIngredient: "Mahlzeit behalten, ohne {{ingredient}}", omitIngredientHint: "Gleiche Mahlzeit, nur ohne {{ingredient}}."
   },
   meal: {
     a11y: "{{label}}: {{title}}, {{calories}} Kilokalorien, {{protein}} Gramm Eiweiß",
@@ -138,9 +139,7 @@ export const de: Translation = {
     mainIngredients: "Hauptzutaten",
     mainHelper: "Grundnahrungsmittel für diese Beispielportion",
     seasonings: "Gewürze & Zutaten zum Kochen",
-    seasoningsHelper: "Getrennt von den Hauptzutaten angezeigt",
-    total: "Summe",
-    totalValue: "{{kcal}} kcal · {{protein}} g Eiweiß · ~{{cost}}",
+    seasoningsHelper: "Getrennt von den Hauptzutaten angezeigt",
     disclaimer: "Nährwerte und Kosten beruhen auf modellierten Zutatenmengen und Stückpreisen; die Kalorienwerte werden an das gewählte Tagesziel angepasst. Kosten werden auf die kleinste Währungseinheit gerundet, sodass eine sehr kleine Portion als null angezeigt werden kann. Portionen und Werte sind Richtwerte – keine geprüften Rezeptmengen, regionalen Preise, Ernährungsempfehlungen oder medizinischen Ratschläge."
   },
   grocery: {

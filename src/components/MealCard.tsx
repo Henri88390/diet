@@ -6,6 +6,7 @@ import { formatMoney } from "../countryPricing";
 import { useTranslation } from "react-i18next";
 import { useFoodNames } from "../i18n";
 import { BatchNote } from "./BatchCooking";
+import { MealStatChips } from "./MealStatChips";
 
 type Props = { meal: Meal; onPress: (meal: Meal) => void; footer?: React.ReactNode; corner?: React.ReactNode };
 
@@ -47,15 +48,7 @@ export function MealCard({ meal, onPress, footer, corner }: Props): React.JSX.El
           </Text>
         )}
         {meal.isReplaced && <View style={styles.replacedChip}><Text style={styles.replacedChipText}>{t("mealActions.replaced")}</Text></View>}
-        <View style={styles.metaRow}>
-          <View style={styles.chip}><Text style={styles.chipText}>{t("meal.kcalChip", { value: meal.calories })}</Text></View>
-          <View style={[styles.chip, styles.chipProtein]}>
-            <Text style={[styles.chipText, styles.chipTextProtein]}>{t("meal.proteinChip", { value: meal.proteinGrams })}</Text>
-          </View>
-          <View style={[styles.chip, styles.chipCost]}>
-            <Text style={[styles.chipText, styles.chipTextCost]}>~{cost}</Text>
-          </View>
-        </View>
+        <MealStatChips style={styles.metaRow} calories={meal.calories} proteinGrams={meal.proteinGrams} cost={cost} />
         {meal.batch && <BatchNote />}
         {footer}
         </View>
@@ -77,13 +70,7 @@ const styles = StyleSheet.create({
   emoji: { fontSize: 24 },
   details: { flex: 1 },
   title: { flex: 1, color: palette.ink, fontSize: 14, fontWeight: "700" },
-  metaRow: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 6 },
-  chip: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, backgroundColor: "#F1EEE4" },
-  chipProtein: { backgroundColor: palette.softGreen },
-  chipCost: { backgroundColor: "#F6E9D8" },
-  chipText: { color: palette.ink, fontSize: 10, fontWeight: "700" },
-  chipTextProtein: { color: palette.green },
-  chipTextCost: { color: "#8A5A1F" },
+  metaRow: { marginTop: 6 },
   banWarning: { color: "#8B3027", fontSize: 10, lineHeight: 14, marginTop: 5 },
   replacedChip: { alignSelf: "flex-start", marginTop: 5, borderRadius: 7, paddingHorizontal: 7, paddingVertical: 2, backgroundColor: "#F1EEE4" },
   replacedChipText: { color: palette.muted, fontSize: 9, fontWeight: "700" }

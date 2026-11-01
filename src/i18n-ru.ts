@@ -116,14 +116,15 @@ export const ru: Translation = {
     banCategory: "Исключить: {{name}}", unbanCategory: "Разрешить: {{name}}", banCategoryConfirmTitle: "Исключить эту категорию?", banCategoryConfirmMessage: "Все ингредиенты из категории «{{name}}» будут исключены. Блюда будут скорректированы автоматически, а при возврате категории восстановятся."
   },
   ingredientBan: {
-    banAction: "Исключить ингредиент", confirmTitle: "Исключить этот ингредиент", confirmMessage: "Исключить {{ingredient}} из {{meal}} и проверить другие блюда.", continue: "Далее",
-    chooseTitle: "Выберите действие", mealChoice: "Для {{name}}", skipAction: "Пропустить ингредиент", skipHint: "Оставить блюдо без этого ингредиента.",
+    banAction: "Исключить ингредиент",
+    chooseTitle: "Выберите действие", mealChoice: "Для {{name}}", skipAction: "Пропустить ингредиент",
     optionalReplacement: "Необязательная замена", noReplacement: "Без замены", replaceMealAction: "Заменить блюдо", automaticHint: "Выбрать блюдо с близкой калорийностью или указать ниже.",
     reviewTitle: "Проверить другие блюда", reviewHint: "Другие затронутые рецепты по умолчанию заменяются автоматически.", affectedCount: "{{count}} запланированных порций", chooseMeal: "Выбрать блюдо",
     restricted: "Замена блюда недоступна; используется обычная автозамена ингредиента.", noAffected: "В текущем плане нет других блюд с этим ингредиентом.", reviewContinue: "Проверить затронутые блюда", applyAction: "Применить исключение",
     applyEverywhere: "Использовать {{replacement}} во всех блюдах", applyEverywhereHint: "По возможности заменить {{ingredient}} на {{replacement}} во всех других блюдах с этим ингредиентом.",
     reviewHintEverywhere: "Блюда, в которых можно использовать {{replacement}} вместо {{ingredient}}, сохранят рецепт. Вы всё ещё можете выбрать другое блюдо.",
-    useReplacement: "Использовать {{replacement}}", useReplacementHint: "Оставить это блюдо и заменить {{ingredient}} на {{replacement}}."
+    useReplacement: "Использовать {{replacement}}", useReplacementHint: "Оставить это блюдо и заменить {{ingredient}} на {{replacement}}.",
+    omitIngredient: "Оставить блюдо без: {{ingredient}}", omitIngredientHint: "То же блюдо, только без: {{ingredient}}."
   },
   meal: {
     a11y: "{{label}}: {{title}}, {{calories}} килокалорий, {{protein}} г белка",
@@ -142,9 +143,7 @@ export const ru: Translation = {
     mainIngredients: "Основные ингредиенты",
     mainHelper: "Основные продукты для этой примерной порции",
     seasonings: "Специи и добавки для готовки",
-    seasoningsHelper: "Показаны отдельно от основных ингредиентов",
-    total: "Итого",
-    totalValue: "{{kcal}} ккал · {{protein}} г белка · ~{{cost}}",
+    seasoningsHelper: "Показаны отдельно от основных ингредиентов",
     disclaimer: "Питательность и стоимость рассчитаны по модельным количествам ингредиентов и ценам за единицу; калорийность подгоняется под выбранную дневную цель. Стоимость округляется до наименьшей денежной единицы, поэтому очень маленькая порция может показываться как ноль. Порции и значения примерные: это не проверенные рецепты, региональные цены, рекомендации по питанию или медицинские советы."
   },
   grocery: {

@@ -6,6 +6,7 @@ import type { Meal } from "../models";
 import { formatMoney } from "../countryPricing";
 import { mealAccent, palette } from "../theme";
 import { BottomSheet, SheetScrollView } from "./BottomSheet";
+import { MealStatChips } from "./MealStatChips";
 
 type Mode = "scope" | "replace" | "ban";
 type Props = {
@@ -100,15 +101,12 @@ export function MealAlternativePicker({ visible, mode, scope, meal, occurrenceCo
                   </View>
                   <View style={styles.optionCopy}>
                     <Text style={styles.optionTitle}>{food(option.title)}</Text>
-                    <View style={styles.metaRow}>
-                      <View style={styles.chip}><Text style={styles.chipText}>{t("meal.kcalChip", { value: option.calories })}</Text></View>
-                      <View style={[styles.chip, styles.chipProtein]}>
-                        <Text style={[styles.chipText, styles.chipTextProtein]}>{t("meal.proteinChip", { value: option.proteinGrams })}</Text>
-                      </View>
-                      <View style={[styles.chip, styles.chipCost]}>
-                        <Text style={[styles.chipText, styles.chipTextCost]}>~{formatMoney(option.estimatedCost ?? { amountMinorUnits: option.estimatedCostCents, currencyCode: option.currencyCode ?? "EUR" }, option.currencyLocale)}</Text>
-                      </View>
-                    </View>
+                    <MealStatChips
+                      style={styles.metaRow}
+                      calories={option.calories}
+                      proteinGrams={option.proteinGrams}
+                      cost={formatMoney(option.estimatedCost ?? { amountMinorUnits: option.estimatedCostCents, currencyCode: option.currencyCode ?? "EUR" }, option.currencyLocale)}
+                    />
                   </View>
                   <Text style={styles.arrow}>›</Text>
                 </Pressable>
@@ -148,13 +146,7 @@ const styles = StyleSheet.create({
   optionCopy: { flex: 1 },
   optionTitle: { color: palette.ink, fontSize: 13, fontWeight: "700" },
   optionHint: { color: palette.muted, fontSize: 10, lineHeight: 15, marginTop: 3 },
-  metaRow: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 6 },
-  chip: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, backgroundColor: "#F1EEE4" },
-  chipProtein: { backgroundColor: palette.softGreen },
-  chipCost: { backgroundColor: "#F6E9D8" },
-  chipText: { color: palette.ink, fontSize: 10, fontWeight: "700" },
-  chipTextProtein: { color: palette.green },
-  chipTextCost: { color: "#8A5A1F" },
+  metaRow: { marginTop: 6 },
   arrow: { color: palette.green, fontSize: 20, fontWeight: "700", marginLeft: 8 },
   confirm: { gap: 16, paddingTop: 6 },
   confirmText: { color: palette.ink, fontSize: 14, lineHeight: 21 },

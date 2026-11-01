@@ -207,12 +207,15 @@ const plans = getSevenCalendarDayPlans(today, preferences, appliedGoals, "DE");
 
   const sharedReplacementPreferences = setIngredientBanChoices(
     { ...preferences, bannedIngredients: [ingredientId] }, ingredientId,
-    ["monday-d", "wednesday-d"].map((key) => ({ ingredientId, recipeKey: key, action: "skip", replacementIngredient: "potato", fallbackToAutomatic: true })),
+    ["monday-d", "wednesday-d"].map((key) => ({ ingredientId, recipeKey: key, action: "skip", replacementIngredient: "pasta", fallbackToAutomatic: true })),
     [new Date(2026, 10, 2), new Date(2026, 10, 4)].map((date) => getPersonalizedDayPlan(date, preferences).meals.find((meal) => meal.type === "Dinner"))
   );
   [new Date(2026, 10, 2), new Date(2026, 10, 4)].forEach((date) => {
     const dinner = getPersonalizedDayPlan(date, sharedReplacementPreferences).meals.find((meal) => meal.type === "Dinner");
-    assert.ok(dinner.ingredients.some((item) => /^potato/i.test(item.name)) && dinner.ingredients.every((item) => !/basmati rice/i.test(item.name)),
+    const categoryOf = (id) => ingredientCatalog.find((option) => option.id === id).category;
+    getIngredientReplacementOptions(getPersonalizedDayPlan(date, preferences).meals.find((meal) => meal.type === "Dinner"), ingredientId, preferences)
+      .forEach((option) => assert.equal(option.category, categoryOf(ingredientId), `${option.name} is offered only as a same-category replacement`));
+    assert.ok(dinner.ingredients.some((item) => /^pasta/i.test(item.name)) && dinner.ingredients.every((item) => !/basmati rice/i.test(item.name)),
       "a replacement ingredient applied to all affected meals swaps the banned ingredient in each of them");
   });
   const meatFree = { ...preferences, meatPerWeek: 0, bannedIngredients: [ingredientId] };
@@ -329,14 +332,21 @@ const plans = getSevenCalendarDayPlans(today, preferences, appliedGoals, "DE");
     { date: monday, p: openPreferences, type: "Dinner", ingredientId: "basmati-rice" },
     { date: tuesday, p: openPreferences, type: "Breakfast", ingredientId: "egg" },
     { date: monday, p: { ...openPreferences, mealsPerDay: 4, fruitPreference: "include" }, type: "Snack", ingredientId: "banana" },
-    { date: monday, p: { ...openPreferences, typicalBreakfast: { mode: "custom", ingredients: [{ name: "Rolled oats", quantity: "80", unit: "g" }] } }, type: "Breakfast", ingredientId: "oats" }
+    { date: monday, p: { ...openPreferences, typicalBreakfast: { mode: "custom", ingredients: [{ name: "Rolled oats", quantity: "80", unit: "g" }] } }, type: "Breakfast", ingredientId: "oats" },
+    { date: monday, p: openPreferences, type: "Breakfast", ingredientId: "milk" },
+    { date: monday, p: openPreferences, type: "Lunch", ingredientId: "chickpeas" },
+    { date: monday, p: openPreferences, type: "Lunch", ingredientId: "cucumber" },
+    { date: monday, p: openPreferences, type: "Dinner", ingredientId: "dried-herbs" }
   ];
   const offeredIds = new Set();
   let offeredCaseCount = 0;
   for (const setup of representativeMeals) {
     const meal = getPersonalizedDayPlan(setup.date, setup.p).meals.find((entry) => entry.type === setup.type);
     const options = getIngredientReplacementOptions(meal, setup.ingredientId, setup.p, setup.date);
-    assert.ok(options.length > 20, "replacement picker still offers meaningful modeled options");
+    const bannedCategory = ingredientCatalog.find((item) => item.id === setup.ingredientId).category;
+    assert.ok(options.length > 0, "replacement picker still offers modeled options");
+    assert.ok(options.every((option) => option.category === bannedCategory), "replacement picker only offers ingredients of the banned ingredient's type");
+    if (bannedCategory === "Pantry & seasonings") assert.ok(options.every((option) => !["baking-powder", "jam", "water"].includes(option.id)), "seasonings are not replaced by unrelated pantry items");
     for (const option of options) {
       offeredIds.add(option.id);
       const p = setIngredientBanChoices({ ...setup.p, bannedIngredients: [setup.ingredientId] }, setup.ingredientId, [
@@ -352,7 +362,7 @@ const plans = getSevenCalendarDayPlans(today, preferences, appliedGoals, "DE");
       offeredCaseCount++;
     }
   }
-  for (const id of ["pasta", "black-beans", "basmati-rice", "lentils-dry", "apple", "egg", "bread", "wrap", "tomato", "chickpeas", "red-beans", "white-beans"]) {
+  for (const id of ["pasta", "black-beans", "basmati-rice", "lentils-dry", "apple", "egg", "bread", "wrap", "tomato", "hummus", "red-beans", "white-beans"]) {
     assert.ok(offeredIds.has(id), id + " remains available with a canonical compatible portion");
   }
   const unknown = choice("basmati-rice", "monday-d", "skip", { replacementIngredient: "unmodeled-id" });
@@ -446,6 +456,7 @@ const plans = getSevenCalendarDayPlans(today, preferences, appliedGoals, "DE");
   const sheetSource = fs.readFileSync(require.resolve("../src/components/IngredientBanFlowSheet.tsx"), "utf8");
   assert.match(sheetSource, /!meal\.batch && <>\s*<Pressable[^\n]+mainAction === "skip"/, "batch meals do not render the skip/replacement-ingredient controls");
   assert.match(sheetSource, /const choices: IngredientBanChoice\[\] = meal\.batch \? \[\] :/, "confirming a batch ban stores no ignored ingredient action");
+  assert.match(sheetSource, /onPress=\{everywhere \? confirmChoices : \(\) => setStage\("review"\)\}/, "\"use replacement in all meals\" applies directly without the review step");
   const batch = getPersonalizedDayPlan(monday, { ...openPreferences, planStyle: "batchCooking" }).meals.find((meal) => meal.batch);
   assert.ok(batch, "setup has a batch-cooked meal");
   assert.deepEqual(getIngredientReplacementOptions(batch, "basmati-rice", openPreferences), [], "batch meals have no ingredient picker options");
@@ -455,6 +466,10 @@ const plans = getSevenCalendarDayPlans(today, preferences, appliedGoals, "DE");
   // 7: Skips refresh meal copy, not just ingredient totals.
   const skipped = dinner(rawChoices(bannedRice, [choice("basmati-rice", "monday-d", "skip")]));
   assert.doesNotMatch(skipped.title + " " + skipped.description, /basmati rice/i, "skipping rice removes stale rice copy");
+  assert.equal(skipped.recipeKey, "monday-d", "a recipe-level skip keeps the same meal");
+  assert.ok(skipped.ingredients.every((item) => !isIngredientBanned(item.name, ["basmati-rice"])), "a recipe-level skip leaves the ingredient out");
+  assert.match(sheetSource, /setPickedMeals\(\(current\) => \(\{ \.\.\.current, \[affected\.recipeKey\]: next\.recipeKey \}\)\)/, "a picked replacement meal stays listed after switching to another option");
+  assert.match(sheetSource, /selection\.kind === "omit"\) \{\s*choices\.push\(\{[^}]*action: "skip",\s*replacementIngredient: null/, "\"keep it, without\" stores a recipe-level skip for other affected meals");
 
   // 8: Removing the only main food (or replacing it with zero-kcal water) warns.
   for (const replacementIngredient of [null, "water"]) {

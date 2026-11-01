@@ -45,11 +45,6 @@ export function MealDetailsModal({ meal, onClose, onReplace, onBan, onBanIngredi
   const currencyLocale = meal?.currencyLocale;
   const formatCost = (minorUnits: number): string =>
     formatMoney({ amountMinorUnits: minorUnits, currencyCode }, currencyLocale);
-  const ingredientCalories = meal?.ingredients.reduce((sum, item) => sum + item.calories, 0) ?? 0;
-  const ingredientCost = meal?.ingredients.reduce(
-    (sum, item) => sum + (item.estimatedCost?.amountMinorUnits ?? item.estimatedCostCents),
-    0
-  ) ?? 0;
   const byCategory = (items: Meal["ingredients"]): Meal["ingredients"] =>
     items
       .map((item, index) => ({ item, index, rank: categoryOrder.indexOf(getShoppingCategory(item.name)) }))
@@ -169,18 +164,6 @@ export function MealDetailsModal({ meal, onClose, onReplace, onBan, onBanIngredi
                   {renderIngredients(seasonings, false)}
                 </View>
               )}
-              <View style={[styles.ingredient, styles.totalCard]}>
-                <Text style={styles.ingredientName}>{t("details.total")}</Text>
-                <View style={styles.chips}>
-                  <View style={styles.chip}><Text style={styles.chipText}>{t("meal.kcalChip", { value: ingredientCalories })}</Text></View>
-                  <View style={[styles.chip, styles.chipProtein]}>
-                    <Text style={[styles.chipText, styles.chipTextProtein]}>{t("meal.proteinChip", { value: meal.proteinGrams })}</Text>
-                  </View>
-                  <View style={[styles.chip, styles.chipCost]}>
-                    <Text style={[styles.chipText, styles.chipTextCost]}>~{formatCost(ingredientCost)}</Text>
-                  </View>
-                </View>
-              </View>
             </SheetScrollView>
           </>
         )}
@@ -310,7 +293,6 @@ const styles = StyleSheet.create({
   chipText: { color: palette.ink, fontSize: 10, fontWeight: "700" },
   chipTextProtein: { color: palette.green },
   chipTextCost: { color: "#8A5A1F" },
-  totalCard: { marginTop: 5, backgroundColor: palette.softGreen, borderWidth: 1, borderColor: palette.green },
   priceReference: { color: palette.muted, fontSize: 9, lineHeight: 14, marginTop: 15 },
   disclaimer: { color: palette.muted, fontSize: 10, lineHeight: 15, marginTop: 16 }
 });

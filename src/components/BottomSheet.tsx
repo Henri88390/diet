@@ -38,6 +38,8 @@ type Props = {
   sheetStyle?: StyleProp<ViewStyle>;
   /** Makes swipe-to-close harder, for steps where an accidental close would lose work. */
   swipeToClose?: "normal" | "firm";
+  /** Android back button / gesture: go to the previous step instead of closing, when set. */
+  onBack?: () => void;
   children: React.ReactNode;
 };
 
@@ -46,7 +48,7 @@ type Props = {
  * scrolled by the same gesture, so dragging down from anywhere scrolls back to the top and
  * then keeps pulling the sheet down until it closes.
  */
-export function BottomSheet({ visible, onClose, closeLabel, sheetStyle, swipeToClose = "normal", children }: Props): React.JSX.Element {
+export function BottomSheet({ visible, onClose, closeLabel, sheetStyle, swipeToClose = "normal", onBack, children }: Props): React.JSX.Element {
   const { height: windowHeight } = useWindowDimensions();
   const firmRef = useRef(swipeToClose === "firm");
   firmRef.current = swipeToClose === "firm";
@@ -191,7 +193,7 @@ export function BottomSheet({ visible, onClose, closeLabel, sheetStyle, swipeToC
   });
 
   return (
-    <Modal animationType="none" onRequestClose={dismiss} statusBarTranslucent transparent visible={mounted}>
+    <Modal animationType="none" onRequestClose={onBack ?? dismiss} statusBarTranslucent transparent visible={mounted}>
       <GestureHandlerRootView style={styles.root}>
       <GestureDetector gesture={pan}>
       <View pointerEvents={visible ? "auto" : "none"} style={styles.overlay}>
@@ -229,6 +231,11 @@ type SheetScrollViewProps = {
 export function SheetScrollView({ style, contentContainerStyle, children }: SheetScrollViewProps): React.JSX.Element {
   const area = useContext(SheetScrollContext);
   const translate = useMemo(() => (area ? Animated.multiply(area.scrollY, -1) : 0), [area]);
+  // A new scroll area (e.g. the next step of a flow) starts at the top.
+  useEffect(() => {
+    area?.scrollY.stopAnimation();
+    area?.scrollY.setValue(0);
+  }, [area]);
   return (
     <View
       onLayout={(event) => area?.setViewportHeight(event.nativeEvent.layout.height)}

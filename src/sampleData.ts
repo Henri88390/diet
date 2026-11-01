@@ -1087,6 +1087,19 @@ function getSelectedIngredientReplacement(
     return null;
   }
 }
+
+const pantryReplacementTypes: Record<string, string> = {
+  "olive-oil": "oil", "sesame-oil": "oil", "vegetable-oil": "oil",
+  honey: "sweet", jam: "sweet",
+  "baking-powder": "baking", "chia-seeds": "seeds", water: "liquid"
+};
+
+/** Replacement ingredients must be of the same kind: catalog category, with pantry items split into finer kinds. */
+function getReplacementType(ingredientId: string): string | undefined {
+  const category = ingredientCatalog.find((option) => option.id === ingredientId)?.category;
+  if (category !== "Pantry & seasonings") return category;
+  return `pantry:${pantryReplacementTypes[ingredientId] ?? "seasoning"}`;
+}
 
 /** The sheet and preference storage use the same validation as generation. */
 export function getIngredientReplacementOptions(
@@ -1095,7 +1108,8 @@ export function getIngredientReplacementOptions(
   if (meal.batch) return [];
   const originals = meal.ingredients.filter((item) => isIngredientBanned(item.name, [ingredientId]));
   const bannedPreferences = { ...preferences, bannedIngredients: [...preferences.bannedIngredients, ingredientId] };
-  return ingredientCatalog.filter((option) => originals.length > 0 && originals.every((original) =>
+  const type = getReplacementType(ingredientId);
+  return ingredientCatalog.filter((option) => getReplacementType(option.id) === type && originals.length > 0 && originals.every((original) =>
     getSelectedIngredientReplacement(option.id, original, meal, bannedPreferences, date) !== null
   ));
 }

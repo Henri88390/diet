@@ -120,14 +120,15 @@ export const en: Translation = {
     banCategory: "Ban {{name}}", unbanCategory: "Unban {{name}}", banCategoryConfirmTitle: "Ban this category?", banCategoryConfirmMessage: "All ingredients in {{name}} will be banned. Meals using them are adjusted automatically, and unbanning puts them back."
   },
   ingredientBan: {
-    banAction: "Ban ingredient", confirmTitle: "Ban this ingredient", confirmMessage: "Ban {{ingredient}} in {{meal}} and review other meals that use it.", continue: "Continue",
-    chooseTitle: "Choose what happens", mealChoice: "For {{name}}", skipAction: "Skip ingredient", skipHint: "Keep this meal, but omit this ingredient.",
+    banAction: "Ban ingredient",
+    chooseTitle: "Choose what happens", mealChoice: "For {{name}}", skipAction: "Skip ingredient",
     optionalReplacement: "Optional replacement ingredient", noReplacement: "No replacement", replaceMealAction: "Replace this meal", automaticHint: "Use the closest-calorie meal, or choose one below.",
     reviewTitle: "Review other meals", reviewHint: "Other affected recipes default to automatic replacements.", affectedCount: "{{count}} planned servings", chooseMeal: "Choose a meal",
     restricted: "Meal replacement is unavailable; the ingredient uses the standard automatic substitute.", noAffected: "No other meals in the current plan use this ingredient.", reviewContinue: "Review affected meals", applyAction: "Apply ingredient ban",
     applyEverywhere: "Use {{replacement}} in all meals", applyEverywhereHint: "Replace {{ingredient}} with {{replacement}} in every other meal that uses it, where possible.",
     reviewHintEverywhere: "Meals that can use {{replacement}} instead of {{ingredient}} keep their recipe. You can still pick a meal replacement.",
-    useReplacement: "Use {{replacement}}", useReplacementHint: "Keep this meal and replace {{ingredient}} with {{replacement}}."
+    useReplacement: "Use {{replacement}}", useReplacementHint: "Keep this meal and replace {{ingredient}} with {{replacement}}.",
+    omitIngredient: "Keep it, without {{ingredient}}", omitIngredientHint: "Same meal, just leave out {{ingredient}}."
   },
   meal: {
     a11y: "{{label}}: {{title}}, {{calories}} kilocalories, {{protein}} grams protein",
@@ -146,9 +147,7 @@ export const en: Translation = {
     mainIngredients: "Main ingredients",
     mainHelper: "Core foods for this sample portion",
     seasonings: "Seasonings & cooking additions",
-    seasoningsHelper: "Shown separately from the main ingredients",
-    total: "Total",
-    totalValue: "{{kcal}} kcal · {{protein}} g protein · ~{{cost}}",
+    seasoningsHelper: "Shown separately from the main ingredients",
     disclaimer: "Nutrition and costs use modeled ingredient quantities and unit estimates; scaled calorie values are reconciled to the selected daily goal. Costs are rounded to the nearest minor currency unit, so a very small positive portion may display as zero. Portions and values are illustrative, not verified recipe amounts, regional prices, nutrition guidance, or medical advice."
   },
   grocery: {

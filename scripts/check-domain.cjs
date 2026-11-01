@@ -735,6 +735,13 @@ assert.match(appSource, /pagingEnabled/, "tabs are a native horizontal pager tha
 assert.match(appSource, /scrollEnabled=\{!pagerSwipeBlocked\}/,
   "the date strip blocks tab swipes while it is touched");
 assert.match(appSource, /<MemoTopTabBar/, "screens are reachable from top tabs");
+{
+  const sheetSource = fs.readFileSync(require.resolve("../src/components/BottomSheet.tsx"), "utf8");
+  assert.doesNotMatch(sheetSource, /if \(finished\) setMounted\(false\)/, "bottom sheet must unmount even when the exit animation is interrupted");
+  assert.match(sheetSource, /setTimeout\(unmount/, "bottom sheet has a fallback unmount so an invisible modal never blocks touches");
+  assert.match(sheetSource, /translateY\.setValue\(-desired\)/, "dragging down from any scroll position hands over to closing the sheet");
+  assert.match(sheetSource, /<GestureDetector gesture=\{pan\}>\s*<View[^>]*style=\{styles\.overlay\}/, "the swipe-to-close gesture covers the whole screen, not just the sheet");
+}
 assert.match(appSource, /const MemoMenuScreen = memo\(MenuScreen\)/, "tab screens are memoized to avoid re-rendering on every tap");
 assert.deepEqual(Object.keys(en.tabs), ["preferences", "meals", "menu", "groceries"]);
 assert.deepEqual([en.tabs.menu, fr.tabs.menu, de.tabs.menu, es.tabs.menu, pl.tabs.menu, ru.tabs.menu],

@@ -63,6 +63,16 @@ export function MealAlternativePicker({ visible, mode, scope, meal, options, onC
                   <Text style={styles.arrow}>›</Text>
                 </Pressable>
               )}
+              {mode === "replace" && scope === "all" && options.length > 0 && (
+                // Options are sorted by calorie distance, so the first one is the closest match.
+                <Pressable accessibilityRole="button" onPress={() => setPending({ recipeKey: options[0].recipeKey, meal: options[0] })} style={styles.automatic}>
+                  <View style={styles.optionCopy}>
+                    <Text style={styles.optionTitle}>{t("picker.automatic")}</Text>
+                    <Text style={styles.optionHint}>{t("picker.automaticHint")}</Text>
+                  </View>
+                  <Text style={styles.arrow}>›</Text>
+                </Pressable>
+              )}
               {options.map((option) => (
                 <Pressable key={option.recipeKey} accessibilityRole="button" onPress={() => setPending({ recipeKey: option.recipeKey, meal: option })} style={styles.option}>
                   <Text style={styles.emoji}>{option.emoji}</Text>
@@ -76,9 +86,11 @@ export function MealAlternativePicker({ visible, mode, scope, meal, options, onC
               {options.length === 0 && <Text style={styles.empty}>{t("picker.noAlternatives")}</Text>}
             </SheetScrollView>
           )}
-          <Pressable accessibilityRole="button" onPress={pending ? () => setPending(null) : onClose} style={styles.cancel}>
-            <Text style={styles.cancelText}>{pending ? t("picker.back") : t("common.cancel")}</Text>
-          </Pressable>
+          {pending && (
+            <Pressable accessibilityRole="button" onPress={() => setPending(null)} style={styles.cancel}>
+              <Text style={styles.cancelText}>{t("picker.back")}</Text>
+            </Pressable>
+          )}
     </BottomSheet>
   );
 }

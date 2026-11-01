@@ -1,37 +1,24 @@
 import React from "react";
 import { ScrollView, StyleSheet } from "react-native";
-import { ArrowButton } from "../components/ArrowButton";
 import { WeeklyGroceryList } from "../components/WeeklyGroceryList";
 import type { CountryCode } from "../countryPricing";
 import type { MealPreferences } from "../models";
-import { useTranslation } from "react-i18next";
 
 type Props = {
   today: Date;
   preferences: MealPreferences;
   appliedGoals: Record<string, number>;
   countryCode: CountryCode;
-  onBackToCalendar: () => void;
 };
 
 export function GroceryScreen({
   today,
   preferences,
   appliedGoals,
-  countryCode,
-  onBackToCalendar
+  countryCode
 }: Props): React.JSX.Element {
-  const { t } = useTranslation();
   return (
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-      <ArrowButton
-        variant="compact"
-        direction="left"
-        label={t("grocery.back")}
-        accessibilityLabel={t("grocery.backA11y")}
-        onPress={onBackToCalendar}
-        style={{ alignSelf: "flex-start" }}
-      />
       <WeeklyGroceryList
         today={today}
         preferences={preferences}

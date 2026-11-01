@@ -2,13 +2,17 @@ export type Translation = { [key: string]: string | Translation };
 
 export const en: Translation = {
   common: {
-    seeMyPlan: "See my plan",
     cancel: "Cancel",
     kcal: "kcal",
     proteinUnit: "g protein",
     language: "Language",
     languageA11y: "Language: {{language}}. Change",
     languageOption: "Language: {{language}}"
+  },
+  tabs: {
+    preferences: "Preferences",
+    meals: "Meals",
+    groceries: "Groceries"
   },
   mealType: {
     Breakfast: "Breakfast",
@@ -84,10 +88,6 @@ export const en: Translation = {
     unban: "Unban {{name}}"
   },
   calendar: {
-    preferences: "Preferences",
-    preferencesA11y: "Edit ingredient preferences",
-    weeklyGrocery: "Weekly grocery estimate",
-    weeklyGroceryA11y: "Open weekly grocery estimate",
     goToToday: "Go to today",
     todayHint: "Selects today's meal plan and brings today into view",
     today: "Today",
@@ -141,8 +141,6 @@ export const en: Translation = {
     disclaimer: "Nutrition and costs use modeled ingredient quantities and unit estimates; scaled calorie values are reconciled to the selected daily goal. Costs are rounded to the nearest minor currency unit, so a very small positive portion may display as zero. Portions and values are illustrative, not verified recipe amounts, regional prices, nutrition guidance, or medical advice."
   },
   grocery: {
-    back: "Meal calendar",
-    backA11y: "Back to meal calendar",
     title: "Shopping list",
     startDate: "Start date",
     endDate: "End date",

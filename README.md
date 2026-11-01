@@ -51,12 +51,12 @@ minor unit. They do not account for package sizes, package waste, promotions,
 or store availability. The selected currency is displayed using a shared
 `Money` contract containing integer minor units and an ISO currency code.
 
-The user may swipe between the adjacent Preferences → Calendar → Grocery
-screens in either direction; transitions animate in the swipe direction, or
-users can use the existing screen actions. The calendar
-date strip retains its own horizontal scrolling and is excluded from page
-swipe recognition. Navigation uses React Native's built-in responder and
-animation APIs; no gesture or router dependency is added.
+The app has three top tabs: Preferences, Meals and Groceries. Tap a tab or
+swipe left/right on the content; pages follow the finger and snap with a
+native paging scroll while the tab underline slides along. The calendar date
+strip keeps its own horizontal scrolling and disables tab swipes while touched.
+Navigation uses React Native's built-in ScrollView paging and Animated APIs;
+no gesture or router dependency is added.
 
 Meal examples are deterministic copies of sample calendar data personalized
 from the selected meal count, plan style, weekly budget, banned ingredients,

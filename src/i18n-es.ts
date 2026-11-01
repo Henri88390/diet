@@ -2,13 +2,17 @@ import type { Translation } from "./i18n-en";
 
 export const es: Translation = {
   common: {
-    seeMyPlan: "Ver mi plan",
     cancel: "Cancelar",
     kcal: "kcal",
     proteinUnit: "g de proteína",
     language: "Idioma",
     languageA11y: "Idioma: {{language}}. Cambiar",
     languageOption: "Idioma: {{language}}"
+  },
+  tabs: {
+    preferences: "Preferencias",
+    meals: "Comidas",
+    groceries: "Compra"
   },
   mealType: { Breakfast: "Desayuno", Lunch: "Almuerzo", Dinner: "Cena", Snack: "Merienda" },
   snackSlot: { Morning: "de la mañana", Afternoon: "de la tarde" },
@@ -76,10 +80,6 @@ export const es: Translation = {
     unban: "Volver a permitir {{name}}"
   },
   calendar: {
-    preferences: "Preferencias",
-    preferencesA11y: "Editar preferencias de ingredientes",
-    weeklyGrocery: "Estimación de la compra semanal",
-    weeklyGroceryA11y: "Abrir la estimación de la compra semanal",
     goToToday: "Ir a hoy",
     todayHint: "Selecciona el plan de comidas de hoy y lo muestra",
     today: "Hoy",
@@ -133,8 +133,6 @@ export const es: Translation = {
     disclaimer: "La nutrición y los costes usan cantidades de ingredientes y precios unitarios modelados; las calorías se ajustan al objetivo diario elegido. Los costes se redondean a la unidad monetaria mínima, por lo que una porción muy pequeña puede mostrarse como cero. Las porciones y los valores son orientativos: no son cantidades de recetas verificadas, precios regionales, recomendaciones nutricionales ni consejo médico."
   },
   grocery: {
-    back: "Calendario de comidas",
-    backA11y: "Volver al calendario de comidas",
     title: "Lista de la compra",
     startDate: "Fecha de inicio",
     endDate: "Fecha de fin",

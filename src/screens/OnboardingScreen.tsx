@@ -12,6 +12,7 @@ import type {
 import { ingredientCatalog, ingredientCategoryOrder } from "../ingredientCatalog";
 import { palette } from "../theme";
 import { getBudgetStep, stepBudget } from "../budgetPlan";
+import { LanguageDropdown } from "../components/LanguageDropdown";
 import type { BudgetWarning } from "../budgetPlan";
 import { countries, formatMoney, getCountry, getCurrencySymbol, type CountryCode } from "../countryPricing";
 import {
@@ -19,8 +20,6 @@ import {
   isValidPositiveIngredientQuantity
 } from "../ingredientEstimates";
 import { customBreakfastIngredientOptions, typicalBreakfastPresets } from "../typicalBreakfast";
-import { ArrowButton } from "../components/ArrowButton";
-import { LanguageDropdown } from "../components/LanguageDropdown";
 import { useFoodNames } from "../i18n";
 import { useTranslation } from "react-i18next";
 
@@ -32,7 +31,6 @@ type Props = {
   countryCode: CountryCode;
   budgetWarning: BudgetWarning | null;
   onCountryChange: (countryCode: CountryCode) => void;
-  onContinue: () => void;
 };
 
 const frequencyOptions: { value: WeeklyFrequency }[] = [
@@ -59,8 +57,7 @@ export function OnboardingScreen({
   onMealPreferencesChange,
   countryCode,
   budgetWarning,
-  onCountryChange,
-  onContinue
+  onCountryChange
 }: Props): React.JSX.Element {
   const { t } = useTranslation();
   const { food } = useFoodNames();
@@ -74,25 +71,14 @@ export function OnboardingScreen({
   const parsedBudget = Number(mealPreferences.weeklyBudget.replace(",", "."));
   const budgetIsValid = mealPreferences.weeklyBudget.trim() === "" ||
     (Number.isFinite(parsedBudget) && parsedBudget >= 0);
-  const typicalBreakfastIsValid = mealPreferences.typicalBreakfast.mode !== "custom" ||
-    (mealPreferences.typicalBreakfast.ingredients.length > 0 &&
-      mealPreferences.typicalBreakfast.ingredients.every((ingredient) =>
-        isValidCustomBreakfastIngredient(ingredient, countryCode)
-      ));
   return (
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-      <View style={styles.topRow}>
-        <ArrowButton
-          label={t("common.seeMyPlan")}
-          disabled={!typicalBreakfastIsValid}
-          onPress={onContinue}
-          style={{ flex: 1 }}
-        />
-        <LanguageDropdown />
-      </View>
       <View style={styles.profileSection}>
-        <View style={styles.choiceGroup}>
-          <Text style={styles.choiceTitle}>{t("prefs.planStyle")}</Text>
+        <View style={[styles.choiceGroup, styles.firstGroup]}>
+          <View style={styles.cardHeader}>
+            <Text style={[styles.choiceTitle, styles.cardHeaderTitle]}>{t("prefs.planStyle")}</Text>
+            <LanguageDropdown />
+          </View>
           <View style={styles.planStyles}>
             {planStyleOptions.map((option) => (
               <ChoiceButton
@@ -285,12 +271,6 @@ export function OnboardingScreen({
           </View>
         ))}
       </View>
-      <ArrowButton
-        label={t("common.seeMyPlan")}
-        disabled={!typicalBreakfastIsValid}
-        onPress={onContinue}
-        style={{ marginTop: 17 }}
-      />
     </ScrollView>
   );
 }
@@ -380,20 +360,6 @@ function CustomBreakfastBuilder({
   );
 }
 
-function isValidCustomBreakfastIngredient(
-  ingredient: TypicalBreakfastIngredient,
-  countryCode: CountryCode
-): boolean {
-  if (!isValidPositiveIngredientQuantity(ingredient.quantity)) return false;
-  try {
-    estimateIngredient(ingredient.name, ingredient.quantity, ingredient.unit, countryCode);
-    return true;
-  } catch (error) {
-    if (error instanceof RangeError) return false;
-    throw error;
-  }
-}
-
 function FrequencyChoice({
   title,
   value,
@@ -452,9 +418,11 @@ function ChoiceButton({
 
 const styles = StyleSheet.create({
   content: { paddingHorizontal: 24, paddingTop: 22, paddingBottom: 36 },
-  topRow: { flexDirection: "row", alignItems: "center", marginBottom: 17, zIndex: 20 },
   profileSection: { backgroundColor: palette.white, borderRadius: 17, padding: 15, marginBottom: 27, borderWidth: 1, borderColor: "#F0F0EA" },
   choiceGroup: { marginTop: 15 },
+  firstGroup: { marginTop: 0, zIndex: 20 },
+  cardHeader: { flexDirection: "row", alignItems: "center", marginBottom: 8, zIndex: 20 },
+  cardHeaderTitle: { flex: 1, marginBottom: 0 },
   breakfastPreset: { flexBasis: "48%", flexGrow: 1 },
   customBreakfast: { marginTop: 10, padding: 10, borderRadius: 11, backgroundColor: "#F7F7F3" },
   customBreakfastTitle: { color: palette.ink, fontSize: 12, fontWeight: "700", marginBottom: 8 },

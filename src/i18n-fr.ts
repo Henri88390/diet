@@ -2,13 +2,17 @@ import type { Translation } from "./i18n-en";
 
 export const fr: Translation = {
   common: {
-    seeMyPlan: "Voir mon plan",
     cancel: "Annuler",
     kcal: "kcal",
     proteinUnit: "g de protéines",
     language: "Langue",
     languageA11y: "Langue : {{language}}. Modifier",
     languageOption: "Langue : {{language}}"
+  },
+  tabs: {
+    preferences: "Pr?f?rences",
+    meals: "Repas",
+    groceries: "Courses"
   },
   mealType: { Breakfast: "Petit-déjeuner", Lunch: "Déjeuner", Dinner: "Dîner", Snack: "Collation" },
   snackSlot: { Morning: "Matin", Afternoon: "Après-midi" },
@@ -76,10 +80,6 @@ export const fr: Translation = {
     unban: "Ne plus exclure {{name}}"
   },
   calendar: {
-    preferences: "Préférences",
-    preferencesA11y: "Modifier les préférences d'ingrédients",
-    weeklyGrocery: "Courses de la semaine",
-    weeklyGroceryA11y: "Ouvrir l'estimation des courses de la semaine",
     goToToday: "Aller à aujourd'hui",
     todayHint: "Sélectionne le plan de repas d'aujourd'hui et l'affiche",
     today: "Aujourd'hui",
@@ -133,8 +133,6 @@ export const fr: Translation = {
     disclaimer: "La nutrition et les coûts reposent sur des quantités d'ingrédients et des prix unitaires modélisés ; les calories sont ajustées à l'objectif quotidien choisi. Les coûts sont arrondis à la plus petite unité monétaire, une très petite portion peut donc s'afficher à zéro. Les portions et valeurs sont indicatives : ce ne sont ni des recettes vérifiées, ni des prix régionaux, ni des conseils nutritionnels ou médicaux."
   },
   grocery: {
-    back: "Calendrier des repas",
-    backA11y: "Retour au calendrier des repas",
     title: "Liste de courses",
     startDate: "Date de début",
     endDate: "Date de fin",

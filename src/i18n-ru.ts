@@ -2,13 +2,17 @@ import type { Translation } from "./i18n-en";
 
 export const ru: Translation = {
   common: {
-    seeMyPlan: "Показать мой план",
     cancel: "Отмена",
     kcal: "ккал",
     proteinUnit: "г белка",
     language: "Язык",
     languageA11y: "Язык: {{language}}. Изменить",
     languageOption: "Язык: {{language}}"
+  },
+  tabs: {
+    preferences: "????????????",
+    meals: "???????",
+    groceries: "???????"
   },
   mealType: { Breakfast: "Завтрак", Lunch: "Обед", Dinner: "Ужин", Snack: "Перекус" },
   snackSlot: { Morning: "утренний", Afternoon: "дневной" },
@@ -80,10 +84,6 @@ export const ru: Translation = {
     unban: "Снова разрешить «{{name}}»"
   },
   calendar: {
-    preferences: "Предпочтения",
-    preferencesA11y: "Изменить предпочтения по ингредиентам",
-    weeklyGrocery: "Оценка недельных покупок",
-    weeklyGroceryA11y: "Открыть оценку недельных покупок",
     goToToday: "Перейти к сегодняшнему дню",
     todayHint: "Выбирает план питания на сегодня и показывает его",
     today: "Сегодня",
@@ -137,8 +137,6 @@ export const ru: Translation = {
     disclaimer: "Питательность и стоимость рассчитаны по модельным количествам ингредиентов и ценам за единицу; калорийность подгоняется под выбранную дневную цель. Стоимость округляется до наименьшей денежной единицы, поэтому очень маленькая порция может показываться как ноль. Порции и значения примерные: это не проверенные рецепты, региональные цены, рекомендации по питанию или медицинские советы."
   },
   grocery: {
-    back: "Календарь питания",
-    backA11y: "Назад к календарю питания",
     title: "Список покупок",
     startDate: "Дата начала",
     endDate: "Дата окончания",

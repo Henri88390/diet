@@ -1,8 +1,21 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Animated, AppState, Easing, PanResponder, StatusBar, StyleSheet } from "react-native";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import {
+  Animated,
+  AppState,
+  StatusBar,
+  StyleSheet,
+  View,
+  useWindowDimensions,
+  type LayoutChangeEvent,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+  type ScrollViewInstance
+} from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 import "./src/i18n";
 import { MealDetailsModal } from "./src/components/MealDetailsModal";
+import { TopTabBar } from "./src/components/TopTabBar";
 import { CalendarScreen } from "./src/screens/CalendarScreen";
 import { GroceryScreen } from "./src/screens/GroceryScreen";
 import { OnboardingScreen } from "./src/screens/OnboardingScreen";
@@ -27,10 +40,10 @@ import { getBudgetPlan } from "./src/budgetPlan";
 import { setBatchCalendar } from "./src/batchCooking";
 import { palette } from "./src/theme";
 
-type Screen = "preferences" | "calendar" | "groceries";
+const tabOrder = ["preferences", "meals", "groceries"] as const;
 
 export default function App(): React.JSX.Element {
-  const [screen, setScreen] = useState<Screen>("preferences");
+  const { t } = useTranslation();
   const [mealPreferences, setMealPreferences] = useState<MealPreferences>({
     meatPerWeek: 2,
     dairyPerWeek: 7,
@@ -48,10 +61,13 @@ export default function App(): React.JSX.Element {
   const [appliedGoals, setAppliedGoals] = useState<Record<string, number>>({});
   const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null);
   const [countryCode, setCountryCode] = useState<CountryCode>(DEFAULT_COUNTRY);
-  const [navigationDirection, setNavigationDirection] = useState(1);
-  const [screenSwipeBlocked, setScreenSwipeBlocked] = useState(false);
-  const swipeBlockedRef = useRef(false);
-  const screenTransition = useRef(new Animated.Value(0)).current;
+  const [activeTab, setActiveTab] = useState(0);
+  const activeTabRef = useRef(0);
+  const [pagerSwipeBlocked, setPagerSwipeBlocked] = useState(false);
+  const { width: windowWidth } = useWindowDimensions();
+  const [pageWidth, setPageWidth] = useState(windowWidth);
+  const pagerRef = useRef<ScrollViewInstance>(null);
+  const scrollX = useRef(new Animated.Value(0)).current;
 
   const dates = useMemo(() => getPlanningDates(today), [today]);
   setBatchCalendar(dates[0], dates[dates.length - 1]);
@@ -155,73 +171,71 @@ export default function App(): React.JSX.Element {
     setSelectedDate(currentDate);
   }
 
-  const screenOrder: Screen[] = ["preferences", "calendar", "groceries"];
-  const goToAdjacentScreen = useCallback((direction: -1 | 1) => {
-    const currentIndex = screenOrder.indexOf(screen);
-    const next = screenOrder[currentIndex + direction];
-    if (!next) return;
-    setNavigationDirection(direction);
-    setScreen(next);
-  }, [screen]);
+  const tabPosition = pageWidth > 0
+    ? scrollX.interpolate({
+        inputRange: [0, pageWidth * (tabOrder.length - 1)],
+        outputRange: [0, tabOrder.length - 1],
+        extrapolate: "clamp"
+      })
+    : scrollX;
 
-  function navigateTo(next: Screen): void {
-    const currentIndex = screenOrder.indexOf(screen);
-    const nextIndex = screenOrder.indexOf(next);
-    setNavigationDirection(nextIndex >= currentIndex ? 1 : -1);
-    setScreen(next);
+  function selectTab(index: number): void {
+    setActiveTab(index);
+    pagerRef.current?.scrollTo({ x: index * pageWidth, animated: true });
   }
 
-  function handleDateStripTouch(touching: boolean): void {
-    swipeBlockedRef.current = touching;
-    setScreenSwipeBlocked(touching);
-  }
-
-  useEffect(() => {
-    screenTransition.setValue(navigationDirection * 72);
-    Animated.timing(screenTransition, {
-      toValue: 0,
-      duration: 300,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: true
-    }).start();
-  }, [screen, navigationDirection, screenTransition]);
-
-  useEffect(() => {
-    swipeBlockedRef.current = screenSwipeBlocked;
-  }, [screenSwipeBlocked]);
-
-  useEffect(() => {
-    swipeBlockedRef.current = false;
-    setScreenSwipeBlocked(false);
-  }, [screen]);
-
-  const panResponder = useMemo(() => PanResponder.create({
-    onMoveShouldSetPanResponder: (_event, gesture) =>
-      !swipeBlockedRef.current &&
-      Math.abs(gesture.dx) > 40 &&
-      Math.abs(gesture.dx) > Math.abs(gesture.dy) * 1.4,
-    onPanResponderRelease: (_event, gesture) => {
-      if (Math.abs(gesture.dx) > 75 && Math.abs(gesture.dx) > Math.abs(gesture.dy) * 1.4) {
-        goToAdjacentScreen(gesture.dx < 0 ? 1 : -1);
-      }
+  function handlePagerScroll(event: NativeSyntheticEvent<NativeScrollEvent>): void {
+    if (pageWidth <= 0) return;
+    const index = Math.round(event.nativeEvent.contentOffset.x / pageWidth);
+    const clamped = Math.max(0, Math.min(tabOrder.length - 1, index));
+    if (clamped !== activeTabRef.current) {
+      activeTabRef.current = clamped;
+      setActiveTab(clamped);
     }
-  }), [goToAdjacentScreen]);
+  }
+
+  function handlePagerLayout(event: LayoutChangeEvent): void {
+    const width = event.nativeEvent.layout.width;
+    if (width === pageWidth) return;
+    setPageWidth(width);
+    requestAnimationFrame(() => pagerRef.current?.scrollTo({ x: activeTabRef.current * width, animated: false }));
+  }
+
+  useEffect(() => {
+    activeTabRef.current = activeTab;
+  }, [activeTab]);
+
+  const pageStyle = { width: pageWidth || windowWidth };
 
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.screen} edges={["top"]}>
         <StatusBar barStyle="dark-content" />
-        <Animated.View
-          {...panResponder.panHandlers}
-          style={[
-            styles.screenContent,
-            {
-              opacity: screenTransition.interpolate({ inputRange: [-72, 0, 72], outputRange: [0.88, 1, 0.88] }),
-              transform: [{ translateX: screenTransition }]
-            }
-          ]}
+        <TopTabBar
+          labels={tabOrder.map((tab) => t(`tabs.${tab}`))}
+          activeIndex={activeTab}
+          position={tabPosition}
+          onTabPress={selectTab}
+        />
+        <Animated.ScrollView
+          ref={pagerRef}
+          horizontal
+          pagingEnabled
+          bounces={false}
+          overScrollMode="never"
+          directionalLockEnabled
+          scrollEnabled={!pagerSwipeBlocked}
+          showsHorizontalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          scrollEventThrottle={16}
+          onLayout={handlePagerLayout}
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+            { useNativeDriver: true, listener: handlePagerScroll }
+          )}
+          style={styles.pager}
         >
-          {screen === "preferences" ? (
+          <View style={pageStyle}>
             <OnboardingScreen
               bannedIngredients={mealPreferences.bannedIngredients}
               onToggleIngredientBan={toggleIngredientBan}
@@ -230,17 +244,9 @@ export default function App(): React.JSX.Element {
               countryCode={countryCode}
               budgetWarning={budgetWarning}
               onCountryChange={setCountryCode}
-              onContinue={() => navigateTo("calendar")}
             />
-          ) : screen === "groceries" ? (
-            <GroceryScreen
-              today={today}
-              preferences={planPreferences}
-              appliedGoals={appliedGoals}
-              countryCode={countryCode}
-              onBackToCalendar={() => navigateTo("calendar")}
-            />
-          ) : (
+          </View>
+          <View style={pageStyle}>
             <CalendarScreen
               dates={dates}
               today={today}
@@ -266,12 +272,18 @@ export default function App(): React.JSX.Element {
               budgetWarning={budgetWarning}
               budgetStatus={budgetPlan.status}
               currencyCode={getCountry(countryCode).currencyCode}
-              onEditPreferences={() => navigateTo("preferences")}
-              onOpenGroceries={() => navigateTo("groceries")}
-              onDateStripTouchChange={handleDateStripTouch}
+              onDateStripTouchChange={setPagerSwipeBlocked}
             />
-          )}
-        </Animated.View>
+          </View>
+          <View style={pageStyle}>
+            <GroceryScreen
+              today={today}
+              preferences={planPreferences}
+              appliedGoals={appliedGoals}
+              countryCode={countryCode}
+            />
+          </View>
+        </Animated.ScrollView>
       </SafeAreaView>
       <MealDetailsModal meal={selectedMeal} onClose={() => setSelectedMeal(null)} />
     </SafeAreaProvider>
@@ -280,5 +292,5 @@ export default function App(): React.JSX.Element {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: palette.paper },
-  screenContent: { flex: 1 }
+  pager: { flex: 1 }
 });

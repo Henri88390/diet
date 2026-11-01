@@ -10,7 +10,6 @@ import { palette } from "../theme";
 import { CalendarDateStrip } from "../components/CalendarDateStrip";
 import { MealCard } from "../components/MealCard";
 import { BatchPrepCard } from "../components/BatchCooking";
-import { ArrowButton } from "../components/ArrowButton";
 import { AmountStepper } from "../components/AmountStepper";
 import { useTranslation } from "react-i18next";
 import { useDateLocale } from "../i18n";
@@ -40,8 +39,6 @@ type Props = {
   budgetWarning: BudgetWarning | null;
   budgetStatus: BudgetPlan["status"];
   currencyCode: string;
-  onEditPreferences: () => void;
-  onOpenGroceries: () => void;
   onDateStripTouchChange: (touching: boolean) => void;
 };
 
@@ -79,10 +76,6 @@ export function CalendarScreen(props: Props): React.JSX.Element {
           style={styles.menuBackdrop}
         />
       )}
-      <View style={styles.header}>
-        <ArrowButton variant="compact" direction="left" label={t("calendar.preferences")} accessibilityLabel={t("calendar.preferencesA11y")} onPress={props.onEditPreferences} />
-        <ArrowButton variant="compact" style={{ flexShrink: 1, marginLeft: 10 }} label={t("calendar.weeklyGrocery")} accessibilityLabel={t("calendar.weeklyGroceryA11y")} onPress={props.onOpenGroceries} />
-      </View>
       <View style={styles.dateHeading}>
         <View style={styles.dateHeadingRow}>
           <Text style={styles.monthLabel}>{monthLabel}</Text>
@@ -294,8 +287,7 @@ export function CalendarScreen(props: Props): React.JSX.Element {
 
 const styles = StyleSheet.create({
   content: { paddingHorizontal: 22, paddingTop: 22, paddingBottom: 40 },
-  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  dateHeading: { marginTop: 26, marginBottom: 12 },
+  dateHeading: { marginBottom: 12 },
   dateHeadingRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   monthLabel: { color: palette.ink, fontSize: 16, fontWeight: "700" },
   todayButton: { minHeight: 34, justifyContent: "center", paddingHorizontal: 13, borderRadius: 10, borderWidth: 1, borderColor: "#C9D9C9", backgroundColor: palette.softGreen },

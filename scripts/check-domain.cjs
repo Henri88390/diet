@@ -549,9 +549,11 @@ assert.doesNotMatch(preferencesSource, /MADE FOR YOUR EVERYDAY|Good food,|your w
 assert.doesNotMatch(preferencesSource, /breakfastEstimate|estimatePresetBreakfast/,
   "standard breakfast choices do not display a cost, calorie, or protein preview");
 assert.match(mealDetailsSource, /formatMoney/);
-assert.match(appSource, /PanResponder/);
-assert.match(appSource, /Animated\.timing/);
-assert.match(appSource, /Easing\.out\(Easing\.cubic\)/);
+assert.match(appSource, /pagingEnabled/, "tabs are a native horizontal pager that follows the finger");
+assert.match(appSource, /scrollEnabled=\{!pagerSwipeBlocked\}/,
+  "the date strip blocks tab swipes while it is touched");
+assert.match(appSource, /<TopTabBar/, "the three screens are reachable from top tabs");
+assert.deepEqual(Object.keys(en.tabs), ["preferences", "meals", "groceries"]);
 assert.match(dateStripSource, /onTouchStart/);
 assert.doesNotMatch(grocerySource, /optimizer|protein|calorie goal|weekly budget/i);
 

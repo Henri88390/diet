@@ -127,7 +127,8 @@ export const fr: Translation = {
     hint: "Ouvre les détails du repas et les quantités indicatives d'ingrédients",
     kcalChip: "{{value}} kcal",
     proteinChip: "{{value}} g de protéines",
-    banned: "Nécessite un remplacement pour l'ingrédient exclu : {{list}}"
+    banned: "Nécessite un remplacement pour l'ingrédient exclu : {{list}}",
+    bannedIngredients: "Exclu : {{list}}"
   },
   details: {
     eyebrow: "{{label}} · REPAS EXEMPLE",
@@ -136,6 +137,12 @@ export const fr: Translation = {
     protein: "protéines",
     estCost: "coût estimé",
     banWarning: "Aucun substitut autorisé trouvé pour : {{list}}. Vérifiez les exclusions ou choisissez un autre repas.",
+    bannedTag: "Exclu",
+    bannedReplaced: "Remplacé par {{name}}",
+    bannedLeftOut: "Retiré de ce repas",
+    unbanIngredient: "Réautoriser",
+    unbanIngredientConfirmTitle: "Réautoriser l'ingrédient ?",
+    unbanIngredientConfirmMessage: "{{name}} sera de nouveau autorisé. Les repas qui l'utilisaient le récupèrent et vos choix de remplacement sont réinitialisés.",
     mainIngredients: "Ingrédients principaux",
     mainHelper: "Aliments de base de cette portion exemple",
     seasonings: "Assaisonnements et ajouts de cuisson",

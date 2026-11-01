@@ -127,7 +127,8 @@ export const es: Translation = {
     hint: "Abre los detalles de la comida y cantidades orientativas de ingredientes",
     kcalChip: "{{value}} kcal",
     proteinChip: "{{value}} g de proteína",
-    banned: "Necesita un sustituto para el ingrediente excluido: {{list}}"
+    banned: "Necesita un sustituto para el ingrediente excluido: {{list}}",
+    bannedIngredients: "Excluido: {{list}}"
   },
   details: {
     eyebrow: "{{label}} · COMIDA DE EJEMPLO",
@@ -136,6 +137,12 @@ export const es: Translation = {
     protein: "proteína",
     estCost: "coste est.",
     banWarning: "No se encontró un sustituto permitido para: {{list}}. Revisa las exclusiones o elige otra comida.",
+    bannedTag: "Excluido",
+    bannedReplaced: "Sustituido por {{name}}",
+    bannedLeftOut: "Quitado de esta comida",
+    unbanIngredient: "Permitir",
+    unbanIngredientConfirmTitle: "¿Permitir el ingrediente?",
+    unbanIngredientConfirmMessage: "{{name}} volverá a estar permitido. Las comidas que lo usaban lo recuperan y se restablecen tus elecciones de sustitución.",
     mainIngredients: "Ingredientes principales",
     mainHelper: "Alimentos base de esta porción de ejemplo",
     seasonings: "Condimentos y añadidos de cocina",

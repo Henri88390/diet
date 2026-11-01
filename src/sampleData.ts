@@ -7,6 +7,7 @@ import type {
   IngredientOption,
   IngredientCategoryGroup,
   MealType,
+  RemovedBannedIngredient,
   TypicalBreakfastIngredient,
   WeeklyFrequency
 } from "./models";
@@ -15,7 +16,7 @@ import {
   getIngredientCategory,
   isValidPositiveIngredientQuantity
 } from "./ingredientEstimates";
-import { ingredientCatalog, isIngredientBanned, isWholePieceIngredient } from "./ingredientCatalog";
+import { getIngredientCatalogId, ingredientCatalog, isIngredientBanned, isWholePieceIngredient } from "./ingredientCatalog";
 import { applyBatchCooking } from "./batchCooking";
 import type { CountryCode } from "./countryPricing";
 import { typicalBreakfastPresets } from "./typicalBreakfast";
@@ -963,6 +964,7 @@ function reduceToStaples(meals: Meal[], withDairy: boolean): void {
     });
     meal.title = `Lower-cost ${meal.type.toLowerCase()} with ${recipe[0][0]}`;
     meal.description = describeMealIngredients(meal);
+    delete meal.removedBannedIngredients;
     refreshMealEstimates(meal);
   });
 }
@@ -974,6 +976,14 @@ function applyIngredientBans(meals: Meal[], bannedIds: string[], preferences: Me
     let replacedIngredient = false;
     let occurrenceScopedChoiceApplied = false;
     const skippedNames: string[] = [];
+    const removed: RemovedBannedIngredient[] = [];
+    const recordRemoval = (ingredient: MealIngredient, replacement: MealIngredient | null): void => {
+      const catalogId = getIngredientCatalogId(ingredient.name);
+      const ingredientId = catalogId && bannedIds.includes(catalogId)
+        ? catalogId
+        : bannedIds.find((id) => isIngredientBanned(ingredient.name, [id]))!;
+      removed.push({ ingredientId, name: ingredient.name, replacement: replacement?.name ?? null });
+    };
     const occupiedNames = new Set(
       meal.ingredients
         .filter((ingredient) => !isIngredientBanned(ingredient.name, bannedIds))
@@ -995,6 +1005,7 @@ function applyIngredientBans(meals: Meal[], bannedIds: string[], preferences: Me
           replacedIngredient = true; // Skips must refresh title and description too.
           occurrenceScopedChoiceApplied ||= Boolean(choice.occurrenceKey);
           skippedNames.push(ingredient.name);
+          recordRemoval(ingredient, usable);
           if (usable) {
             occupiedNames.add(usable.name.toLowerCase());
             return [usable];
@@ -1003,6 +1014,7 @@ function applyIngredientBans(meals: Meal[], bannedIds: string[], preferences: Me
         }
       }
       const replacement = getBanReplacement(ingredient, bannedIds, occupiedNames);
+      recordRemoval(ingredient, replacement);
       if (!replacement) {
         replacedIngredient = true;
         conflicts.push(ingredient.name);
@@ -1033,6 +1045,12 @@ function applyIngredientBans(meals: Meal[], bannedIds: string[], preferences: Me
       meal.description = foods.join(" · ");
     }
     if (conflicts.length > 0) meal.banConflicts = conflicts;
+    if (removed.length > 0) {
+      // Bans run before and after budget fitting; keep removals from the first pass.
+      const previous = (meal.removedBannedIngredients ?? []).filter((item) =>
+        !removed.some((next) => next.name.toLowerCase() === item.name.toLowerCase()));
+      meal.removedBannedIngredients = [...previous, ...removed];
+    }
     refreshMealEstimates(meal);
   });
 }

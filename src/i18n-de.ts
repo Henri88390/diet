@@ -127,7 +127,8 @@ export const de: Translation = {
     hint: "Öffnet Mahlzeitendetails und beispielhafte Zutatenmengen",
     kcalChip: "{{value}} kcal",
     proteinChip: "{{value}} g Eiweiß",
-    banned: "Ersatz nötig für ausgeschlossene Zutat: {{list}}"
+    banned: "Ersatz nötig für ausgeschlossene Zutat: {{list}}",
+    bannedIngredients: "Ausgeschlossen: {{list}}"
   },
   details: {
     eyebrow: "{{label}} · BEISPIELMAHLZEIT",
@@ -136,6 +137,12 @@ export const de: Translation = {
     protein: "Eiweiß",
     estCost: "gesch. Kosten",
     banWarning: "Für {{list}} wurde kein erlaubter Ersatz gefunden. Prüfe die Ausschlüsse oder wähle eine andere Mahlzeit.",
+    bannedTag: "Ausgeschlossen",
+    bannedReplaced: "Ersetzt durch {{name}}",
+    bannedLeftOut: "Aus dieser Mahlzeit entfernt",
+    unbanIngredient: "Wieder erlauben",
+    unbanIngredientConfirmTitle: "Zutat wieder erlauben?",
+    unbanIngredientConfirmMessage: "{{name}} ist wieder erlaubt. Mahlzeiten, die sie enthielten, bekommen sie zurück, und deine Ersatz-Auswahl wird zurückgesetzt.",
     mainIngredients: "Hauptzutaten",
     mainHelper: "Grundnahrungsmittel für diese Beispielportion",
     seasonings: "Gewürze & Zutaten zum Kochen",

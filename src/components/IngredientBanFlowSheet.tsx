@@ -89,12 +89,14 @@ export function IngredientBanFlowSheet({
         ? { replacementIngredient }
         : { replacementMealKey: mainReplacement })
     }));
-    if (everywhere && sharedReplacement && (meal.occurrenceKey || meal.occurrenceKeys?.length)) {
-      // Other servings of the same recipe also get the replacement ingredient.
-      choices.push({
-        ingredientId: ingredient.id, recipeKey: meal.recipeKey, action: "skip",
-        replacementIngredient: sharedReplacement.id, fallbackToAutomatic: true
-      });
+    if (meal.occurrenceKey || meal.occurrenceKeys?.length) {
+      // The choice covers the whole recipe, so its other servings are not reviewed again.
+      choices.push(mainAction === "skip"
+        ? {
+          ingredientId: ingredient.id, recipeKey: meal.recipeKey, action: "skip",
+          replacementIngredient, ...(replacementIngredient ? { fallbackToAutomatic: true } : {})
+        }
+        : { ingredientId: ingredient.id, recipeKey: meal.recipeKey, action: "replaceMeal", replacementMealKey: mainReplacement });
     }
     affectedMeals.forEach((affected) => {
       const selection = selectionFor(affected);

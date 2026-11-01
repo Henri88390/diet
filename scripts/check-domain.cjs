@@ -471,6 +471,13 @@ const plans = getSevenCalendarDayPlans(today, preferences, appliedGoals, "DE");
   assert.ok(skipped.ingredients.every((item) => !isIngredientBanned(item.name, ["basmati-rice"])), "a recipe-level skip leaves the ingredient out");
   assert.match(sheetSource, /setPickedMeals\(\(current\) => \(\{ \.\.\.current, \[affected\.recipeKey\]: next\.recipeKey \}\)\)/, "a picked replacement meal stays listed after switching to another option");
   assert.match(sheetSource, /selection\.kind === "omit"\) \{\s*choices\.push\(\{[^}]*action: "skip",\s*replacementIngredient: null/, "\"keep it, without\" stores a recipe-level skip for other affected meals");
+  assert.match(sheetSource, /if \(meal\.occurrenceKey \|\| meal\.occurrenceKeys\?\.length\) \{[\s\S]{0,200}choices\.push\(mainAction === "skip"/,
+    "a choice made on one serving also covers the recipe's other servings");
+  assert.match(appSource, /if \(candidate\.recipeKey === meal\.recipeKey \|\|/, "other servings of the chosen recipe are not reviewed again");
+  const laterDay = new Date(2026, 10, 9);
+  const laterSkipped = getPersonalizedDayPlan(laterDay, rawChoices(bannedRice, [choice("basmati-rice", "monday-d", "skip")]))
+    .meals.find((meal) => meal.type === "Dinner");
+  assert.equal(laterSkipped.recipeKey, "monday-d", "a recipe-level skip keeps the meal on every day it is planned");
 
   // 8: Removing the only main food (or replacing it with zero-kcal water) warns.
   for (const replacementIngredient of [null, "water"]) {
@@ -519,7 +526,7 @@ const plans = getSevenCalendarDayPlans(today, preferences, appliedGoals, "DE");
         for (const mealsPerDay of [2, 3, 4, 5]) for (let day = 2; day <= 8; day++) {
           const p = { ...preferences, planStyle, mealsPerDay, bannedIngredients: id ? [id] : [] };
           const plan = getPersonalizedDayPlan(new Date(2026, 10, day), p);
-          hash.update(JSON.stringify(plan, (key, value) => key === "emoji" ? undefined : value));
+          hash.update(JSON.stringify(plan, (key, value) => key === "emoji" || key === "removedBannedIngredients" ? undefined : value));
           assert.ok(plan.meals.every((meal) => meal.ingredients.every((item) => !isIngredientBanned(item.name, p.bannedIngredients))), "automatic bans remain leak-free");
           count++;
         }
@@ -585,6 +592,59 @@ const plans = getSevenCalendarDayPlans(today, preferences, appliedGoals, "DE");
   assert.ok(oilOptions.every((id) => !["vinegar", "salt", "sugar", "peanut-butter"].includes(id)), "only cooking fats replace an oil");
   const riceOptions = optionIds("Dinner", "basmati-rice");
   assert.ok(riceOptions.includes("brown-rice") && riceOptions.includes("couscous"), "brown rice and couscous replace rice");
+}
+
+// Kept meals list the banned ingredients they lost, so the card and details can show and unban them.
+{
+  const { repriceMeals } = require("../src/ingredientEstimates.ts");
+  const monday = new Date(2026, 10, 2);
+  const base = getPersonalizedDayPlan(monday, preferences).meals;
+  assert.ok(base.every((meal) => meal.removedBannedIngredients === undefined), "no bans: no removed-ingredient markers");
+  const target = base.find((meal) => meal.ingredients.some((item) => getIngredientCatalogId(item.name) === "olive-oil"));
+  assert.ok(target, "a default meal uses olive oil");
+  const automatic = { ...preferences, bannedIngredients: ["olive-oil"] };
+  const automaticMeal = getPersonalizedDayPlan(monday, automatic).meals.find((meal) => meal.recipeKey === target.recipeKey);
+  assert.deepEqual(automaticMeal.removedBannedIngredients?.map((item) => item.ingredientId), ["olive-oil"]);
+  assert.equal(automaticMeal.removedBannedIngredients[0].replacement, null, "seasonings are left out automatically");
+  const riceMeal = base.find((meal) => meal.ingredients.some((item) => getIngredientCatalogId(item.name) === "basmati-rice"));
+  assert.ok(riceMeal, "a default meal uses basmati rice");
+  const riceBanned = getPersonalizedDayPlan(monday, { ...preferences, bannedIngredients: ["basmati-rice"] }).meals
+    .find((meal) => meal.recipeKey === riceMeal.recipeKey);
+  assert.equal(riceBanned.removedBannedIngredients?.[0].ingredientId, "basmati-rice");
+  assert.ok(riceBanned.removedBannedIngredients[0].replacement, "automatic substitutes are recorded");
+  assert.ok(riceBanned.ingredients.some((item) => item.name === riceBanned.removedBannedIngredients[0].replacement));
+  const displayed = repriceMeals(scaleMealPlan(getPersonalizedDayPlan(monday, automatic).meals, 2000), "FR")
+    .find((meal) => meal.recipeKey === target.recipeKey);
+  assert.deepEqual(displayed.removedBannedIngredients, automaticMeal.removedBannedIngredients, "scaling and repricing keep the marker");
+
+  const skipped = setIngredientBanChoices(automatic, "olive-oil",
+    [{ ingredientId: "olive-oil", recipeKey: target.recipeKey, action: "skip", replacementIngredient: null }]);
+  const skippedMeal = getPersonalizedDayPlan(monday, skipped).meals.find((meal) => meal.recipeKey === target.recipeKey);
+  assert.equal(skippedMeal.removedBannedIngredients?.[0].replacement, null, "left-out ingredients have no replacement");
+  assert.ok(!skippedMeal.ingredients.some((item) => getIngredientCatalogId(item.name) === "olive-oil"));
+
+  const replaced = setIngredientBanChoices(automatic, "olive-oil",
+    [{ ingredientId: "olive-oil", recipeKey: target.recipeKey, action: "skip", replacementIngredient: "sunflower-oil" }], [target]);
+  const replacedMeal = getPersonalizedDayPlan(monday, replaced).meals.find((meal) => meal.recipeKey === target.recipeKey);
+  assert.equal(getIngredientCatalogId(replacedMeal.removedBannedIngredients?.[0].replacement ?? ""), "sunflower-oil");
+
+  const unbanned = toggleIngredientBanPreference(replaced, "olive-oil");
+  const restored = getPersonalizedDayPlan(monday, unbanned).meals.find((meal) => meal.recipeKey === target.recipeKey);
+  assert.equal(restored.removedBannedIngredients, undefined, "unbanning restores the original meal");
+  assert.deepEqual(restored.ingredients, target.ingredients);
+
+  const mealCardSource = fs.readFileSync(require.resolve("../src/components/MealCard.tsx"), "utf8");
+  const menuSource = fs.readFileSync(require.resolve("../src/screens/MenuScreen.tsx"), "utf8");
+  const modalSource = fs.readFileSync(require.resolve("../src/components/MealDetailsModal.tsx"), "utf8");
+  assert.match(mealCardSource, /<BannedIngredientsChip meal=\{meal\}/, "meal cards indicate removed banned ingredients");
+  assert.match(menuSource, /<BannedIngredientsChip meal=\{meal\}/, "menu cards indicate removed banned ingredients");
+  assert.match(modalSource, /<BannedIngredientRow item=\{row\.item\}/, "details list banned ingredients inline");
+  assert.match(modalSource, /onUnbanIngredient\(meal, item\.ingredientId\)/, "details offer an unban action");
+  assert.match(appSource, /onUnbanIngredient=\{\(_meal, ingredientId\) => setIngredientUnbanRequest\(ingredientId\)\}/,
+    "unbanning from details asks for confirmation first");
+  assert.match(appSource, /<IngredientUnbanConfirmSheet[\s\S]*?onConfirm=\{confirmIngredientUnban\}/);
+  assert.match(appSource, /ingredientBanRequest \|\| ingredientUnbanRequest \? null : selectedMeal/,
+    "details hide while the confirmation is open and return on cancel");
 }
 
 // "Revert this meal" restores the original recipe for every kind of replacement it can undo.
@@ -1273,7 +1333,7 @@ assert.doesNotMatch(preferencesSource, /MADE FOR YOUR EVERYDAY|Good food,|your w
 assert.doesNotMatch(preferencesSource, /breakfastEstimate|estimatePresetBreakfast/,
   "standard breakfast choices do not display a cost, calorie, or protein preview");
 assert.match(mealDetailsSource, /formatMoney/);
-assert.match(appSource, /meal=\{pickerRequest \|\| unbanRequest \|\| ingredientBanRequest \? null : selectedMeal\}/,
+assert.match(appSource, /meal=\{pickerRequest \|\| unbanRequest \|\| ingredientBanRequest \|\| ingredientUnbanRequest \? null : selectedMeal\}/,
   "the details modal is hidden while the alternatives picker is open");
 assert.match(appSource, /onClose=\{\(\) => setPickerRequest\(null\)\}/,
   "canceling the picker preserves the selected meal so its details can return");

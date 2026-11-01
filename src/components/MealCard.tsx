@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { useFoodNames } from "../i18n";
 import { BatchNote } from "./BatchCooking";
 import { MealStatChips } from "./MealStatChips";
+import { BannedIngredientsChip } from "./BannedIngredientsChip";
 
 type Props = { meal: Meal; onPress: (meal: Meal) => void; footer?: React.ReactNode; corner?: React.ReactNode };
 
@@ -47,6 +48,7 @@ export function MealCard({ meal, onPress, footer, corner }: Props): React.JSX.El
             {t("meal.banned", { list: meal.banConflicts.map(food).join(", ") })}
           </Text>
         )}
+        <BannedIngredientsChip meal={meal} exclude={meal.banConflicts} />
         {meal.isReplaced && <View style={styles.replacedChip}><Text style={styles.replacedChipText}>{t("mealActions.replaced")}</Text></View>}
         <MealStatChips style={styles.metaRow} calories={meal.calories} proteinGrams={meal.proteinGrams} cost={cost} />
         {meal.batch && <BatchNote />}

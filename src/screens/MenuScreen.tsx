@@ -6,6 +6,7 @@ import type { Meal, MealType, PlanStyle } from "../models";
 import { mealAccent, mealBadge, mealTypeIcon, palette } from "../theme";
 import { getMenuMealGroupKey } from "../menuGrouping";
 import { GroupHeading } from "../components/BanSections";
+import { BannedIngredientsChip } from "../components/BannedIngredientsChip";
 
 type MenuDay = { dateKey: string; meals: Meal[] };
 type Props = {
@@ -89,6 +90,7 @@ export function MenuScreen(props: Props): React.JSX.Element {
                     <Text style={styles.mealTitle}>{food(meal.title)}</Text>
                     <Text style={styles.count}>{t("menu.occurrences", { count: entry.occurrences })}</Text>
                   </View>
+                  <BannedIngredientsChip meal={meal} />
                   <View style={styles.datesRow}>
                     {dates.map((dateKey) => (
                       <View key={dateKey} style={styles.dateChip}>

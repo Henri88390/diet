@@ -17,6 +17,7 @@ import "./src/i18n";
 import { MealDetailsModal } from "./src/components/MealDetailsModal";
 import { MealAlternativePicker } from "./src/components/MealAlternativePicker";
 import { UnbanConfirmSheet } from "./src/components/UnbanConfirmSheet";
+import { IngredientUnbanConfirmSheet } from "./src/components/IngredientUnbanConfirmSheet";
 import { CategoryBanConfirmSheet } from "./src/components/CategoryBanConfirmSheet";
 import { IngredientBanFlowSheet } from "./src/components/IngredientBanFlowSheet";
 import { TopTabBar } from "./src/components/TopTabBar";
@@ -121,6 +122,7 @@ export default function App(): React.JSX.Element {
   const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null);
   const [pickerRequest, setPickerRequest] = useState<PickerRequest | null>(null);
   const [unbanRequest, setUnbanRequest] = useState<Meal | null>(null);
+  const [ingredientUnbanRequest, setIngredientUnbanRequest] = useState<string | null>(null);
   const [ingredientBanRequest, setIngredientBanRequest] = useState<IngredientBanRequest | null>(null);
   const [categoryBanRequest, setCategoryBanRequest] = useState<IngredientCategoryGroup | null>(null);
   const [countryCode, setCountryCode] = useState<CountryCode>(DEFAULT_COUNTRY);
@@ -226,14 +228,9 @@ export default function App(): React.JSX.Element {
 
   const requestIngredientBan = useStableCallback((meal: Meal, ingredientId: string): void => {
     const affectedByRecipe = new Map<string, { meal: Meal; count: number; restricted: boolean }>();
-    const isVariantScope = Boolean(meal.occurrenceKeys?.length);
     menuDays.forEach(({ meals: dayMeals }) => dayMeals.forEach((candidate) => {
-      const isSelectedOccurrence = meal.occurrenceKeys?.length
-        ? meal.occurrenceKeys.includes(candidate.occurrenceKey ?? "")
-        : meal.occurrenceKey
-          ? candidate.occurrenceKey === meal.occurrenceKey
-          : candidate.recipeKey === meal.recipeKey;
-      if (isSelectedOccurrence || (isVariantScope && candidate.recipeKey === meal.recipeKey) ||
+      // The main choice applies to every serving of the selected recipe.
+      if (candidate.recipeKey === meal.recipeKey ||
         !candidate.ingredients.some((item) => isIngredientBanned(item.name, [ingredientId]))) return;
       const existing = affectedByRecipe.get(candidate.recipeKey);
       if (existing) {
@@ -329,6 +326,15 @@ export default function App(): React.JSX.Element {
     setMealPreferences((current) => removeMealBan(current, meal.recipeKey));
     setUnbanRequest(null);
     setSelectedMeal((current) => current?.recipeKey === meal.recipeKey ? null : current);
+  }
+
+  function confirmIngredientUnban(ingredientId: string): void {
+    setMealPreferences((current) => current.bannedIngredients.includes(ingredientId)
+      ? toggleIngredientBanPreference(current, ingredientId)
+      : current);
+    setIngredientUnbanRequest(null);
+    // The displayed meal changes once the ingredient is restored.
+    setSelectedMeal(null);
   }
 
   function revertOccurrence(meal: Meal, scope: "meal" | "all" = "meal"): void {
@@ -548,11 +554,12 @@ export default function App(): React.JSX.Element {
         </Animated.ScrollView>
       </SafeAreaView>
       <MealDetailsModal
-        meal={pickerRequest || unbanRequest || ingredientBanRequest ? null : selectedMeal}
+        meal={pickerRequest || unbanRequest || ingredientBanRequest || ingredientUnbanRequest ? null : selectedMeal}
         onClose={() => setSelectedMeal(null)}
         onReplace={requestReplacement}
         onBan={requestBan}
         onBanIngredient={requestIngredientBan}
+        onUnbanIngredient={(_meal, ingredientId) => setIngredientUnbanRequest(ingredientId)}
         canRevert={canRevertSelectedMeal}
         revertAllCount={revertAllOccurrenceKeys.length}
         onRevert={revertOccurrence}
@@ -580,6 +587,11 @@ export default function App(): React.JSX.Element {
         onSelect={applyPickerChoice}
       />
       <UnbanConfirmSheet meal={unbanRequest} onCancel={() => setUnbanRequest(null)} onConfirm={confirmUnban} />
+      <IngredientUnbanConfirmSheet
+        ingredientId={ingredientUnbanRequest}
+        onCancel={() => setIngredientUnbanRequest(null)}
+        onConfirm={confirmIngredientUnban}
+      />
       <CategoryBanConfirmSheet
         category={categoryBanRequest}
         onCancel={() => setCategoryBanRequest(null)}

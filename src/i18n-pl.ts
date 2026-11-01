@@ -131,7 +131,8 @@ export const pl: Translation = {
     hint: "Otwiera szczegóły posiłku i orientacyjne ilości składników",
     kcalChip: "{{value}} kcal",
     proteinChip: "{{value}} g białka",
-    banned: "Wymaga zamiennika wykluczonego składnika: {{list}}"
+    banned: "Wymaga zamiennika wykluczonego składnika: {{list}}",
+    bannedIngredients: "Wykluczone: {{list}}"
   },
   details: {
     eyebrow: "{{label}} · PRZYKŁADOWY POSIŁEK",
@@ -140,6 +141,12 @@ export const pl: Translation = {
     protein: "białko",
     estCost: "szac. koszt",
     banWarning: "Nie znaleziono dozwolonego zamiennika dla: {{list}}. Sprawdź wykluczenia lub wybierz inny posiłek.",
+    bannedTag: "Wykluczone",
+    bannedReplaced: "Zastąpione przez {{name}}",
+    bannedLeftOut: "Usunięte z tego posiłku",
+    unbanIngredient: "Przywróć",
+    unbanIngredientConfirmTitle: "Przywrócić składnik?",
+    unbanIngredientConfirmMessage: "{{name}} będzie znów dozwolony. Posiłki, które go zawierały, odzyskają go, a Twoje wybory zamienników zostaną zresetowane.",
     mainIngredients: "Główne składniki",
     mainHelper: "Podstawowe produkty w tej przykładowej porcji",
     seasonings: "Przyprawy i dodatki do gotowania",

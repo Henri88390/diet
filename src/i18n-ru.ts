@@ -131,7 +131,8 @@ export const ru: Translation = {
     hint: "Открывает детали блюда и примерные количества ингредиентов",
     kcalChip: "{{value}} ккал",
     proteinChip: "{{value}} г белка",
-    banned: "Нужна замена исключённого ингредиента: {{list}}"
+    banned: "Нужна замена исключённого ингредиента: {{list}}",
+    bannedIngredients: "Исключено: {{list}}"
   },
   details: {
     eyebrow: "{{label}} · ПРИМЕР БЛЮДА",
@@ -140,6 +141,12 @@ export const ru: Translation = {
     protein: "белок",
     estCost: "оценка цены",
     banWarning: "Не найдена разрешённая замена для: {{list}}. Проверьте исключения или выберите другое блюдо.",
+    bannedTag: "Исключено",
+    bannedReplaced: "Заменено на {{name}}",
+    bannedLeftOut: "Убрано из этого блюда",
+    unbanIngredient: "Разрешить",
+    unbanIngredientConfirmTitle: "Разрешить ингредиент?",
+    unbanIngredientConfirmMessage: "{{name}} снова будет разрешён. Блюда, где он был, получат его обратно, а ваши варианты замены будут сброшены.",
     mainIngredients: "Основные ингредиенты",
     mainHelper: "Основные продукты для этой примерной порции",
     seasonings: "Специи и добавки для готовки",

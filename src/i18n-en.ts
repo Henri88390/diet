@@ -135,7 +135,8 @@ export const en: Translation = {
     hint: "Opens meal details and illustrative ingredient quantities",
     kcalChip: "{{value}} kcal",
     proteinChip: "{{value}} g protein",
-    banned: "Needs a replacement for banned: {{list}}"
+    banned: "Needs a replacement for banned: {{list}}",
+    bannedIngredients: "Banned: {{list}}"
   },
   details: {
     eyebrow: "{{label}} · SAMPLE MEAL",
@@ -144,6 +145,12 @@ export const en: Translation = {
     protein: "protein",
     estCost: "est. cost",
     banWarning: "No allowed substitute was found for: {{list}}. Review the bans or choose another meal.",
+    bannedTag: "Banned",
+    bannedReplaced: "Replaced by {{name}}",
+    bannedLeftOut: "Left out of this meal",
+    unbanIngredient: "Unban",
+    unbanIngredientConfirmTitle: "Unban ingredient?",
+    unbanIngredientConfirmMessage: "{{name}} will be allowed again. Meals that used it get it back, and your replacement choices for it are reset.",
     mainIngredients: "Main ingredients",
     mainHelper: "Core foods for this sample portion",
     seasonings: "Seasonings & cooking additions",

@@ -106,6 +106,15 @@ export type MealBatch = {
   components: string[];
 };
 
+export type RemovedBannedIngredient = {
+  /** Banned catalog ingredient that removed it; unbanning this ID restores it. */
+  ingredientId: string;
+  /** Original recipe ingredient name. */
+  name: string;
+  /** Ingredient used instead, or null when it was left out. */
+  replacement: string | null;
+};
+
 export type Meal = {
   id: string;
   /** Stable recipe identity shared by recurring copies. */
@@ -118,6 +127,8 @@ export type Meal = {
   ingredientBanAdjusted?: boolean;
   /** Internal marker: at least one effective ingredient choice is occurrence-scoped. */
   ingredientBanOccurrenceScoped?: boolean;
+  /** Banned ingredients this kept meal originally used. */
+  removedBannedIngredients?: RemovedBannedIngredient[];
   isReplaced?: boolean;
   isTypicalBreakfast?: boolean;
   type: MealType;

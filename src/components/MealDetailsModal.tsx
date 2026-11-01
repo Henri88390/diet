@@ -1,7 +1,8 @@
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import type { Meal } from "../models";
+import type { Meal, RemovedBannedIngredient } from "../models";
 import { getIngredientCatalogId } from "../ingredientCatalog";
+import { getIngredientCategory } from "../ingredientEstimates";
 import { mealBadge, mealTypeIcon, palette } from "../theme";
 import { formatMoney } from "../countryPricing";
 import { useTranslation } from "react-i18next";
@@ -34,9 +35,15 @@ type Props = {
   restrictionReason?: string | null;
   /** When set, the meal is banned and only an Unban action is offered. */
   onUnban?: (meal: Meal) => void;
+  /** Starts the confirmation for unbanning an ingredient this meal originally used. */
+  onUnbanIngredient?: (meal: Meal, ingredientId: string) => void;
 };
 
-export function MealDetailsModal({ meal, onClose, onReplace, onBan, onBanIngredient, canRevert = false, revertAllCount = 0, onRevert, restrictionReason, onUnban }: Props): React.JSX.Element {
+type IngredientListRow =
+  | { kind: "active"; name: string; seasoning: boolean; ingredient: Meal["ingredients"][number] }
+  | { kind: "banned"; name: string; seasoning: boolean; item: RemovedBannedIngredient };
+
+export function MealDetailsModal({ meal, onClose, onReplace, onBan, onBanIngredient, canRevert = false, revertAllCount = 0, onRevert, restrictionReason, onUnban, onUnbanIngredient }: Props): React.JSX.Element {
   const { t } = useTranslation();
   const { food } = useFoodNames();
   const [revertChoiceOpen, setRevertChoiceOpen] = React.useState(false);
@@ -45,33 +52,45 @@ export function MealDetailsModal({ meal, onClose, onReplace, onBan, onBanIngredi
   const currencyLocale = meal?.currencyLocale;
   const formatCost = (minorUnits: number): string =>
     formatMoney({ amountMinorUnits: minorUnits, currencyCode }, currencyLocale);
-  const byCategory = (items: Meal["ingredients"]): Meal["ingredients"] =>
+  const byCategory = <Row extends { name: string }>(items: Row[]): Row[] =>
     items
       .map((item, index) => ({ item, index, rank: categoryOrder.indexOf(getShoppingCategory(item.name)) }))
       .sort((a, b) => a.rank - b.rank || a.index - b.index)
       .map(({ item }) => item);
-  const renderIngredients = (items: Meal["ingredients"], showCategories = true): React.JSX.Element[] =>
-    items.map((ingredient, index) => (
-      <React.Fragment key={`${ingredient.name}-${index}`}>
-        {showCategories && (index === 0 || getShoppingCategory(items[index - 1].name) !== getShoppingCategory(ingredient.name)) && (
+  const renderIngredients = (items: IngredientListRow[], showCategories = true): React.JSX.Element[] =>
+    items.map((row, index) => (
+      <React.Fragment key={`${row.kind}-${row.name}-${index}`}>
+        {showCategories && (index === 0 || getShoppingCategory(items[index - 1].name) !== getShoppingCategory(row.name)) && (
           <View style={[styles.categoryDivider, index === 0 && styles.categoryDividerFirst]}>
             <View style={styles.categoryDividerLine} />
             <Text style={styles.categoryDividerLabel}>
-              {t(`grocery.category.${getShoppingCategory(ingredient.name)}`, { defaultValue: getShoppingCategory(ingredient.name) })}
+              {t(`grocery.category.${getShoppingCategory(row.name)}`, { defaultValue: getShoppingCategory(row.name) })}
             </Text>
             <View style={styles.categoryDividerLine} />
           </View>
         )}
-        <IngredientRow
-          ingredient={ingredient}
-          meal={meal!}
-          formatCost={formatCost}
-          onBanIngredient={onBanIngredient}
-        />
+        {row.kind === "active" ? (
+          <IngredientRow
+            ingredient={row.ingredient}
+            meal={meal!}
+            formatCost={formatCost}
+            onBanIngredient={onBanIngredient}
+          />
+        ) : (
+          <BannedIngredientRow item={row.item} meal={meal!} onUnbanIngredient={onUnbanIngredient} />
+        )}
       </React.Fragment>
     ));
-  const mainIngredients = byCategory(meal?.ingredients.filter((item) => item.category === "main") ?? []);
-  const seasonings = byCategory(meal?.ingredients.filter((item) => item.category === "seasoning") ?? []);
+  const rows: IngredientListRow[] = [
+    ...(meal?.ingredients ?? []).map((ingredient): IngredientListRow => ({
+      kind: "active", name: ingredient.name, seasoning: ingredient.category === "seasoning", ingredient
+    })),
+    ...(meal?.removedBannedIngredients ?? []).map((item): IngredientListRow => ({
+      kind: "banned", name: item.name, seasoning: getIngredientCategory(item.name) === "seasoning", item
+    }))
+  ];
+  const mainIngredients = byCategory(rows.filter((row) => !row.seasoning));
+  const seasonings = byCategory(rows.filter((row) => row.seasoning));
   return (
     <BottomSheet visible={meal !== null} onClose={onClose} closeLabel={t("details.close")} sheetStyle={styles.sheet}>
         {meal && (
@@ -217,6 +236,45 @@ function IngredientRow({
   );
 }
 
+function BannedIngredientRow({
+  item,
+  meal,
+  onUnbanIngredient
+}: {
+  item: RemovedBannedIngredient;
+  meal: Meal;
+  onUnbanIngredient?: (meal: Meal, ingredientId: string) => void;
+}): React.JSX.Element {
+  const { t } = useTranslation();
+  const { food } = useFoodNames();
+  return (
+    <View style={[styles.ingredient, styles.bannedIngredient]}>
+      <View style={styles.ingredientTop}>
+        <Text style={[styles.ingredientName, styles.bannedName]}>{food(item.name)}</Text>
+        <View style={styles.bannedTag}><Text style={styles.bannedTagText}>{t("details.bannedTag")}</Text></View>
+      </View>
+      <View style={styles.chips}>
+        <Text style={styles.bannedNote}>
+          {item.replacement
+            ? t("details.bannedReplaced", { name: food(item.replacement) })
+            : t("details.bannedLeftOut")}
+        </Text>
+        {onUnbanIngredient && (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`${t("details.unbanIngredient")}: ${food(item.name)}`}
+            hitSlop={6}
+            onPress={() => onUnbanIngredient(meal, item.ingredientId)}
+            style={({ pressed }) => [styles.unbanIngredientButton, pressed && styles.actionPressed]}
+          >
+            <Text style={styles.unbanIngredientText}>{t("details.unbanIngredient")}</Text>
+          </Pressable>
+        )}
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   sheet: { maxHeight: "88%", paddingHorizontal: 21, paddingTop: 10, paddingBottom: 24 },
   header: { flexDirection: "row", alignItems: "center" },
@@ -286,6 +344,13 @@ const styles = StyleSheet.create({
   quantity: { color: palette.muted, fontSize: 11, fontWeight: "600", marginLeft: 12 },
   banIngredientButton: { marginLeft: "auto", borderRadius: 8, borderWidth: 1, borderColor: "#E6C3BB", backgroundColor: "#F8E9E5", paddingHorizontal: 10, paddingVertical: 3 },
   banIngredientText: { color: "#A23A2B", fontSize: 10, fontWeight: "800" },
+  bannedIngredient: { backgroundColor: "#FBF3F1", borderWidth: 1, borderStyle: "dashed", borderColor: "#E6C3BB" },
+  bannedName: { color: palette.muted, textDecorationLine: "line-through" },
+  bannedTag: { marginLeft: 12, borderRadius: 7, paddingHorizontal: 7, paddingVertical: 2, backgroundColor: "#F8E9E5" },
+  bannedTagText: { color: "#A23A2B", fontSize: 9, fontWeight: "800" },
+  bannedNote: { flexShrink: 1, color: palette.muted, fontSize: 10, fontWeight: "600" },
+  unbanIngredientButton: { marginLeft: "auto", borderRadius: 8, borderWidth: 1, borderColor: "#BFD3BF", backgroundColor: palette.softGreen, paddingHorizontal: 10, paddingVertical: 3 },
+  unbanIngredientText: { color: palette.green, fontSize: 10, fontWeight: "800" },
   chips: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 6, marginTop: 8 },
   chip: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, backgroundColor: "#F1EEE4" },
   chipProtein: { backgroundColor: palette.softGreen },

@@ -77,6 +77,27 @@ export function WeeklyGroceryList({
     category,
     items: estimate.items.filter((item) => getShoppingCategory(item.name) === category)
   })).filter((group) => group.items.length > 0);
+  const [checkedKeys, setCheckedKeys] = useState<ReadonlySet<string>>(() => new Set());
+  // Price-only changes keep the ticks; any change in dates, items or quantities resets them.
+  const listSignature = [
+    startDate.toDateString(),
+    endDate.toDateString(),
+    ...estimate.items.map((item) => `${item.key}:${item.quantity}:${item.unit}`)
+  ].join("|");
+  const checkedCount = estimate.items.filter((item) => checkedKeys.has(item.key)).length;
+
+  useEffect(() => {
+    setCheckedKeys(new Set());
+  }, [listSignature]);
+
+  function toggleItem(key: string): void {
+    setCheckedKeys((current) => {
+      const next = new Set(current);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
 
   function chooseDate(date: Date): void {
     setHasCustomRange(true);
@@ -122,24 +143,52 @@ export function WeeklyGroceryList({
         <Text style={styles.empty}>{t("grocery.empty")}</Text>
       ) : (
         <View style={styles.items}>
+          <View style={styles.progressRow}>
+            <Text style={styles.progressText}>{t("grocery.progress", { checked: checkedCount, total: estimate.items.length })}</Text>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t("grocery.resetA11y")}
+              accessibilityState={{ disabled: checkedCount === 0 }}
+              disabled={checkedCount === 0}
+              hitSlop={6}
+              onPress={() => setCheckedKeys(new Set())}
+              style={({ pressed }) => [styles.resetButton, checkedCount === 0 && styles.resetButtonDisabled, pressed && styles.pressed]}
+            >
+              <Text style={styles.resetText}>↺ {t("grocery.reset")}</Text>
+            </Pressable>
+          </View>
           {groups.map((group) => (
             <View key={group.category} style={styles.category}>
               <View style={styles.categoryHeader}>
                 <Text style={styles.categoryTitle}>{t(`grocery.category.${group.category}`, { defaultValue: group.category }).toUpperCase()}</Text>
-                <Text style={styles.categoryCount}>{group.items.length}</Text>
+                <Text style={styles.categoryCount}>
+                  {group.items.filter((item) => checkedKeys.has(item.key)).length}/{group.items.length}
+                </Text>
               </View>
               <View style={styles.categoryItems}>
-                {group.items.map((item) => (
-                  <View key={item.key} style={styles.itemRow}>
-                    <View style={styles.itemMain}>
-                      <Text style={styles.itemName}>{food(item.name)}</Text>
-                      <Text style={styles.quantity}>
-                                              {formatShoppingQuantity(item.quantity, unit(item.unit), country.locale)}
-                      </Text>
-                    </View>
-                    <Text style={styles.itemCost}>{formatMoney(item.estimatedCost, country.locale)}</Text>
-                  </View>
-                ))}
+                {group.items.map((item) => {
+                  const checked = checkedKeys.has(item.key);
+                  const quantity = formatShoppingQuantity(item.quantity, unit(item.unit), country.locale);
+                  return (
+                    <Pressable
+                      key={item.key}
+                      accessibilityRole="checkbox"
+                      accessibilityState={{ checked }}
+                      accessibilityLabel={`${food(item.name)}, ${quantity}`}
+                      onPress={() => toggleItem(item.key)}
+                      style={({ pressed }) => [styles.itemRow, checked && styles.itemRowChecked, pressed && styles.pressed]}
+                    >
+                      <View style={[styles.checkbox, checked && styles.checkboxChecked]}>
+                        {checked && <Text style={styles.checkmark}>✓</Text>}
+                      </View>
+                      <View style={styles.itemMain}>
+                        <Text style={[styles.itemName, checked && styles.textChecked]}>{food(item.name)}</Text>
+                        <Text style={[styles.quantity, checked && styles.textChecked]}>{quantity}</Text>
+                      </View>
+                      <Text style={[styles.itemCost, checked && styles.itemCostChecked]}>{formatMoney(item.estimatedCost, country.locale)}</Text>
+                    </Pressable>
+                  );
+                })}
               </View>
             </View>
           ))}
@@ -321,6 +370,17 @@ const styles = StyleSheet.create({
   countryLabel: { color: palette.muted, fontSize: 9, marginTop: 3 },
   totalValue: { color: palette.green, fontSize: 17, fontWeight: "700" },
   items: { marginTop: 3 },
+  progressRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 12 },
+  progressText: { color: palette.muted, fontSize: 11, fontWeight: "700" },
+  resetButton: { flexDirection: "row", alignItems: "center", paddingHorizontal: 11, paddingVertical: 6, borderRadius: 9, borderWidth: 1, borderColor: "#C9D9C9", backgroundColor: palette.softGreen },
+  resetButtonDisabled: { opacity: 0.4 },
+  resetText: { color: palette.green, fontSize: 11, fontWeight: "700" },
+  checkbox: { width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: "#B9C8B6", alignItems: "center", justifyContent: "center", marginRight: 11, backgroundColor: palette.white },
+  checkboxChecked: { borderColor: palette.green, backgroundColor: palette.green },
+  checkmark: { color: palette.white, fontSize: 13, lineHeight: 16, fontWeight: "900", includeFontPadding: false },
+  itemRowChecked: { backgroundColor: "#F3F5F0" },
+  textChecked: { color: "#A3A79E", textDecorationLine: "line-through" },
+  itemCostChecked: { opacity: 0.45 },
   category: { marginTop: 15, borderWidth: 1, borderColor: "#C9D8C6", borderRadius: 13, overflow: "hidden", backgroundColor: "#FAFBF8" },
   categoryHeader: { minHeight: 46, flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 13, backgroundColor: "#DCE9D9", borderBottomWidth: 2, borderBottomColor: "#C0D2BC" },
   categoryTitle: { color: "#244A31", fontSize: 13, fontWeight: "800", letterSpacing: 0.8 },

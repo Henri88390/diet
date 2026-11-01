@@ -284,6 +284,9 @@ assert.ok(dryLentilSubstitution.meals.flatMap((meal) => meal.ingredients)
   .some((ingredient) => ingredient.name === "Lentils, dry"),
   "ban substitution falls back to generic dry lentils rather than cooked red lentils");
 assert.match(grocerySource, /categoryTitle/);
+assert.match(grocerySource, /accessibilityRole="checkbox"/, "shopping list items can be ticked off in store");
+assert.match(grocerySource, /useEffect\(\(\) => \{\s*setCheckedKeys\(new Set\(\)\);\s*\}, \[listSignature\]\)/,
+  "ticked items reset when the list dates or contents change");
 assert.match(grocerySource, /categoryHeader/);
 assert.match(grocerySource, /hasCustomRange/,
   "user-selected grocery date ranges are preserved when today rolls over");
